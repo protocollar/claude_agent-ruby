@@ -1,0 +1,22 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
+
+# Ignore Vendor (using to load relevant external libs)
+vendor/
+
+# Ignore Jetbrains Config
+.idea/*
+
+# Ignore Claude Code personal configs
+.claude/settings.local.json
+# Use "local-" prefix or "local/" folder to exclude from git (e.g., local-agent.md, local/command.md)
+.claude/**/local-*
+.claude/**/local/
+# Ignore mcp configs (eventually consider checking this in when configuration spec improves)
+.mcp.json

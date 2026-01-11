@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle:*)",
+      "Bash(gem:*)",
+      "Bash(rbs:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git worktree:*)",
+      "Bash(git mv:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run view:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(ps:*)",
+      "Bash(lsof:*)",
+      "Bash(wc:*)",
+      "Bash(mkdir:*)",
+      "Bash(bin/rbs-validate:*)",
+      "Bash(bin/setup:*)",
+      "Bash(bin/test:*)",
+      "Bash(bin/test-integration:*)",
+      "Bash(bin/test-all:*)",
+      "Bash(bin/update-reference-sdks:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:docs.claude.com)"
+    ],
+    "deny": [],
+    "ask": [],
+    "additionalDirectories": [],
+    "defaultMode": "default"
+  },
+  "hooks": {},
+  "env": {},
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  }
+}

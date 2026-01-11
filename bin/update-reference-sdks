@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+# frozen_string_literal: true
+#
+# Updates the official Anthropic Claude Agent SDKs in vendor/ for feature parity audits.
+#
+# Usage:
+#   bin/update-reference-sdks           # Update both SDKs
+#   bin/update-reference-sdks --python  # Update Python SDK only
+#   bin/update-reference-sdks --ts      # Update TypeScript SDK only
+#   bin/update-reference-sdks --status  # Show current versions without updating
+
+set -euo pipefail
+IFS=$'\n\t'
+
+# Configuration
+VENDOR_DIR="vendor"
+PYTHON_REPO="https://github.com/anthropics/claude-agent-sdk-python"
+PYTHON_DIR="$VENDOR_DIR/claude-agent-sdk-python"
+TS_PACKAGE="@anthropic-ai/claude-agent-sdk"
+TS_DIR="$VENDOR_DIR/claude-agent-sdk-npm"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+info() { echo -e "${BLUE}==> $1${NC}"; }
+success() { echo -e "${GREEN}✓ $1${NC}"; }
+warn() { echo -e "${YELLOW}⚠ $1${NC}"; }
+error() { echo -e "${RED}✗ $1${NC}" >&2; }
+
+# Check for required commands
+check_dependencies() {
+  local missing=()
+  command -v git &>/dev/null || missing+=("git")
+  command -v npm &>/dev/null || missing+=("npm")
+
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    error "Missing required commands: ${missing[*]}"
+    exit 1
+  fi
+}
+
+# Ensure vendor directory exists
+ensure_vendor_dir() {
+  if [[ ! -d "$VENDOR_DIR" ]]; then
+    info "Creating vendor directory..."
+    mkdir -p "$VENDOR_DIR"
+  fi
+}
+
+# Update Python SDK from GitHub
+update_python_sdk() {
+  info "Updating Python SDK..."
+
+  if [[ -d "$PYTHON_DIR" ]]; then
+    # Repository exists, update it
+    pushd "$PYTHON_DIR" > /dev/null
+    git fetch origin --quiet
+    local current_branch
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ "$current_branch" != "main" ]]; then
+      warn "Not on main branch (currently on $current_branch), switching..."
+      git checkout main --quiet
+    fi
+    git pull origin main --quiet
+    popd > /dev/null
+  else
+    # Clone fresh
+    info "Cloning Python SDK repository..."
+    git clone --quiet "$PYTHON_REPO" "$PYTHON_DIR"
+  fi
+
+  # Report version info
+  local commit_sha commit_msg
+  commit_sha=$(git -C "$PYTHON_DIR" log -1 --format="%h")
+  commit_msg=$(git -C "$PYTHON_DIR" log -1 --format="%s")
+  success "Python SDK: $commit_sha - $commit_msg"
+}
+
+# Update TypeScript SDK from npm
+update_typescript_sdk() {
+  info "Updating TypeScript SDK from npm..."
+
+  # Always download fresh to ensure latest version
+  if [[ -d "$TS_DIR" ]]; then
+    rm -rf "$TS_DIR"
+  fi
+
+  pushd "$VENDOR_DIR" > /dev/null
+
+  # Download and extract package
+  npm pack "$TS_PACKAGE" --quiet 2>/dev/null
+  local tarball
+  tarball=$(ls anthropic-ai-claude-agent-sdk-*.tgz 2>/dev/null | head -1)
+
+  if [[ -z "$tarball" ]]; then
+    popd > /dev/null
+    error "Failed to download TypeScript SDK package"
+    exit 1
+  fi
+
+  tar -xzf "$tarball" --quiet 2>/dev/null || tar -xzf "$tarball"
+  mv package claude-agent-sdk-npm
+  rm "$tarball"
+
+  popd > /dev/null
+
+  # Report version info
+  local version
+  version=$(grep '"version"' "$TS_DIR/package.json" | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/')
+  success "TypeScript SDK: v$version (npm package)"
+}
+
+# Show current versions without updating
+show_status() {
+  echo ""
+  info "Current SDK versions:"
+  echo ""
+
+  if [[ -d "$PYTHON_DIR" ]]; then
+    local py_commit py_msg py_date
+    py_commit=$(git -C "$PYTHON_DIR" log -1 --format="%h")
+    py_msg=$(git -C "$PYTHON_DIR" log -1 --format="%s")
+    py_date=$(git -C "$PYTHON_DIR" log -1 --format="%ci" | cut -d' ' -f1)
+    echo -e "  ${GREEN}Python SDK:${NC} $py_commit ($py_date)"
+    echo -e "             $py_msg"
+  else
+    echo -e "  ${YELLOW}Python SDK:${NC} Not installed"
+  fi
+
+  echo ""
+
+  if [[ -d "$TS_DIR" ]]; then
+    local ts_version
+    ts_version=$(grep '"version"' "$TS_DIR/package.json" | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/')
+    echo -e "  ${GREEN}TypeScript SDK:${NC} v$ts_version"
+  else
+    echo -e "  ${YELLOW}TypeScript SDK:${NC} Not installed"
+  fi
+
+  echo ""
+}
+
+# Main
+main() {
+  local update_python=true
+  local update_ts=true
+  local status_only=false
+
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --python)
+        update_ts=false
+        shift
+        ;;
+      --ts|--typescript)
+        update_python=false
+        shift
+        ;;
+      --status)
+        status_only=true
+        shift
+        ;;
+      --help|-h)
+        echo "Usage: bin/update-reference-sdks [OPTIONS]"
+        echo ""
+        echo "Updates official Anthropic Claude Agent SDKs in vendor/ for feature parity audits."
+        echo ""
+        echo "Options:"
+        echo "  --python     Update Python SDK only"
+        echo "  --ts         Update TypeScript SDK only"
+        echo "  --status     Show current versions without updating"
+        echo "  --help       Show this help message"
+        exit 0
+        ;;
+      *)
+        error "Unknown option: $1"
+        exit 1
+        ;;
+    esac
+  done
+
+  if $status_only; then
+    show_status
+    exit 0
+  fi
+
+  check_dependencies
+  ensure_vendor_dir
+
+  echo ""
+
+  if $update_python; then
+    update_python_sdk
+  fi
+
+  if $update_ts; then
+    update_typescript_sdk
+  fi
+
+  echo ""
+  success "Reference SDKs updated successfully!"
+  echo ""
+}
+
+main "$@"

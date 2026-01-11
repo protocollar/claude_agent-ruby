@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Release script for claude_agent gem
+# Usage: bin/release 1.2.3
+#
+# This script:
+# 1. Validates the version format (semantic versioning)
+# 2. Checks that CHANGELOG.md has an entry for the version
+# 3. Updates lib/claude_agent/version.rb
+# 4. Updates Gemfile.lock
+# 5. Commits, tags, and pushes
+# 6. Builds and publishes the gem
+
+cd "$(dirname "$0")/.."
+
+VERSION=${1:-}
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+error() {
+  echo -e "${RED}Error: $1${NC}" >&2
+  exit 1
+}
+
+success() {
+  echo -e "${GREEN}$1${NC}"
+}
+
+warn() {
+  echo -e "${YELLOW}$1${NC}"
+}
+
+# Validate version argument
+if [[ -z "$VERSION" ]]; then
+  error "Usage: bin/release VERSION (e.g., bin/release 1.2.3)"
+fi
+
+# Validate semantic version format
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+  error "Invalid version format. Use semantic versioning: MAJOR.MINOR.PATCH (e.g., 1.2.3 or 1.0.0-beta.1)"
+fi
+
+# Check for uncommitted changes
+if ! git diff --quiet HEAD; then
+  error "You have uncommitted changes. Please commit or stash them first."
+fi
+
+# Check that we're on main branch
+CURRENT_BRANCH=$(git branch --show-current)
+if [[ "$CURRENT_BRANCH" != "main" ]]; then
+  warn "Warning: You're on branch '$CURRENT_BRANCH', not 'main'"
+  read -p "Continue anyway? [y/N] " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    exit 1
+  fi
+fi
+
+# Check that CHANGELOG.md has an entry for this version
+if ! grep -q "## \[$VERSION\]" CHANGELOG.md; then
+  error "CHANGELOG.md does not have an entry for version $VERSION.
+
+Please add a changelog entry before releasing:
+
+## [$VERSION] - $(date +%Y-%m-%d)
+
+### Added
+- New features...
+
+### Changed
+- Changes...
+
+### Fixed
+- Bug fixes..."
+fi
+
+# Check that tag doesn't already exist
+if git tag -l "v$VERSION" | grep -q "v$VERSION"; then
+  error "Tag v$VERSION already exists"
+fi
+
+echo "Releasing version $VERSION..."
+echo
+
+# Update version.rb
+echo "Updating lib/claude_agent/version.rb..."
+cat > lib/claude_agent/version.rb << EOF
+# frozen_string_literal: true
+
+module ClaudeAgent
+  VERSION = "$VERSION"
+end
+EOF
+
+# Update Gemfile.lock
+echo "Updating Gemfile.lock..."
+bundle install --quiet
+
+# Move [Unreleased] section for next development cycle
+# (User should have already added the version entry)
+
+# Stage changes
+git add lib/claude_agent/version.rb Gemfile.lock
+
+# Commit
+echo "Creating commit..."
+git commit -m "Release v$VERSION"
+
+# Create tag
+echo "Creating tag v$VERSION..."
+git tag -a "v$VERSION" -m "Release $VERSION"
+
+# Push
+echo "Pushing to remote..."
+git push origin "$CURRENT_BRANCH"
+git push origin "v$VERSION"
+
+# Build gem
+echo "Building gem..."
+gem build claude_agent.gemspec
+
+# Publish
+GEM_FILE="claude_agent-$VERSION.gem"
+echo "Publishing $GEM_FILE to RubyGems..."
+gem push "$GEM_FILE"
+
+# Cleanup
+rm -f "$GEM_FILE"
+
+echo
+success "Successfully released claude_agent v$VERSION!"
+echo
+echo "Next steps:"
+echo "  1. Create a GitHub release at: https://github.com/protocollar/claude_agent-ruby/releases/new?tag=v$VERSION"
+echo "  2. Add an [Unreleased] section to CHANGELOG.md for the next version"

@@ -1,0 +1,12 @@
+# Inherit from rubocop-rails-omakase
+# To disable a check for a specific case, see:
+# http://docs.rubocop.org/en/latest/configuration/#disabling-cops-within-source-code
+
+inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+  Exclude:
+    - "vendor/**/*"
+    - "tmp/**/*"

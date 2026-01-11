@@ -1,0 +1,912 @@
+module ClaudeAgent
+  VERSION: String
+
+  # One-shot query to Claude Code CLI
+  def self.query: (
+    prompt: String,
+    ?options: Options?,
+    ?transport: Transport::Base?
+  ) -> Enumerator[message, void]
+
+  # Error classes
+  class Error < StandardError
+  end
+
+  class CLINotFoundError < Error
+  end
+
+  class CLIVersionError < Error
+    attr_reader required_version: String
+    attr_reader actual_version: String?
+
+    def initialize: (String message, ?required_version: String, ?actual_version: String?) -> void
+  end
+
+  class CLIConnectionError < Error
+  end
+
+  class ProcessError < Error
+    attr_reader exit_code: Integer?
+    attr_reader stderr: String?
+
+    def initialize: (String message, ?exit_code: Integer?, ?stderr: String?) -> void
+  end
+
+  class TimeoutError < Error
+    attr_reader request_id: String?
+    attr_reader timeout_seconds: Integer?
+
+    def initialize: (String message, ?request_id: String?, ?timeout_seconds: Integer?) -> void
+  end
+
+  class ConfigurationError < Error
+  end
+
+  class JSONDecodeError < Error
+    attr_reader raw_data: String?
+
+    def initialize: (String message, ?raw_data: String?) -> void
+  end
+
+  class MessageParseError < Error
+    attr_reader raw_message: Hash[String, untyped]?
+
+    def initialize: (String message, ?raw_message: Hash[String, untyped]?) -> void
+  end
+
+  class AbortError < Error
+    def initialize: (?String message) -> void
+  end
+
+  # Abort controller for cancelling operations (TypeScript SDK parity)
+  class AbortController
+    attr_reader signal: AbortSignal
+
+    def initialize: () -> void
+    def abort: (?String? reason) -> void
+  end
+
+  # Abort signal for tracking abort state (TypeScript SDK parity)
+  class AbortSignal
+    def initialize: () -> void
+    def aborted?: () -> bool
+    def reason: () -> String?
+    def on_abort: () { (String?) -> void } -> void
+    def wait: (?timeout: Numeric?) -> bool
+    def check!: () -> void
+    def abort!: (?String? reason) -> void
+  end
+
+  # TypeScript SDK parity types
+  ASSISTANT_MESSAGE_ERROR_TYPES: Array[String]
+  API_KEY_SOURCES: Array[String]
+  class SlashCommand
+    attr_reader name: String
+    attr_reader description: String?
+    attr_reader argument_hint: String?
+
+    def initialize: (name: String, ?description: String?, ?argument_hint: String?) -> void
+  end
+
+  class ModelInfo
+    attr_reader value: String
+    attr_reader display_name: String?
+    attr_reader description: String?
+
+    def initialize: (value: String, ?display_name: String?, ?description: String?) -> void
+  end
+
+  class McpServerStatus
+    attr_reader name: String
+    attr_reader status: String
+    attr_reader server_info: Hash[String, untyped]?
+
+    def initialize: (name: String, status: String, ?server_info: Hash[String, untyped]?) -> void
+  end
+
+  class AccountInfo
+    attr_reader email: String?
+    attr_reader organization: String?
+    attr_reader subscription_type: String?
+    attr_reader token_source: String?
+    attr_reader api_key_source: String?
+
+    def initialize: (?email: String?, ?organization: String?, ?subscription_type: String?, ?token_source: String?, ?api_key_source: String?) -> void
+  end
+
+  class ModelUsage
+    attr_reader input_tokens: Integer
+    attr_reader output_tokens: Integer
+    attr_reader cache_read_input_tokens: Integer
+    attr_reader cache_creation_input_tokens: Integer
+    attr_reader web_search_requests: Integer
+    attr_reader cost_usd: Float
+    attr_reader context_window: Integer?
+
+    def initialize: (?input_tokens: Integer, ?output_tokens: Integer, ?cache_read_input_tokens: Integer, ?cache_creation_input_tokens: Integer, ?web_search_requests: Integer, ?cost_usd: Float, ?context_window: Integer?) -> void
+  end
+
+  class SDKPermissionDenial
+    attr_reader tool_name: String
+    attr_reader tool_use_id: String
+    attr_reader tool_input: Hash[String, untyped]
+
+    def initialize: (tool_name: String, tool_use_id: String, tool_input: Hash[String, untyped]) -> void
+  end
+
+  # Result of set_mcp_servers() control method (TypeScript SDK parity)
+  class McpSetServersResult
+    attr_reader added: Array[String]
+    attr_reader removed: Array[String]
+    attr_reader errors: Hash[String, String]
+
+    def initialize: (?added: Array[String], ?removed: Array[String], ?errors: Hash[String, String]) -> void
+  end
+
+  # Result of rewind_files() control method (TypeScript SDK parity)
+  class RewindFilesResult
+    attr_reader can_rewind: bool
+    attr_reader error: String?
+    attr_reader files_changed: Array[String]?
+    attr_reader insertions: Integer?
+    attr_reader deletions: Integer?
+
+    def initialize: (can_rewind: bool, ?error: String?, ?files_changed: Array[String]?, ?insertions: Integer?, ?deletions: Integer?) -> void
+  end
+
+  # Agent definition for custom subagents (TypeScript SDK parity)
+  class AgentDefinition
+    attr_reader description: String
+    attr_reader prompt: String
+    attr_reader tools: Array[String]?
+    attr_reader disallowed_tools: Array[String]?
+    attr_reader model: String?
+    attr_reader mcp_servers: Hash[String, untyped]?
+    attr_reader critical_system_reminder: String?
+
+    def initialize: (description: String, prompt: String, ?tools: Array[String]?, ?disallowed_tools: Array[String]?, ?model: String?, ?mcp_servers: Hash[String, untyped]?, ?critical_system_reminder: String?) -> void
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  # Sandbox configuration types
+  class SandboxNetworkConfig
+    attr_reader allowed_domains: Array[String]
+    attr_reader allow_local_binding: bool
+    attr_reader allow_unix_sockets: Array[String]
+    attr_reader allow_all_unix_sockets: bool
+    attr_reader http_proxy_port: Integer?
+    attr_reader socks_proxy_port: Integer?
+
+    def initialize: (?allowed_domains: Array[String], ?allow_local_binding: bool, ?allow_unix_sockets: Array[String], ?allow_all_unix_sockets: bool, ?http_proxy_port: Integer?, ?socks_proxy_port: Integer?) -> void
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class SandboxRipgrepConfig
+    attr_reader command: String
+    attr_reader args: Array[String]?
+
+    def initialize: (command: String, ?args: Array[String]?) -> void
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class SandboxIgnoreViolations
+    attr_reader file: Array[String]
+    attr_reader network: Array[String]
+
+    def initialize: (?file: Array[String], ?network: Array[String]) -> void
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class SandboxSettings
+    attr_reader enabled: bool
+    attr_reader auto_allow_bash_if_sandboxed: bool
+    attr_reader excluded_commands: Array[String]
+    attr_reader allow_unsandboxed_commands: bool
+    attr_reader network: SandboxNetworkConfig?
+    attr_reader ignore_violations: SandboxIgnoreViolations?
+    attr_reader enable_weaker_nested_sandbox: bool
+    attr_reader ripgrep: SandboxRipgrepConfig?
+
+    def initialize: (?enabled: bool, ?auto_allow_bash_if_sandboxed: bool, ?excluded_commands: Array[String], ?allow_unsandboxed_commands: bool, ?network: SandboxNetworkConfig?, ?ignore_violations: SandboxIgnoreViolations?, ?enable_weaker_nested_sandbox: bool, ?ripgrep: SandboxRipgrepConfig?) -> void
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  # Tools preset configuration
+  class ToolsPreset
+    attr_reader type: String
+    attr_reader preset: String
+
+    def initialize: (?type: String, ?preset: String) -> void
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  # Permission modes
+  PERMISSION_MODES: Array[String]
+
+  # Options for configuring Claude Code CLI
+  class Options
+    # Constants
+    DEFAULTS: Hash[Symbol, untyped]
+    ATTRIBUTES: Array[Symbol]
+
+    # Tool configuration
+    attr_accessor tools: (Array[String] | String)?
+    attr_accessor allowed_tools: Array[String]
+    attr_accessor disallowed_tools: Array[String]
+
+    # System prompt
+    attr_accessor system_prompt: (String | Hash[Symbol, untyped])?
+    attr_accessor append_system_prompt: String?
+
+    # Model selection
+    attr_accessor model: String?
+    attr_accessor fallback_model: String?
+
+    # Permission control
+    attr_accessor permission_mode: String?
+    attr_accessor permission_prompt_tool_name: String?
+    attr_accessor can_use_tool: (^(String, Hash[String, untyped], untyped) -> permission_result)?
+    attr_accessor allow_dangerously_skip_permissions: bool
+
+    # Conversation flow
+    attr_accessor continue_conversation: bool
+    attr_accessor resume: String?
+    attr_accessor fork_session: bool
+    attr_accessor resume_session_at: String?
+    attr_accessor persist_session: bool
+
+    # Limits & budget
+    attr_accessor max_turns: Integer?
+    attr_accessor max_budget_usd: Float?
+    attr_accessor max_thinking_tokens: Integer?
+
+    # Strict validation
+    attr_accessor strict_mcp_config: bool
+
+    # MCP servers
+    attr_accessor mcp_servers: Hash[String, Hash[Symbol, untyped]]
+
+    # Hooks
+    attr_accessor hooks: Hash[String, Array[HookMatcher]]?
+
+    # Settings & sandbox
+    attr_accessor settings: String?
+    attr_accessor sandbox: SandboxSettings?
+
+    # Environment
+    attr_accessor cwd: String?
+    attr_accessor add_dirs: Array[String]
+    attr_accessor env: Hash[String, String]
+    attr_accessor user: String?
+
+    # CLI configuration
+    attr_accessor cli_path: String?
+    attr_accessor extra_args: Hash[String | Symbol, String?]
+
+    # Advanced features
+    attr_accessor agents: Hash[String, untyped]?
+    attr_accessor setting_sources: Array[String]?
+    attr_accessor plugins: Array[String | Hash[Symbol, String]]
+
+    # Output & streaming
+    attr_accessor include_partial_messages: bool
+    attr_accessor output_format: Hash[String, untyped]?
+    attr_accessor enable_file_checkpointing: bool
+
+    # Beta features
+    attr_accessor betas: Array[String]
+
+    # Buffering & debugging
+    attr_accessor max_buffer_size: Integer?
+    attr_accessor stderr_callback: (^(String) -> void)?
+
+    # Abort control (TypeScript SDK parity)
+    attr_accessor abort_controller: AbortController?
+
+    # Custom spawn function (TypeScript SDK parity)
+    attr_accessor spawn_claude_code_process: (^(Array[String], Hash[Symbol, untyped]) -> untyped)?
+
+    def initialize: (**untyped kwargs) -> void
+    def to_cli_args: () -> Array[String]
+    def to_env: () -> Hash[String, String]
+    def has_hooks?: () -> bool
+    def has_sdk_mcp_servers?: () -> bool
+    def abort_signal: () -> AbortSignal?
+  end
+
+  # Content block types
+  class TextBlock
+    attr_reader text: String
+
+    def initialize: (text: String) -> void
+    def type: () -> :text
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class ThinkingBlock
+    attr_reader thinking: String
+    attr_reader signature: String?
+
+    def initialize: (thinking: String, ?signature: String?) -> void
+    def type: () -> :thinking
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class ToolUseBlock
+    attr_reader id: String
+    attr_reader name: String
+    attr_reader input: Hash[String, untyped]
+
+    def initialize: (id: String, name: String, input: Hash[String, untyped]) -> void
+    def type: () -> :tool_use
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class ToolResultBlock
+    attr_reader tool_use_id: String
+    attr_reader content: String?
+    attr_reader is_error: bool?
+
+    def initialize: (tool_use_id: String, ?content: String?, ?is_error: bool?) -> void
+    def type: () -> :tool_result
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class ServerToolUseBlock
+    attr_reader id: String
+    attr_reader name: String
+    attr_reader input: Hash[String, untyped]
+    attr_reader server_name: String
+
+    def initialize: (id: String, name: String, input: Hash[String, untyped], server_name: String) -> void
+    def type: () -> :server_tool_use
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class ServerToolResultBlock
+    attr_reader tool_use_id: String
+    attr_reader server_name: String
+    attr_reader content: String?
+    attr_reader is_error: bool?
+
+    def initialize: (tool_use_id: String, server_name: String, ?content: String?, ?is_error: bool?) -> void
+    def type: () -> :server_tool_result
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class ImageContentBlock
+    attr_reader source: Hash[String | Symbol, untyped]
+
+    def initialize: (source: Hash[String | Symbol, untyped]) -> void
+    def type: () -> :image
+    def source_type: () -> String?
+    def media_type: () -> String?
+    def data: () -> String?
+    def url: () -> String?
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  type content_block = TextBlock | ThinkingBlock | ToolUseBlock | ToolResultBlock | ServerToolUseBlock | ServerToolResultBlock | ImageContentBlock
+
+  CONTENT_BLOCK_TYPES: Array[Class]
+
+  # Message types
+  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage
+
+  MESSAGE_TYPES: Array[Class]
+
+  class UserMessage
+    attr_reader content: String | Array[content_block]
+    attr_reader uuid: String?
+    attr_reader session_id: String?
+    attr_reader parent_tool_use_id: String?
+
+    def initialize: (content: String | Array[content_block], ?uuid: String?, ?session_id: String?, ?parent_tool_use_id: String?) -> void
+    def type: () -> :user
+    def text: () -> String?
+    def replay?: () -> bool
+  end
+
+  class UserMessageReplay
+    attr_reader content: String | Array[content_block]
+    attr_reader uuid: String?
+    attr_reader session_id: String?
+    attr_reader parent_tool_use_id: String?
+    attr_reader is_replay: bool
+    attr_reader is_synthetic: bool?
+    attr_reader tool_use_result: untyped
+
+    def initialize: (content: String | Array[content_block], ?uuid: String?, ?session_id: String?, ?parent_tool_use_id: String?, ?is_replay: bool, ?is_synthetic: bool?, ?tool_use_result: untyped) -> void
+    def type: () -> :user
+    def text: () -> String?
+    def replay?: () -> bool
+    def synthetic?: () -> bool
+  end
+
+  class AssistantMessage
+    attr_reader content: Array[content_block]
+    attr_reader model: String
+    attr_reader uuid: String?
+    attr_reader session_id: String?
+    attr_reader error: String?
+    attr_reader parent_tool_use_id: String?
+
+    def initialize: (content: Array[content_block], model: String, ?uuid: String?, ?session_id: String?, ?error: String?, ?parent_tool_use_id: String?) -> void
+    def type: () -> :assistant
+    def text: () -> String
+    def thinking: () -> String
+    def tool_uses: () -> Array[ToolUseBlock]
+    def has_tool_use?: () -> bool
+  end
+
+  class SystemMessage
+    attr_reader subtype: String
+    attr_reader data: Hash[String, untyped]
+
+    def initialize: (subtype: String, data: Hash[String, untyped]) -> void
+    def type: () -> :system
+  end
+
+  class ResultMessage
+    attr_reader subtype: String
+    attr_reader duration_ms: Integer
+    attr_reader duration_api_ms: Integer
+    attr_reader is_error: bool
+    attr_reader num_turns: Integer
+    attr_reader session_id: String
+    attr_reader total_cost_usd: Float?
+    attr_reader usage: Hash[String, untyped]?
+    attr_reader result: String?
+    attr_reader structured_output: untyped
+    attr_reader errors: Array[String]?
+    attr_reader permission_denials: Array[SDKPermissionDenial]?
+    attr_reader model_usage: Hash[String, untyped]?
+
+    def initialize: (
+      subtype: String,
+      duration_ms: Integer,
+      duration_api_ms: Integer,
+      is_error: bool,
+      num_turns: Integer,
+      session_id: String,
+      ?total_cost_usd: Float?,
+      ?usage: Hash[String, untyped]?,
+      ?result: String?,
+      ?structured_output: untyped,
+      ?errors: Array[String]?,
+      ?permission_denials: Array[SDKPermissionDenial]?,
+      ?model_usage: Hash[String, untyped]?
+    ) -> void
+
+    def type: () -> :result
+    def success?: () -> bool
+    def error?: () -> bool
+  end
+
+  class StreamEvent
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader event: Hash[String, untyped]
+    attr_reader parent_tool_use_id: String?
+
+    def initialize: (uuid: String, session_id: String, event: Hash[String, untyped], ?parent_tool_use_id: String?) -> void
+    def type: () -> :stream_event
+    def event_type: () -> String?
+  end
+
+  class CompactBoundaryMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader compact_metadata: Hash[String | Symbol, untyped]
+
+    def initialize: (uuid: String, session_id: String, compact_metadata: Hash[String | Symbol, untyped]) -> void
+    def type: () -> :compact_boundary
+    def trigger: () -> String?
+    def pre_tokens: () -> Integer?
+  end
+
+  # Status message (TypeScript SDK parity)
+  class StatusMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader status: String
+
+    def initialize: (uuid: String, session_id: String, status: String) -> void
+    def type: () -> :status
+  end
+
+  # Tool progress message (TypeScript SDK parity)
+  class ToolProgressMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader tool_use_id: String
+    attr_reader tool_name: String
+    attr_reader parent_tool_use_id: String?
+    attr_reader elapsed_time_seconds: Float
+
+    def initialize: (uuid: String, session_id: String, tool_use_id: String, tool_name: String, elapsed_time_seconds: Float, ?parent_tool_use_id: String?) -> void
+    def type: () -> :tool_progress
+  end
+
+  # Hook response message (TypeScript SDK parity)
+  class HookResponseMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader hook_name: String
+    attr_reader hook_event: String
+    attr_reader stdout: String
+    attr_reader stderr: String
+    attr_reader exit_code: Integer?
+
+    def initialize: (uuid: String, session_id: String, hook_name: String, hook_event: String, ?stdout: String, ?stderr: String, ?exit_code: Integer?) -> void
+    def type: () -> :hook_response
+  end
+
+  # Auth status message (TypeScript SDK parity)
+  class AuthStatusMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader is_authenticating: bool
+    attr_reader output: Array[String]
+    attr_reader error: String?
+
+    def initialize: (uuid: String, session_id: String, is_authenticating: bool, ?output: Array[String], ?error: String?) -> void
+    def type: () -> :auth_status
+  end
+
+  # Message parser
+  class MessageParser
+    def initialize: () -> void
+    def parse: (Hash[String, untyped] raw) -> message
+  end
+
+  # Hook types
+  HOOK_EVENTS: Array[String]
+
+  class HookMatcher
+    attr_reader matcher: String | Regexp
+    attr_reader callbacks: Array[^(BaseHookInput, HookContext) -> Hash[Symbol, untyped]]
+    attr_reader timeout: Integer?
+
+    def initialize: (matcher: String | Regexp, callbacks: Array[^(BaseHookInput, HookContext) -> Hash[Symbol, untyped]], ?timeout: Integer?) -> void
+    def matches?: (String tool_name) -> bool
+  end
+
+  class HookContext
+    attr_reader tool_use_id: String?
+
+    def initialize: (?tool_use_id: String?) -> void
+  end
+
+  class BaseHookInput
+    attr_reader hook_event_name: String
+    attr_reader session_id: String?
+    attr_reader transcript_path: String?
+    attr_reader cwd: String?
+    attr_reader permission_mode: String?
+
+    def initialize: (hook_event_name: String, ?session_id: String?, ?transcript_path: String?, ?cwd: String?, ?permission_mode: String?, **untyped) -> void
+  end
+
+  class PreToolUseInput < BaseHookInput
+    attr_reader tool_name: String
+    attr_reader tool_input: Hash[String, untyped]
+    attr_reader tool_use_id: String?
+
+    def initialize: (tool_name: String, tool_input: Hash[String, untyped], ?tool_use_id: String?, **untyped) -> void
+  end
+
+  class PostToolUseInput < BaseHookInput
+    attr_reader tool_name: String
+    attr_reader tool_input: Hash[String, untyped]
+    attr_reader tool_response: untyped
+    attr_reader tool_use_id: String?
+
+    def initialize: (tool_name: String, tool_input: Hash[String, untyped], tool_response: untyped, ?tool_use_id: String?, **untyped) -> void
+  end
+
+  class PostToolUseFailureInput < BaseHookInput
+    attr_reader tool_name: String
+    attr_reader tool_input: Hash[String, untyped]
+    attr_reader tool_use_id: String?
+    attr_reader error: String
+    attr_reader is_interrupt: bool?
+
+    def initialize: (tool_name: String, tool_input: Hash[String, untyped], error: String, ?tool_use_id: String?, ?is_interrupt: bool?, **untyped) -> void
+  end
+
+  class NotificationInput < BaseHookInput
+    attr_reader message: String
+    attr_reader title: String?
+    attr_reader notification_type: String?
+
+    def initialize: (message: String, ?title: String?, ?notification_type: String?, **untyped) -> void
+  end
+
+  class UserPromptSubmitInput < BaseHookInput
+    attr_reader prompt: String
+
+    def initialize: (prompt: String, **untyped) -> void
+  end
+
+  class SessionStartInput < BaseHookInput
+    attr_reader source: String
+    attr_reader agent_type: String?
+
+    def initialize: (source: String, ?agent_type: String?, **untyped) -> void
+  end
+
+  class SessionEndInput < BaseHookInput
+    attr_reader reason: String
+
+    def initialize: (reason: String, **untyped) -> void
+  end
+
+  class StopInput < BaseHookInput
+    attr_reader stop_hook_active: bool
+
+    def initialize: (?stop_hook_active: bool, **untyped) -> void
+  end
+
+  class SubagentStartInput < BaseHookInput
+    attr_reader agent_id: String
+    attr_reader agent_type: String
+
+    def initialize: (agent_id: String, agent_type: String, **untyped) -> void
+  end
+
+  class SubagentStopInput < BaseHookInput
+    attr_reader stop_hook_active: bool
+    attr_reader agent_id: String?
+    attr_reader agent_transcript_path: String?
+
+    def initialize: (?stop_hook_active: bool, ?agent_id: String?, ?agent_transcript_path: String?, **untyped) -> void
+  end
+
+  class PreCompactInput < BaseHookInput
+    attr_reader trigger: String
+    attr_reader custom_instructions: String?
+
+    def initialize: (trigger: String, ?custom_instructions: String?, **untyped) -> void
+  end
+
+  class PermissionRequestInput < BaseHookInput
+    attr_reader tool_name: String
+    attr_reader tool_input: Hash[String, untyped]
+    attr_reader permission_suggestions: untyped
+
+    def initialize: (tool_name: String, tool_input: Hash[String, untyped], ?permission_suggestions: untyped, **untyped) -> void
+  end
+
+  # Permission types
+  type permission_result = PermissionResultAllow | PermissionResultDeny
+
+  PERMISSION_UPDATE_TYPES: Array[String]
+  PERMISSION_UPDATE_DESTINATIONS: Array[String]
+
+  class PermissionResultAllow
+    attr_reader updated_input: Hash[String, untyped]?
+    attr_reader updated_permissions: Array[PermissionUpdate]?
+
+    def initialize: (?updated_input: Hash[String, untyped]?, ?updated_permissions: Array[PermissionUpdate]?) -> void
+    def behavior: () -> "allow"
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class PermissionResultDeny
+    attr_reader message: String
+    attr_reader interrupt: bool
+
+    def initialize: (?message: String, ?interrupt: bool) -> void
+    def behavior: () -> "deny"
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class PermissionUpdate
+    attr_reader type: String
+    attr_reader rules: Array[PermissionRuleValue]?
+    attr_reader behavior: String?
+    attr_reader mode: String?
+    attr_reader directories: Array[String]?
+    attr_reader destination: String?
+
+    def initialize: (type: String, ?rules: Array[PermissionRuleValue]?, ?behavior: String?, ?mode: String?, ?directories: Array[String]?, ?destination: String?) -> void
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class PermissionRuleValue
+    attr_reader tool_name: String?
+    attr_reader rule_content: String?
+
+    def initialize: (?tool_name: String?, ?rule_content: String?) -> void
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class ToolPermissionContext
+    attr_reader permission_suggestions: untyped
+    attr_reader blocked_path: String?
+    attr_reader decision_reason: String?
+    attr_reader tool_use_id: String?
+    attr_reader agent_id: String?
+
+    def initialize: (?permission_suggestions: untyped, ?blocked_path: String?, ?decision_reason: String?, ?tool_use_id: String?, ?agent_id: String?) -> void
+  end
+
+  # Client
+  class Client
+    attr_reader options: Options
+    attr_reader transport: Transport::Base
+    attr_reader server_info: Hash[String, untyped]?
+
+    def self.open: (?options: Options?, ?transport: Transport::Base?, ?prompt: String?) { (Client) -> void } -> void
+
+    def initialize: (?options: Options?, ?transport: Transport::Base?) -> void
+    def connect: (?prompt: String?) -> void
+    def disconnect: () -> void
+    def connected?: () -> bool
+    def send_message: (String | Array[content_block] content, ?session_id: String, ?uuid: String?) -> void
+    alias query send_message
+    def receive_messages: () { (message) -> void } -> void
+                        | () -> Enumerator[message, void]
+    def receive_response: () { (message) -> void } -> void
+                        | () -> Enumerator[message, void]
+    def stream_input: (Enumerable[String | Hash[String, untyped] | UserMessage] stream, ?session_id: String) -> void
+                    | (Enumerable[String | Hash[String, untyped] | UserMessage] stream, ?session_id: String) { (message) -> void } -> void
+    def interrupt: () -> void
+    def abort!: (?String? reason) -> void
+    def set_permission_mode: (String mode) -> Hash[String, untyped]
+    def set_model: (String? model) -> Hash[String, untyped]
+    def rewind_files: (String user_message_id, ?dry_run: bool) -> RewindFilesResult
+    def set_max_thinking_tokens: (Integer? tokens) -> Hash[String, untyped]
+    def set_mcp_servers: (Hash[String, untyped] servers) -> McpSetServersResult
+    def supported_commands: () -> Array[SlashCommand]
+    def supported_models: () -> Array[ModelInfo]
+    def mcp_server_status: () -> Array[McpServerStatus]
+    def account_info: () -> AccountInfo
+  end
+
+  # Control protocol
+  class ControlProtocol
+    DEFAULT_TIMEOUT: Integer
+    REQUEST_ID_PREFIX: String
+    HOOK_RESPONSE_KEYS: Hash[Symbol, String]
+
+    attr_reader transport: Transport::Base
+    attr_reader options: Options
+    attr_reader server_info: Hash[String, untyped]?
+
+    def initialize: (transport: Transport::Base, ?options: Options?) -> void
+    def start: (?streaming: bool, ?prompt: String?) -> Hash[String, untyped]?
+    def stop: () -> void
+    def abort!: () -> void
+    def send_user_message: (String | Array[content_block] content, ?session_id: String, ?uuid: String?) -> void
+    def each_message: () { (message) -> void } -> void
+                    | () -> Enumerator[message, void]
+    def receive_response: () { (message) -> void } -> void
+                        | () -> Enumerator[message, void]
+    def stream_input: (Enumerable[String | Hash[String, untyped] | UserMessage] stream, ?session_id: String) -> void
+    def stream_conversation: (Enumerable[String | Hash[String, untyped] | UserMessage] stream, ?session_id: String) { (message) -> void } -> void
+    def interrupt: () -> void
+    def set_permission_mode: (String mode) -> Hash[String, untyped]
+    def set_model: (String? model) -> Hash[String, untyped]
+    def rewind_files: (String user_message_id, ?dry_run: bool) -> RewindFilesResult
+    def set_max_thinking_tokens: (Integer? tokens) -> Hash[String, untyped]
+    def set_mcp_servers: (Hash[String, untyped] servers) -> McpSetServersResult
+    def supported_commands: () -> Array[SlashCommand]
+    def supported_models: () -> Array[ModelInfo]
+    def mcp_server_status: () -> Array[McpServerStatus]
+    def account_info: () -> AccountInfo
+  end
+
+  # Transport layer
+  module Transport
+    class Base
+      def connect: (?streaming: bool, ?prompt: String?) -> void
+      def close: () -> void
+      def connected?: () -> bool
+      def ready?: () -> bool
+      def write: (String data) -> void
+      def read_messages: () { (Hash[String, untyped]) -> void } -> void
+                       | () -> Enumerator[Hash[String, untyped], void]
+      def end_input: () -> void
+    end
+
+    class Subprocess < Base
+      attr_reader cli_path: String
+      attr_reader options: Options
+
+      def initialize: (?options: Options?, ?cli_path: String?) -> void
+      def connect: (?streaming: bool, ?prompt: String?) -> void
+      def close: () -> void
+      def connected?: () -> bool
+      def ready?: () -> bool
+      def write: (String data) -> void
+      def read_messages: () { (Hash[String, untyped]) -> void } -> void
+                       | () -> Enumerator[Hash[String, untyped], void]
+      def end_input: () -> void
+    end
+  end
+
+  # Spawn options for custom process creation (TypeScript SDK parity)
+  class SpawnOptions
+    attr_reader command: String
+    attr_reader args: Array[String]
+    attr_reader cwd: String?
+    attr_reader env: Hash[String, String]
+    attr_reader abort_signal: AbortSignal?
+
+    def initialize: (command: String, ?args: Array[String], ?cwd: String?, ?env: Hash[String, String], ?abort_signal: AbortSignal?) -> void
+    def to_command_array: () -> Array[String]
+  end
+
+  # Interface for spawned processes (TypeScript SDK parity)
+  module SpawnedProcess
+    def write: (String data) -> void
+    def read_stdout: () { (String) -> void } -> void
+                   | () -> Enumerator[String, void]
+    def read_stderr: () { (String) -> void } -> void
+                   | () -> Enumerator[String, void]
+    def close_stdin: () -> void
+    def terminate: (?timeout: Numeric) -> void
+    def kill: () -> void
+    def running?: () -> bool
+    def exit_status: () -> Integer?
+    def close: () -> void
+  end
+
+  # Local spawned process using Open3.popen3 (TypeScript SDK parity)
+  class LocalSpawnedProcess
+    include SpawnedProcess
+
+    attr_reader pid: Integer?
+    attr_reader stdin: IO
+    attr_reader stdout: IO
+    attr_reader stderr: IO
+    attr_reader wait_thread: Thread
+
+    def self.spawn: (SpawnOptions spawn_options) -> LocalSpawnedProcess
+    def initialize: (stdin: IO, stdout: IO, stderr: IO, wait_thread: Thread) -> void
+    def write: (String data) -> void
+    def read_stdout: () { (String) -> void } -> void
+                   | () -> Enumerator[String, void]
+    def read_stderr: () { (String) -> void } -> void
+                   | () -> Enumerator[String, void]
+    def close_stdin: () -> void
+    def terminate: (?timeout: Numeric) -> void
+    def kill: () -> void
+    def running?: () -> bool
+    def exit_status: () -> Integer?
+    def killed?: () -> bool
+    def close: () -> void
+  end
+
+  # Default spawn function
+  DEFAULT_SPAWN: ^(SpawnOptions) -> LocalSpawnedProcess
+
+  # MCP module
+  module MCP
+    def self.tool: (String name, String description, ?Hash[Symbol, untyped] schema) { (Hash[String, untyped]) -> untyped } -> Tool
+    def self.create_server: (name: String, ?tools: Array[Tool]) -> Server
+
+    class Tool
+      attr_reader name: String
+      attr_reader description: String
+      attr_reader schema: Hash[Symbol, untyped]
+
+      def initialize: (name: String, description: String, ?schema: Hash[Symbol, untyped]) { (Hash[String, untyped]) -> untyped } -> void
+      def call: (Hash[String, untyped] arguments) -> Hash[Symbol, untyped]
+      def to_mcp_definition: () -> Hash[Symbol, untyped]
+    end
+
+    class Server
+      attr_reader name: String
+      attr_reader tools: Hash[String, Tool]
+
+      def initialize: (name: String, ?tools: Array[Tool]) -> void
+      def add_tool: (Tool tool) -> void
+      def remove_tool: (String name) -> Tool?
+      def handle_message: (Hash[String, untyped] message) -> Hash[Symbol, untyped]?
+      def to_config: () -> Hash[Symbol, untyped]
+    end
+  end
+end

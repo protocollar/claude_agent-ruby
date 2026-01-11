@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run integration tests (requires Claude CLI v2.0.0+)
+bundle exec rake test_integration

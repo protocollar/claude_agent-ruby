@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run unit tests only (fast, no Claude CLI required)
+bundle exec rake test
