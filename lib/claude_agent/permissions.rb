@@ -5,11 +5,12 @@ module ClaudeAgent
   #
   # @example Allow with modified input
   #   PermissionResultAllow.new(
-  #     updated_input: input.merge("safe" => true)
+  #     updated_input: input.merge("safe" => true),
+  #     tool_use_id: "tool_123"
   #   )
   #
-  PermissionResultAllow = Data.define(:updated_input, :updated_permissions) do
-    def initialize(updated_input: nil, updated_permissions: nil)
+  PermissionResultAllow = Data.define(:updated_input, :updated_permissions, :tool_use_id) do
+    def initialize(updated_input: nil, updated_permissions: nil, tool_use_id: nil)
       super
     end
 
@@ -21,6 +22,7 @@ module ClaudeAgent
       h = { behavior: "allow" }
       h[:updatedInput] = updated_input if updated_input
       h[:updatedPermissions] = updated_permissions&.map { |p| p.respond_to?(:to_h) ? p.to_h : p } if updated_permissions
+      h[:toolUseID] = tool_use_id if tool_use_id
       h
     end
   end
@@ -30,11 +32,12 @@ module ClaudeAgent
   # @example Deny with message
   #   PermissionResultDeny.new(
   #     message: "Operation not allowed",
-  #     interrupt: true
+  #     interrupt: true,
+  #     tool_use_id: "tool_123"
   #   )
   #
-  PermissionResultDeny = Data.define(:message, :interrupt) do
-    def initialize(message: "", interrupt: false)
+  PermissionResultDeny = Data.define(:message, :interrupt, :tool_use_id) do
+    def initialize(message: "", interrupt: false, tool_use_id: nil)
       super
     end
 
@@ -43,7 +46,9 @@ module ClaudeAgent
     end
 
     def to_h
-      { behavior: "deny", message: message, interrupt: interrupt }
+      h = { behavior: "deny", message: message, interrupt: interrupt }
+      h[:toolUseID] = tool_use_id if tool_use_id
+      h
     end
   end
 
@@ -141,7 +146,8 @@ module ClaudeAgent
   #     blocked_path: "/etc/passwd",
   #     decision_reason: "Path outside allowed directories",
   #     tool_use_id: "tool_123",
-  #     agent_id: "agent_456"
+  #     agent_id: "agent_456",
+  #     signal: abort_signal
   #   )
   #
   ToolPermissionContext = Data.define(
@@ -149,14 +155,16 @@ module ClaudeAgent
     :blocked_path,
     :decision_reason,
     :tool_use_id,
-    :agent_id
+    :agent_id,
+    :signal
   ) do
     def initialize(
       permission_suggestions: nil,
       blocked_path: nil,
       decision_reason: nil,
       tool_use_id: nil,
-      agent_id: nil
+      agent_id: nil,
+      signal: nil
     )
       super
     end

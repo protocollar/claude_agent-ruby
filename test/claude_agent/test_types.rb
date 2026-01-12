@@ -123,6 +123,16 @@ class TestClaudeAgentTypes < ActiveSupport::TestCase
     assert_equal 0, usage.output_tokens
     assert_equal 0.0, usage.cost_usd
     assert_nil usage.context_window
+    assert_nil usage.max_output_tokens
+  end
+
+  test "model_usage_with_max_output_tokens" do
+    usage = ClaudeAgent::ModelUsage.new(
+      input_tokens: 100,
+      output_tokens: 50,
+      max_output_tokens: 4096
+    )
+    assert_equal 4096, usage.max_output_tokens
   end
 
   # --- SDKPermissionDenial ---

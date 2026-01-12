@@ -67,6 +67,23 @@ class TestClaudeAgentPermissions < ActiveSupport::TestCase
     assert_equal({ safe: true }, h[:updatedInput])
   end
 
+  test "permission_result_allow_with_tool_use_id" do
+    result = ClaudeAgent::PermissionResultAllow.new(tool_use_id: "tool-123")
+    assert_equal "tool-123", result.tool_use_id
+  end
+
+  test "permission_result_allow_to_h_includes_tool_use_id" do
+    result = ClaudeAgent::PermissionResultAllow.new(tool_use_id: "tool-456")
+    h = result.to_h
+    assert_equal "tool-456", h[:toolUseID]
+  end
+
+  test "permission_result_allow_to_h_omits_nil_tool_use_id" do
+    result = ClaudeAgent::PermissionResultAllow.new
+    h = result.to_h
+    refute h.key?(:toolUseID)
+  end
+
   # --- PermissionResultDeny ---
 
   test "permission_result_deny" do
@@ -94,6 +111,29 @@ class TestClaudeAgentPermissions < ActiveSupport::TestCase
       { behavior: "deny", message: "Blocked", interrupt: true },
       result.to_h
     )
+  end
+
+  test "permission_result_deny_with_tool_use_id" do
+    result = ClaudeAgent::PermissionResultDeny.new(
+      message: "Blocked",
+      tool_use_id: "tool-789"
+    )
+    assert_equal "tool-789", result.tool_use_id
+  end
+
+  test "permission_result_deny_to_h_includes_tool_use_id" do
+    result = ClaudeAgent::PermissionResultDeny.new(
+      message: "Blocked",
+      tool_use_id: "tool-abc"
+    )
+    h = result.to_h
+    assert_equal "tool-abc", h[:toolUseID]
+  end
+
+  test "permission_result_deny_to_h_omits_nil_tool_use_id" do
+    result = ClaudeAgent::PermissionResultDeny.new(message: "Blocked")
+    h = result.to_h
+    refute h.key?(:toolUseID)
   end
 
   # --- PermissionUpdate ---
@@ -217,5 +257,17 @@ class TestClaudeAgentPermissions < ActiveSupport::TestCase
     assert_nil context.permission_suggestions
     assert_nil context.blocked_path
     assert_nil context.agent_id
+    assert_nil context.signal
+  end
+
+  test "tool_permission_context_with_signal" do
+    signal = ClaudeAgent::AbortSignal.new
+    context = ClaudeAgent::ToolPermissionContext.new(signal: signal)
+    assert_equal signal, context.signal
+  end
+
+  test "tool_permission_context_signal_default" do
+    context = ClaudeAgent::ToolPermissionContext.new
+    assert_nil context.signal
   end
 end

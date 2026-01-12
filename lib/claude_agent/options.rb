@@ -60,7 +60,9 @@ module ClaudeAgent
     attr_accessor(*ATTRIBUTES)
 
     def initialize(**kwargs)
-      merged = DEFAULTS.merge(kwargs)
+      # Remove nil values so they don't override defaults
+      filtered = kwargs.compact
+      merged = DEFAULTS.merge(filtered)
       ATTRIBUTES.each do |attr|
         instance_variable_set(:"@#{attr}", merged[attr])
       end
