@@ -3,8 +3,8 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.3 (npm package)
-- Python SDK: Latest from GitHub (commit 55372da)
+- TypeScript SDK: v0.2.5 (npm package)
+- Python SDK: Latest from GitHub (commit 3b7e3ba)
 - Ruby SDK: This repository
 
 ---
@@ -64,12 +64,12 @@ Configuration options for SDK queries and clients.
 | `sandbox`                         |     ✅      |   ✅    |  ✅   | Sandbox settings                                            |
 | `settingSources`                  |     ✅      |   ✅    |  ✅   | Which settings to load                                      |
 | `plugins`                         |     ✅      |   ✅    |  ✅   | Plugin configurations                                       |
-| `betas`                           |     ✅      |   ✅    |  ✅   | Beta features (e.g., context-1m)                            |
+| `betas`                           |     ✅      |   ✅    |  ✅   | Beta features (e.g., context-1m-2025-08-07)                 |
 | `abortController`                 |     ✅      |   ❌    |  ✅   | Cancellation controller                                     |
 | `stderr`                          |     ✅      |   ✅    |  ✅   | Stderr callback                                             |
 | `spawnClaudeCodeProcess`          |     ✅      |   ❌    |  ✅   | Custom spawn function                                       |
 | `pathToClaudeCodeExecutable`      |     ✅      |   ✅    |  ✅   | Custom CLI path                                             |
-| `executable`                      |     ✅      |   ❌    |  ❌   | JS runtime (bun/deno/node)                                  |
+| `executable`                      |     ✅      |   ❌    |  ❌   | JS runtime (node/bun/deno)                                  |
 | `executableArgs`                  |     ✅      |   ❌    |  ❌   | JS runtime args                                             |
 | `extraArgs`                       |     ✅      |   ✅    |  ✅   | Extra CLI arguments                                         |
 | `user`                            |     ❌      |   ✅    |  ✅   | User identifier                                             |
@@ -289,7 +289,7 @@ Permission handling and updates.
 | `updatedPermissions` |     ✅      |   ✅    |  ✅   |
 | `message` (deny)     |     ✅      |   ✅    |  ✅   |
 | `interrupt` (deny)   |     ✅      |   ✅    |  ✅   |
-| `toolUseID`          |     ✅      |   ❌    |  ❌   |
+| `toolUseID`          |     ✅      |   ❌    |  ✅   |
 
 ### Permission Update Types
 
@@ -316,7 +316,7 @@ Permission handling and updates.
 
 | Field            | TypeScript | Python | Ruby | Notes                     |
 |------------------|:----------:|:------:|:----:|---------------------------|
-| `signal`         |     ✅      |   ✅    |  ❌   | Abort signal              |
+| `signal`         |     ✅      |   ✅    |  ✅   | Abort signal              |
 | `suggestions`    |     ✅      |   ✅    |  ✅   | Permission suggestions    |
 | `blockedPath`    |     ✅      |   ✅    |  ✅   | Blocked file path         |
 | `decisionReason` |     ✅      |   ❌    |  ✅   | Why permission triggered  |
@@ -392,10 +392,10 @@ Session management and resumption.
 
 | Feature                     | TypeScript | Python | Ruby | Notes                     |
 |-----------------------------|:----------:|:------:|:----:|---------------------------|
-| `SDKSession` interface      |     ✅      |   ❌    |  ❌   | Multi-turn session object |
-| `unstable_v2_createSession` |     ✅      |   ❌    |  ❌   | Create new session        |
-| `unstable_v2_resumeSession` |     ✅      |   ❌    |  ❌   | Resume existing session   |
-| `unstable_v2_prompt`        |     ✅      |   ❌    |  ❌   | One-shot prompt           |
+| `SDKSession` interface      |     ✅      |   ❌    |  ✅   | Multi-turn session object |
+| `unstable_v2_createSession` |     ✅      |   ❌    |  ✅   | Create new session        |
+| `unstable_v2_resumeSession` |     ✅      |   ❌    |  ✅   | Resume existing session   |
+| `unstable_v2_prompt`        |     ✅      |   ❌    |  ✅   | One-shot prompt           |
 
 ---
 
@@ -541,7 +541,9 @@ Public API surface for SDK clients.
 - Primary reference for API surface (most comprehensive)
 - Source is bundled/minified, but `sdk.d.ts` provides complete type definitions
 - Includes unstable V2 session API
-- Version 0.2.3 adds `maxOutputTokens` field to `ModelUsage`
+- Version 0.2.5 includes `maxOutputTokens` field in `ModelUsage`
+- Adds `deno` as supported executable option
+- Includes experimental `criticalSystemReminder_EXPERIMENTAL` for agent definitions
 
 ### Python SDK
 - Full source available
@@ -556,3 +558,4 @@ Public API surface for SDK clients.
 - Complete control protocol support
 - Dedicated Client class for multi-turn conversations
 - Full hook event support including all 12 events
+- Full V2 Session API support (unstable)

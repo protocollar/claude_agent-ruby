@@ -83,7 +83,7 @@ module ClaudeAgent
   # Per-model usage statistics returned in result messages (TypeScript SDK parity)
   #
   # @example
-  #   usage = ModelUsage.new(input_tokens: 100, output_tokens: 50, cost_usd: 0.01)
+  #   usage = ModelUsage.new(input_tokens: 100, output_tokens: 50, cost_usd: 0.01, max_output_tokens: 4096)
   #
   ModelUsage = Data.define(
     :input_tokens,
@@ -92,7 +92,8 @@ module ClaudeAgent
     :cache_creation_input_tokens,
     :web_search_requests,
     :cost_usd,
-    :context_window
+    :context_window,
+    :max_output_tokens
   ) do
     def initialize(
       input_tokens: 0,
@@ -101,7 +102,8 @@ module ClaudeAgent
       cache_creation_input_tokens: 0,
       web_search_requests: 0,
       cost_usd: 0.0,
-      context_window: nil
+      context_window: nil,
+      max_output_tokens: nil
     )
       super
     end

@@ -122,8 +122,9 @@ module ClaudeAgent
     attr_reader web_search_requests: Integer
     attr_reader cost_usd: Float
     attr_reader context_window: Integer?
+    attr_reader max_output_tokens: Integer?
 
-    def initialize: (?input_tokens: Integer, ?output_tokens: Integer, ?cache_read_input_tokens: Integer, ?cache_creation_input_tokens: Integer, ?web_search_requests: Integer, ?cost_usd: Float, ?context_window: Integer?) -> void
+    def initialize: (?input_tokens: Integer, ?output_tokens: Integer, ?cache_read_input_tokens: Integer, ?cache_creation_input_tokens: Integer, ?web_search_requests: Integer, ?cost_usd: Float, ?context_window: Integer?, ?max_output_tokens: Integer?) -> void
   end
 
   class SDKPermissionDenial
@@ -687,8 +688,9 @@ module ClaudeAgent
   class PermissionResultAllow
     attr_reader updated_input: Hash[String, untyped]?
     attr_reader updated_permissions: Array[PermissionUpdate]?
+    attr_reader tool_use_id: String?
 
-    def initialize: (?updated_input: Hash[String, untyped]?, ?updated_permissions: Array[PermissionUpdate]?) -> void
+    def initialize: (?updated_input: Hash[String, untyped]?, ?updated_permissions: Array[PermissionUpdate]?, ?tool_use_id: String?) -> void
     def behavior: () -> "allow"
     def to_h: () -> Hash[Symbol, untyped]
   end
@@ -696,8 +698,9 @@ module ClaudeAgent
   class PermissionResultDeny
     attr_reader message: String
     attr_reader interrupt: bool
+    attr_reader tool_use_id: String?
 
-    def initialize: (?message: String, ?interrupt: bool) -> void
+    def initialize: (?message: String, ?interrupt: bool, ?tool_use_id: String?) -> void
     def behavior: () -> "deny"
     def to_h: () -> Hash[Symbol, untyped]
   end
@@ -728,8 +731,9 @@ module ClaudeAgent
     attr_reader decision_reason: String?
     attr_reader tool_use_id: String?
     attr_reader agent_id: String?
+    attr_reader signal: AbortSignal?
 
-    def initialize: (?permission_suggestions: untyped, ?blocked_path: String?, ?decision_reason: String?, ?tool_use_id: String?, ?agent_id: String?) -> void
+    def initialize: (?permission_suggestions: untyped, ?blocked_path: String?, ?decision_reason: String?, ?tool_use_id: String?, ?agent_id: String?, ?signal: AbortSignal?) -> void
   end
 
   # Client
@@ -909,4 +913,39 @@ module ClaudeAgent
       def to_config: () -> Hash[Symbol, untyped]
     end
   end
+
+  # V2 Session API - UNSTABLE
+  # @alpha
+
+  # V2 Session options (subset of full Options)
+  class SessionOptions
+    attr_reader model: String
+    attr_reader path_to_claude_code_executable: String?
+    attr_reader env: Hash[String, String]?
+    attr_reader allowed_tools: Array[String]?
+    attr_reader disallowed_tools: Array[String]?
+    attr_reader can_use_tool: (^(String, Hash[String, untyped], untyped) -> permission_result)?
+    attr_reader hooks: Hash[String, Array[HookMatcher]]?
+    attr_reader permission_mode: String?
+
+    def initialize: (model: String, ?path_to_claude_code_executable: String?, ?env: Hash[String, String]?, ?allowed_tools: Array[String]?, ?disallowed_tools: Array[String]?, ?can_use_tool: (^(String, Hash[String, untyped], untyped) -> permission_result)?, ?hooks: Hash[String, Array[HookMatcher]]?, ?permission_mode: String?) -> void
+  end
+
+  # V2 Session interface for multi-turn conversations
+  class Session
+    attr_reader session_id: String?
+    attr_reader options: SessionOptions
+
+    def initialize: (Hash[Symbol, untyped] | SessionOptions options) -> void
+    def send: (String | UserMessage message) -> void
+    def stream: () -> Enumerator[message, void]
+             | () { (message) -> void } -> void
+    def close: () -> void
+    def closed?: () -> bool
+  end
+
+  # V2 API module-level methods
+  def self.unstable_v2_create_session: (Hash[Symbol, untyped] | SessionOptions options) -> Session
+  def self.unstable_v2_resume_session: (String session_id, Hash[Symbol, untyped] | SessionOptions options) -> Session
+  def self.unstable_v2_prompt: (String message, Hash[Symbol, untyped] | SessionOptions options) -> ResultMessage
 end
