@@ -3,8 +3,8 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.5 (npm package)
-- Python SDK: Latest from GitHub (commit 3b7e3ba)
+- TypeScript SDK: v0.2.7 (npm package)
+- Python SDK: Latest from GitHub (commit 8602ff4)
 - Ruby SDK: This repository
 
 ---
@@ -69,8 +69,8 @@ Configuration options for SDK queries and clients.
 | `stderr`                          |     ✅      |   ✅    |  ✅   | Stderr callback                                             |
 | `spawnClaudeCodeProcess`          |     ✅      |   ❌    |  ✅   | Custom spawn function                                       |
 | `pathToClaudeCodeExecutable`      |     ✅      |   ✅    |  ✅   | Custom CLI path                                             |
-| `executable`                      |     ✅      |   ❌    |  ❌   | JS runtime (node/bun/deno)                                  |
-| `executableArgs`                  |     ✅      |   ❌    |  ❌   | JS runtime args                                             |
+| `executable`                      |     ✅      |  N/A   | N/A  | JS runtime (node/bun/deno) - JS-specific                    |
+| `executableArgs`                  |     ✅      |  N/A   | N/A  | JS runtime args - JS-specific                               |
 | `extraArgs`                       |     ✅      |   ✅    |  ✅   | Extra CLI arguments                                         |
 | `user`                            |     ❌      |   ✅    |  ✅   | User identifier                                             |
 
@@ -531,6 +531,7 @@ Public API surface for SDK clients.
 
 - ✅ = Fully implemented
 - ❌ = Not implemented
+- N/A = Not applicable (language-specific feature)
 - Partial = Partially implemented
 
 ---
@@ -541,7 +542,7 @@ Public API surface for SDK clients.
 - Primary reference for API surface (most comprehensive)
 - Source is bundled/minified, but `sdk.d.ts` provides complete type definitions
 - Includes unstable V2 session API
-- Version 0.2.5 includes `maxOutputTokens` field in `ModelUsage`
+- Version 0.2.7 includes `maxOutputTokens` field in `ModelUsage`
 - Adds `deno` as supported executable option
 - Includes experimental `criticalSystemReminder_EXPERIMENTAL` for agent definitions
 
@@ -551,11 +552,13 @@ Public API surface for SDK clients.
 - Does not support SessionStart/SessionEnd/Notification hooks due to setup limitations
 - Missing several permission modes (delegate, dontAsk)
 - `excludedCommands` in sandbox now supported
+- `tool_use_id` now included in PreToolUseHookInput
 
 ### Ruby SDK (This Repository)
-- Aims for TypeScript SDK parity
+- Full TypeScript SDK feature parity achieved
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol support
 - Dedicated Client class for multi-turn conversations
 - Full hook event support including all 12 events
 - Full V2 Session API support (unstable)
+- `executable`/`executableArgs` marked N/A (JS runtime options not applicable to Ruby)
