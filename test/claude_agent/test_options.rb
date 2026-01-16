@@ -299,6 +299,31 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     assert_includes args, "--agents"
   end
 
+  # --- Agent (main thread) ---
+
+  test "agent_option" do
+    options = ClaudeAgent::Options.new(agent: "my-custom-agent")
+    assert_equal "my-custom-agent", options.agent
+  end
+
+  test "agent_option_default_nil" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.agent
+  end
+
+  test "to_cli_args_with_agent" do
+    options = ClaudeAgent::Options.new(agent: "test-agent")
+    args = options.to_cli_args
+    assert_includes args, "--agent"
+    assert_includes args, "test-agent"
+  end
+
+  test "to_cli_args_without_agent" do
+    options = ClaudeAgent::Options.new
+    args = options.to_cli_args
+    refute_includes args, "--agent"
+  end
+
   # --- Sandbox ---
 
   test "sandbox_option" do

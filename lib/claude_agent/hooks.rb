@@ -141,14 +141,16 @@ module ClaudeAgent
   # Input for SessionStart hook (TypeScript SDK parity)
   #
   class SessionStartInput < BaseHookInput
-    attr_reader :source, :agent_type
+    attr_reader :source, :agent_type, :model
 
     # @param source [String] One of: "startup", "resume", "clear", "compact"
     # @param agent_type [String, nil] Type of agent if running in subagent context
-    def initialize(source:, agent_type: nil, **kwargs)
+    # @param model [String, nil] Model being used for this session
+    def initialize(source:, agent_type: nil, model: nil, **kwargs)
       super(hook_event_name: "SessionStart", **kwargs)
       @source = source
       @agent_type = agent_type
+      @model = model
     end
   end
 

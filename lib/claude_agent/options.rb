@@ -50,7 +50,7 @@ module ClaudeAgent
       continue_conversation resume fork_session resume_session_at
       max_turns max_budget_usd max_thinking_tokens
       strict_mcp_config mcp_servers hooks
-      settings sandbox cwd add_dirs env user
+      settings sandbox cwd add_dirs env user agent
       cli_path extra_args agents setting_sources plugins
       include_partial_messages output_format enable_file_checkpointing
       persist_session betas max_buffer_size stderr_callback
@@ -206,6 +206,7 @@ module ClaudeAgent
     def environment_args
       [].tap do |args|
         args.push("--user", user) if user
+        args.push("--agent", agent) if agent
         add_dirs.each { |dir| args.push("--add-dir", dir.to_s) }
         args.push("--setting-sources", setting_sources.join(",")) if setting_sources&.any?
         plugins.each do |plugin|

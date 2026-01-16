@@ -279,6 +279,7 @@ module ClaudeAgent
     attr_accessor add_dirs: Array[String]
     attr_accessor env: Hash[String, String]
     attr_accessor user: String?
+    attr_accessor agent: String?
 
     # CLI configuration
     attr_accessor cli_path: String?
@@ -633,8 +634,9 @@ module ClaudeAgent
   class SessionStartInput < BaseHookInput
     attr_reader source: String
     attr_reader agent_type: String?
+    attr_reader model: String?
 
-    def initialize: (source: String, ?agent_type: String?, **untyped) -> void
+    def initialize: (source: String, ?agent_type: String?, ?model: String?, **untyped) -> void
   end
 
   class SessionEndInput < BaseHookInput
