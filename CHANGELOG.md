@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-01-16
+
+### Added
+- `agent` option for specifying main thread agent name (TypeScript SDK v0.2.9 parity)
+- `model` field in `SessionStartInput` hook input
+
 ## [0.2.0] - 2026-01-11
 
 ### Added

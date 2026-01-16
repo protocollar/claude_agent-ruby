@@ -3,8 +3,8 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.7 (npm package)
-- Python SDK: Latest from GitHub (commit 8602ff4)
+- TypeScript SDK: v0.2.9 (npm package)
+- Python SDK: v0.1.20 from GitHub (commit 04da88d)
 - Ruby SDK: This repository
 
 ---
@@ -65,6 +65,7 @@ Configuration options for SDK queries and clients.
 | `settingSources`                  |     ✅      |   ✅    |  ✅   | Which settings to load                                      |
 | `plugins`                         |     ✅      |   ✅    |  ✅   | Plugin configurations                                       |
 | `betas`                           |     ✅      |   ✅    |  ✅   | Beta features (e.g., context-1m-2025-08-07)                 |
+| `agent`                           |     ✅      |   ❌    |  ✅   | Agent name for main thread                                  |
 | `abortController`                 |     ✅      |   ❌    |  ✅   | Cancellation controller                                     |
 | `stderr`                          |     ✅      |   ✅    |  ✅   | Stderr callback                                             |
 | `spawnClaudeCodeProcess`          |     ✅      |   ❌    |  ✅   | Custom spawn function                                       |
@@ -542,12 +543,13 @@ Public API surface for SDK clients.
 - Primary reference for API surface (most comprehensive)
 - Source is bundled/minified, but `sdk.d.ts` provides complete type definitions
 - Includes unstable V2 session API
-- Version 0.2.7 includes `maxOutputTokens` field in `ModelUsage`
+- Version 0.2.9 adds `agent` option for specifying main thread agent
 - Adds `deno` as supported executable option
 - Includes experimental `criticalSystemReminder_EXPERIMENTAL` for agent definitions
+- `SessionStartHookInput` includes `model` field
 
 ### Python SDK
-- Full source available
+- Full source available (v0.1.20)
 - Fewer control protocol features than TypeScript
 - Does not support SessionStart/SessionEnd/Notification hooks due to setup limitations
 - Missing several permission modes (delegate, dontAsk)

@@ -1,6 +1,6 @@
 # ClaudeAgent
 
-A Ruby SDK for building AI-powered applications with [Claude Code](https://docs.anthropic.com/en/docs/claude-code). This library wraps the Claude Code CLI, providing both simple one-shot queries and interactive bidirectional sessions.
+Ruby gem for building AI-powered applications with the [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview). This library essentially wraps the Claude Code CLI, providing both simple one-shot queries and interactive bidirectional sessions.
 
 ## Requirements
 
@@ -94,6 +94,9 @@ options = ClaudeAgent::Options.new(
   # Working directory for file operations
   cwd: "/path/to/project",
   add_dirs: ["/additional/path"],
+
+  # Agent configuration
+  agent: "my-agent",  # Agent name for main thread
 
   # Session management
   resume: "session-id",
@@ -456,7 +459,7 @@ All available hook events:
 | PostToolUseFailure | `PostToolUseFailureInput` | tool_name, tool_input, error, tool_use_id, is_interrupt |
 | Notification       | `NotificationInput`       | message, title, notification_type                       |
 | UserPromptSubmit   | `UserPromptSubmitInput`   | prompt                                                  |
-| SessionStart       | `SessionStartInput`       | source, agent_type                                      |
+| SessionStart       | `SessionStartInput`       | source, agent_type, model                               |
 | SessionEnd         | `SessionEndInput`         | reason                                                  |
 | Stop               | `StopInput`               | stop_hook_active                                        |
 | SubagentStart      | `SubagentStartInput`      | agent_id, agent_type                                    |
@@ -589,6 +592,88 @@ puts client.account_info.email
 
 # Disconnect
 client.disconnect
+```
+
+## V2 Session API (Unstable)
+
+> **⚠️ Alpha API**: This API is unstable and may change without notice.
+
+The V2 Session API provides a simpler interface for multi-turn conversations, matching the TypeScript SDK's `SDKSession` interface.
+
+### Create a Session
+
+```ruby
+# Create a new session
+session = ClaudeAgent.unstable_v2_create_session(
+  model: "claude-sonnet-4-5-20250514",
+  permission_mode: "acceptEdits"
+)
+
+# Send a message
+session.send("Hello, Claude!")
+
+# Stream responses
+session.stream.each do |msg|
+  case msg
+  when ClaudeAgent::AssistantMessage
+    puts msg.text
+  when ClaudeAgent::ResultMessage
+    puts "Done! Cost: $#{msg.total_cost_usd}"
+  end
+end
+
+# Continue the conversation
+session.send("Tell me more")
+session.stream.each { |msg| puts msg.text if msg.is_a?(ClaudeAgent::AssistantMessage) }
+
+# Close when done
+session.close
+```
+
+### Resume a Session
+
+```ruby
+# Resume an existing session by ID
+session = ClaudeAgent.unstable_v2_resume_session(
+  "session-abc123",
+  model: "claude-sonnet-4-5-20250514"
+)
+
+session.send("What were we discussing?")
+session.stream.each { |msg| puts msg.text if msg.is_a?(ClaudeAgent::AssistantMessage) }
+session.close
+```
+
+### One-Shot Prompt
+
+```ruby
+# Simple one-shot prompt (auto-closes session)
+result = ClaudeAgent.unstable_v2_prompt(
+  "What is 2 + 2?",
+  model: "claude-sonnet-4-5-20250514"
+)
+
+puts "Success: #{result.success?}"
+puts "Cost: $#{result.total_cost_usd}"
+```
+
+### SessionOptions
+
+The V2 API uses a simplified options type:
+
+```ruby
+options = ClaudeAgent::SessionOptions.new(
+  model: "claude-sonnet-4-5-20250514",           # Required
+  permission_mode: "acceptEdits",                 # Optional
+  allowed_tools: ["Read", "Grep"],                # Optional
+  disallowed_tools: ["Write"],                    # Optional
+  can_use_tool: ->(name, input, ctx) { ... },    # Optional
+  hooks: { "PreToolUse" => [...] },               # Optional
+  env: { "MY_VAR" => "value" },                   # Optional
+  path_to_claude_code_executable: "/custom/path"  # Optional
+)
+
+session = ClaudeAgent.unstable_v2_create_session(options)
 ```
 
 ## Types Reference

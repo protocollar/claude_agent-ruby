@@ -200,6 +200,20 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert_nil input.agent_type
   end
 
+  test "session_start_input_with_model" do
+    input = ClaudeAgent::SessionStartInput.new(
+      source: "startup",
+      model: "claude-sonnet-4-5-20250514"
+    )
+    assert_equal "startup", input.source
+    assert_equal "claude-sonnet-4-5-20250514", input.model
+  end
+
+  test "session_start_input_model_default_nil" do
+    input = ClaudeAgent::SessionStartInput.new(source: "startup")
+    assert_nil input.model
+  end
+
   # --- SessionEndInput ---
 
   test "session_end_input" do
