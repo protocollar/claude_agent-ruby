@@ -14,66 +14,84 @@ Follow [Semantic Versioning 2.0.0](https://semver.org/):
 
 ## Changelog Format
 
-Follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. Maintain an `[Unreleased]` section at the top for work in progress.
+Follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. Add changes to the `[Unreleased]` section as you work. The release script will automatically move them to a versioned section.
 
 ## Release Process
 
 ### Prerequisites
 
 1. All tests pass (`bundle exec rake`)
-2. CHANGELOG.md has entry for the new version
-3. You have push access to main branch
-4. You have RubyGems publish credentials configured
+2. Changes documented in `[Unreleased]` section of CHANGELOG.md
+3. You have push access to the repository
+4. Trusted Publishing configured on RubyGems (one-time setup)
 
-### Release Command
+### Step 1: Prepare Release PR
 
-```bash
-bin/release VERSION
-```
-
-Example:
 ```bash
 bin/release 1.2.0
 ```
 
-### What the Script Does
+This will:
+1. Create branch `release-1.2.0`
+2. Update `lib/claude_agent/version.rb`
+3. Update `Gemfile.lock`
+4. Move `[Unreleased]` changelog entries to `[1.2.0]`
+5. Commit, push, and open a PR
 
-1. Validates version format (semantic versioning)
-2. Checks CHANGELOG.md has entry for version
-3. Checks tag doesn't already exist
-4. Updates `lib/claude_agent/version.rb`
-5. Updates `Gemfile.lock`
-6. Commits with message "Bump version for X.Y.Z"
-7. Pushes to current branch
-8. Creates and pushes tag `vX.Y.Z`
-9. Builds and publishes gem to RubyGems
+### Step 2: Review and Merge
 
-### Example Workflow
+- Review the release PR
+- Ensure CI passes
+- Merge to main
+
+### Step 3: Publish
 
 ```bash
-# 1. Ensure tests pass
-bundle exec rake
-
-# 2. Update CHANGELOG.md
-# Move items from [Unreleased] to new version section:
-## [1.2.0] - 2025-03-15
-
-### Added
-- New feature description
-
-# 3. Commit changelog
-git add CHANGELOG.md
-git commit -m "docs: update changelog for 1.2.0"
-git push
-
-# 4. Release
-bin/release 1.2.0
+git checkout main && git pull
+bin/publish 1.2.0
 ```
 
-### Post-Release
+This will:
+1. Verify you're on main with correct version
+2. Create and push tag `v1.2.0`
+3. Create GitHub release
+4. GitHub Actions publishes to RubyGems automatically
 
-1. Add `## [Unreleased]` section to CHANGELOG.md if needed
-2. Optionally create a GitHub release at the new tag
+### Workflow Diagram
+
+```
+bin/release 1.2.0
+       │
+       ├── Creates branch: release-1.2.0
+       ├── Updates version.rb, Gemfile.lock, CHANGELOG.md
+       ├── Commits and pushes
+       └── Opens PR
+              │
+              ▼
+       [Review & merge PR]
+              │
+              ▼
+bin/publish 1.2.0
+       │
+       ├── Creates tag v1.2.0
+       ├── Pushes tag
+       └── Creates GitHub release
+              │
+              ▼
+       [GitHub Actions]
+              │
+              └── Publishes to RubyGems via Trusted Publishing
+```
+
+## Setting Up Trusted Publishing (One-Time)
+
+1. Go to [rubygems.org](https://rubygems.org) → Your gems → claude_agent → Trusted Publishers
+2. Add a new publisher:
+   - Repository owner: `protocollar`
+   - Repository name: `claude_agent-ruby`
+   - Workflow filename: `push_gem.yml`
+   - Environment: `release`
+3. Create a GitHub environment named `release` in your repository settings
 
 ## Version Bumping Guidelines
 

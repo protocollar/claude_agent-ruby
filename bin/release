@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Release script for claude_agent gem
+# Release preparation script for claude_agent gem
 # Usage: bin/release 1.2.3
 #
-# This script:
-# 1. Updates lib/claude_agent/version.rb
-# 2. Updates Gemfile.lock
-# 3. Commits, tags, and pushes to main
-# 4. Creates a GitHub release
-# 5. Builds and publishes the gem to RubyGems
+# This script prepares a release PR:
+# 1. Creates a release branch
+# 2. Updates lib/claude_agent/version.rb
+# 3. Updates Gemfile.lock
+# 4. Moves [Unreleased] changelog entries to new version
+# 5. Commits and pushes the branch
+# 6. Opens a PR
+#
+# After the PR is merged, run: bin/publish 1.2.3
 
 VERSION=${1:-}
 
@@ -23,37 +26,59 @@ if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
   exit 1
 fi
 
-if ! grep -q "## \[$VERSION\]" CHANGELOG.md; then
-  echo "CHANGELOG.md does not have an entry for version $VERSION"
-  echo "Please add a changelog entry before releasing"
-  exit 1
-fi
-
 if git tag -l "v$VERSION" | grep -q "v$VERSION"; then
   echo "Tag v$VERSION already exists"
   exit 1
 fi
 
-# Prompt for OTP upfront
-read -p "Enter RubyGems OTP code: " OTP
+BRANCH="release-$VERSION"
 
-if [[ -z "$OTP" ]]; then
-  echo "OTP is required"
+if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
+  echo "Branch $BRANCH already exists"
   exit 1
 fi
 
-echo "Releasing $VERSION..."
+echo "Preparing release $VERSION..."
 
+# Create release branch
+git checkout -b "$BRANCH"
+
+# Update version.rb
 printf "# frozen_string_literal: true\n\nmodule ClaudeAgent\n  VERSION = \"$VERSION\"\nend\n" > lib/claude_agent/version.rb
-bundle install
-git add Gemfile.lock lib/claude_agent/version.rb
-git commit -m "Bump version for $VERSION"
-git push
-git tag v$VERSION
-git push --tags
-gh release create "v$VERSION" --title "v$VERSION" --notes-from-tag
-gem build claude_agent.gemspec
-gem push "claude_agent-$VERSION.gem" --host https://rubygems.org --otp "$OTP"
-rm "claude_agent-$VERSION.gem"
 
-echo "Released claude_agent $VERSION"
+# Update Gemfile.lock
+bundle install
+
+# Update changelog - insert version header after [Unreleased]
+DATE=$(date +%Y-%m-%d)
+sed -i '' "s/## \[Unreleased\]/## [Unreleased]\\
+\\
+## [$VERSION] - $DATE/" CHANGELOG.md
+
+# Commit
+git add lib/claude_agent/version.rb Gemfile.lock CHANGELOG.md
+git commit -m "Release $VERSION"
+
+# Push branch
+git push -u origin "$BRANCH"
+
+# Create PR
+gh pr create --title "Release $VERSION" --body "## Release $VERSION
+
+This PR prepares the release of version $VERSION.
+
+### After merging
+
+Run the following to publish:
+
+\`\`\`bash
+git checkout main && git pull
+bin/publish $VERSION
+\`\`\`
+"
+
+echo ""
+echo "Release PR created. After it's merged, run:"
+echo ""
+echo "  git checkout main && git pull"
+echo "  bin/publish $VERSION"

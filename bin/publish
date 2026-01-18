@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Publish script for claude_agent gem
+# Usage: bin/publish 1.2.3
+#
+# Run this AFTER merging the release PR.
+#
+# This script:
+# 1. Verifies you're on main with the correct version
+# 2. Creates and pushes the version tag
+# 3. Creates a GitHub release
+# 4. GitHub Actions handles publishing to RubyGems via Trusted Publishing
+
+VERSION=${1:-}
+
+if [[ -z "$VERSION" ]]; then
+  echo "Usage: bin/publish VERSION (e.g., bin/publish 1.2.3)"
+  exit 1
+fi
+
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+  echo "Invalid version format. Use semantic versioning (e.g., 1.2.3)"
+  exit 1
+fi
+
+# Verify we're on main
+CURRENT_BRANCH=$(git branch --show-current)
+if [[ "$CURRENT_BRANCH" != "main" ]]; then
+  echo "Must be on main branch (currently on $CURRENT_BRANCH)"
+  echo "Run: git checkout main && git pull"
+  exit 1
+fi
+
+# Verify version.rb matches
+CURRENT_VERSION=$(ruby -r ./lib/claude_agent/version.rb -e "puts ClaudeAgent::VERSION")
+if [[ "$CURRENT_VERSION" != "$VERSION" ]]; then
+  echo "Version mismatch: version.rb has $CURRENT_VERSION, expected $VERSION"
+  echo "Make sure the release PR has been merged"
+  exit 1
+fi
+
+if git tag -l "v$VERSION" | grep -q "v$VERSION"; then
+  echo "Tag v$VERSION already exists"
+  exit 1
+fi
+
+echo "Publishing $VERSION..."
+
+# Create and push tag
+git tag "v$VERSION"
+git push origin "v$VERSION"
+
+# Create GitHub release
+gh release create "v$VERSION" --title "v$VERSION" --generate-notes
+
+echo ""
+echo "Tag v$VERSION pushed. GitHub Actions will publish to RubyGems."
+echo "Monitor the workflow at: https://github.com/$(gh repo view --json nameWithOwner -q .nameWithOwner)/actions"
