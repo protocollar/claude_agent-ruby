@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-01-18
+
+### Fixed
+- Release script now uses `bundle install` (Bundler 4.x compatibility)
+
+### Changed
+- Release script prompts for RubyGems OTP upfront
+- Release script creates GitHub releases automatically
+
 ## [0.4.1] - 2026-01-18
 
 ### Changed
