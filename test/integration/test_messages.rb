@@ -34,6 +34,43 @@ class TestIntegrationMessages < IntegrationTestCase
     assert ClaudeAgent::MESSAGE_TYPES.include?(ClaudeAgent::ToolProgressMessage)
     assert ClaudeAgent::MESSAGE_TYPES.include?(ClaudeAgent::HookResponseMessage)
     assert ClaudeAgent::MESSAGE_TYPES.include?(ClaudeAgent::AuthStatusMessage)
+    assert ClaudeAgent::MESSAGE_TYPES.include?(ClaudeAgent::TaskNotificationMessage)
+  end
+
+  test "TaskNotificationMessage type" do
+    notification = ClaudeAgent::TaskNotificationMessage.new(
+      uuid: "msg-123",
+      session_id: "sess-456",
+      task_id: "task-789",
+      status: "completed",
+      output_file: "/tmp/task-output.txt",
+      summary: "Task finished successfully"
+    )
+
+    assert_equal :task_notification, notification.type
+    assert_equal "task-789", notification.task_id
+    assert_equal "completed", notification.status
+    assert_equal "/tmp/task-output.txt", notification.output_file
+    assert_equal "Task finished successfully", notification.summary
+    assert notification.completed?
+    refute notification.failed?
+    refute notification.stopped?
+  end
+
+  test "TaskNotificationMessage status predicates" do
+    failed = ClaudeAgent::TaskNotificationMessage.new(
+      uuid: "msg-1", session_id: "s-1", task_id: "t-1",
+      status: "failed", output_file: "", summary: ""
+    )
+    assert failed.failed?
+    refute failed.completed?
+
+    stopped = ClaudeAgent::TaskNotificationMessage.new(
+      uuid: "msg-2", session_id: "s-2", task_id: "t-2",
+      status: "stopped", output_file: "", summary: ""
+    )
+    assert stopped.stopped?
+    refute stopped.completed?
   end
 
   test "session_id field on UserMessage and AssistantMessage" do

@@ -11,7 +11,7 @@ module ClaudeAgent
     # Parse a raw message hash into a typed message object
     #
     # @param raw [Hash] Raw message from CLI
-    # @return [UserMessage, UserMessageReplay, AssistantMessage, SystemMessage, ResultMessage, StreamEvent, CompactBoundaryMessage, StatusMessage, ToolProgressMessage, HookResponseMessage, AuthStatusMessage]
+    # @return [UserMessage, UserMessageReplay, AssistantMessage, SystemMessage, ResultMessage, StreamEvent, CompactBoundaryMessage, StatusMessage, ToolProgressMessage, HookResponseMessage, AuthStatusMessage, TaskNotificationMessage]
     # @raise [MessageParseError] If message cannot be parsed
     def parse(raw)
       type = raw["type"]
@@ -30,6 +30,8 @@ module ClaudeAgent
           parse_status_message(raw)
         when "hook_response"
           parse_hook_response_message(raw)
+        when "task_notification"
+          parse_task_notification_message(raw)
         else
           parse_system_message(raw)
         end
@@ -256,6 +258,17 @@ module ClaudeAgent
         is_authenticating: fetch_dual(raw, :is_authenticating, false),
         output: raw["output"] || [],
         error: raw["error"]
+      )
+    end
+
+    def parse_task_notification_message(raw)
+      TaskNotificationMessage.new(
+        uuid: raw["uuid"] || "",
+        session_id: fetch_dual(raw, :session_id, ""),
+        task_id: fetch_dual(raw, :task_id, ""),
+        status: raw["status"] || "unknown",
+        output_file: fetch_dual(raw, :output_file, ""),
+        summary: raw["summary"] || ""
       )
     end
   end

@@ -64,6 +64,26 @@ ClaudeAgent::Client.open do |client|
 end
 ```
 
+### Run Setup Hooks
+
+Run Setup hooks without starting a conversation (useful for CI/CD pipelines):
+
+```ruby
+require "claude_agent"
+
+# Run init Setup hooks (default)
+messages = ClaudeAgent.run_setup
+result = messages.last
+puts "Setup completed" if result.success?
+
+# Run init Setup hooks with custom options
+options = ClaudeAgent::Options.new(cwd: "/my/project")
+ClaudeAgent.run_setup(trigger: :init, options: options)
+
+# Run maintenance Setup hooks
+ClaudeAgent.run_setup(trigger: :maintenance)
+```
+
 ## Configuration
 
 Use `ClaudeAgent::Options` to customize behavior:
@@ -161,7 +181,9 @@ agents = {
     description: "Runs tests and reports results",
     prompt: "You are a test runner. Execute tests and report failures clearly.",
     tools: ["Read", "Bash"],
-    model: "haiku"
+    model: "haiku",
+    max_turns: 5,                  # Max agentic turns before stopping
+    skills: ["testing", "debug"]   # Skills to preload into agent context
   )
 }
 
@@ -275,6 +297,20 @@ Authentication status during login:
 auth.is_authenticating # Whether auth is in progress
 auth.output            # Auth output messages
 auth.error             # Error message (if any)
+```
+
+### TaskNotificationMessage
+
+Background task completion notifications:
+
+```ruby
+notification.task_id     # Background task ID
+notification.status      # "completed", "failed", or "stopped"
+notification.output_file # Path to task output file
+notification.summary     # Task summary
+notification.completed?  # Convenience predicate
+notification.failed?     # Convenience predicate
+notification.stopped?    # Convenience predicate
 ```
 
 ## Content Blocks
@@ -449,6 +485,7 @@ All available hook events:
 - `SubagentStop` - When subagent stops
 - `PreCompact` - Before conversation compaction
 - `PermissionRequest` - When permission is requested
+- `Setup` - Initial setup or maintenance (trigger: "init" or "maintenance")
 
 ### Hook Input Types
 
@@ -466,6 +503,7 @@ All available hook events:
 | SubagentStop       | `SubagentStopInput`       | stop_hook_active, agent_id, agent_transcript_path       |
 | PreCompact         | `PreCompactInput`         | trigger, custom_instructions                            |
 | PermissionRequest  | `PermissionRequestInput`  | tool_name, tool_input, permission_suggestions           |
+| Setup              | `SetupInput`              | trigger (init/maintenance)                              |
 
 All hook inputs inherit from `BaseHookInput` with: `hook_event_name`, `session_id`, `transcript_path`, `cwd`, `permission_mode`.
 

@@ -38,7 +38,10 @@ module ClaudeAgent
       include_partial_messages: false,
       enable_file_checkpointing: false,
       persist_session: true,
-      betas: []
+      betas: [],
+      init: false,
+      init_only: false,
+      maintenance: false
     }.freeze
 
     # All configurable attributes
@@ -55,6 +58,7 @@ module ClaudeAgent
       include_partial_messages output_format enable_file_checkpointing
       persist_session betas max_buffer_size stderr_callback
       abort_controller spawn_claude_code_process
+      init init_only maintenance
     ].freeze
 
     attr_accessor(*ATTRIBUTES)
@@ -83,6 +87,7 @@ module ClaudeAgent
         args.concat(settings_args)
         args.concat(environment_args)
         args.concat(output_args)
+        args.concat(setup_hook_args)
         args.concat(extra_cli_args)
       end
     end
@@ -230,6 +235,14 @@ module ClaudeAgent
       end
     end
 
+    def setup_hook_args
+      [].tap do |args|
+        args.push("--init") if init
+        args.push("--init-only") if init_only
+        args.push("--maintenance") if maintenance
+      end
+    end
+
     def extra_cli_args
       [].tap do |args|
         extra_args.each do |key, value|
@@ -261,6 +274,11 @@ module ClaudeAgent
 
       if max_budget_usd && (!max_budget_usd.is_a?(Numeric) || max_budget_usd <= 0)
         raise ConfigurationError, "max_budget_usd must be a positive number"
+      end
+
+      setup_options = [ init, init_only, maintenance ].count { |opt| opt }
+      if setup_options > 1
+        raise ConfigurationError, "Only one of init, init_only, or maintenance can be set at a time"
       end
     end
   end

@@ -518,4 +518,67 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal [], msg.output
     assert_equal "Auth failed", msg.error
   end
+
+  # --- TaskNotificationMessage parsing ---
+
+  test "parse_task_notification_message" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_notification",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "task_id" => "task-456",
+      "status" => "completed",
+      "output_file" => "/path/to/output.txt",
+      "summary" => "Task completed successfully"
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::TaskNotificationMessage, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal "task-456", msg.task_id
+    assert_equal "completed", msg.status
+    assert_equal "/path/to/output.txt", msg.output_file
+    assert_equal "Task completed successfully", msg.summary
+    assert_equal :task_notification, msg.type
+  end
+
+  test "parse_task_notification_message_camel_case" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_notification",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "taskId" => "task-789",
+      "status" => "failed",
+      "outputFile" => "/path/to/error.log",
+      "summary" => "Task failed"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "task-789", msg.task_id
+    assert_equal "failed", msg.status
+    assert_equal "/path/to/error.log", msg.output_file
+    assert_equal "Task failed", msg.summary
+  end
+
+  test "parse_task_notification_message_status_helpers" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_notification",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "task_id" => "task-456",
+      "status" => "stopped",
+      "output_file" => "/path/to/output.txt",
+      "summary" => "Task stopped by user"
+    }
+    msg = @parser.parse(raw)
+
+    refute msg.completed?
+    refute msg.failed?
+    assert msg.stopped?
+  end
 end

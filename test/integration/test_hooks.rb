@@ -258,4 +258,28 @@ class TestIntegrationHooks < IntegrationTestCase
     assert_equal "agent-123", input.agent_id
     assert_equal "/path/to/transcript.json", input.agent_transcript_path
   end
+
+  test "SetupInput type" do
+    input = ClaudeAgent::SetupInput.new(
+      hook_event_name: "Setup",
+      session_id: "session_123",
+      transcript_path: "/tmp/transcript.json",
+      cwd: "/home/user",
+      permission_mode: "default",
+      trigger: "init"
+    )
+
+    assert_equal "Setup", input.hook_event_name
+    assert_equal "init", input.trigger
+    assert input.init?
+    refute input.maintenance?
+  end
+
+  test "SetupInput maintenance trigger" do
+    input = ClaudeAgent::SetupInput.new(trigger: "maintenance")
+
+    assert_equal "maintenance", input.trigger
+    assert input.maintenance?
+    refute input.init?
+  end
 end

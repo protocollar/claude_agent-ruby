@@ -347,4 +347,74 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     assert parsed["enabled"]
     assert parsed["autoAllowBashIfSandboxed"]
   end
+
+  # --- Setup Hook Options ---
+
+  test "init_option_default_false" do
+    options = ClaudeAgent::Options.new
+    assert_equal false, options.init
+  end
+
+  test "init_only_option_default_false" do
+    options = ClaudeAgent::Options.new
+    assert_equal false, options.init_only
+  end
+
+  test "maintenance_option_default_false" do
+    options = ClaudeAgent::Options.new
+    assert_equal false, options.maintenance
+  end
+
+  test "to_cli_args_with_init" do
+    options = ClaudeAgent::Options.new(init: true)
+    args = options.to_cli_args
+    assert_includes args, "--init"
+    refute_includes args, "--init-only"
+    refute_includes args, "--maintenance"
+  end
+
+  test "to_cli_args_with_init_only" do
+    options = ClaudeAgent::Options.new(init_only: true)
+    args = options.to_cli_args
+    assert_includes args, "--init-only"
+    refute_includes args, "--init"
+    refute_includes args, "--maintenance"
+  end
+
+  test "to_cli_args_with_maintenance" do
+    options = ClaudeAgent::Options.new(maintenance: true)
+    args = options.to_cli_args
+    assert_includes args, "--maintenance"
+    refute_includes args, "--init"
+    refute_includes args, "--init-only"
+  end
+
+  test "to_cli_args_without_setup_options" do
+    options = ClaudeAgent::Options.new
+    args = options.to_cli_args
+    refute_includes args, "--init"
+    refute_includes args, "--init-only"
+    refute_includes args, "--maintenance"
+  end
+
+  test "raises_when_multiple_setup_options_set" do
+    error = assert_raises(ClaudeAgent::ConfigurationError) do
+      ClaudeAgent::Options.new(init: true, init_only: true)
+    end
+    assert_match(/Only one of init, init_only, or maintenance/, error.message)
+  end
+
+  test "raises_when_init_and_maintenance_set" do
+    error = assert_raises(ClaudeAgent::ConfigurationError) do
+      ClaudeAgent::Options.new(init: true, maintenance: true)
+    end
+    assert_match(/Only one of init, init_only, or maintenance/, error.message)
+  end
+
+  test "raises_when_all_setup_options_set" do
+    error = assert_raises(ClaudeAgent::ConfigurationError) do
+      ClaudeAgent::Options.new(init: true, init_only: true, maintenance: true)
+    end
+    assert_match(/Only one of init, init_only, or maintenance/, error.message)
+  end
 end
