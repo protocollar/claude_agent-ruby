@@ -150,4 +150,106 @@ class TestClaudeAgentQuery < ActiveSupport::TestCase
     # Final result
     assert_equal 2, messages[3].num_turns
   end
+
+  # --- run_setup ---
+
+  test "run_setup defaults to init trigger" do
+    responses = [
+      {
+        "type" => "result",
+        "subtype" => "success",
+        "duration_ms" => 100,
+        "duration_api_ms" => 80,
+        "is_error" => false,
+        "num_turns" => 0,
+        "session_id" => "test"
+      }
+    ]
+
+    transport = MockTransport.new(responses: responses)
+
+    # Stub query to capture the options passed
+    captured_options = nil
+    ClaudeAgent.stub(:query, ->(prompt:, options:, transport: nil) {
+      captured_options = options
+      responses.map { |r| ClaudeAgent::MessageParser.new.parse(r) }
+    }) do
+      ClaudeAgent.run_setup
+    end
+
+    assert captured_options.init_only
+    refute captured_options.init
+    refute captured_options.maintenance
+  end
+
+  test "run_setup with init trigger sets init_only" do
+    captured_options = nil
+    ClaudeAgent.stub(:query, ->(prompt:, options:, transport: nil) {
+      captured_options = options
+      []
+    }) do
+      ClaudeAgent.run_setup(trigger: :init)
+    end
+
+    assert captured_options.init_only
+  end
+
+  test "run_setup with maintenance trigger sets maintenance" do
+    captured_options = nil
+    ClaudeAgent.stub(:query, ->(prompt:, options:, transport: nil) {
+      captured_options = options
+      []
+    }) do
+      ClaudeAgent.run_setup(trigger: :maintenance)
+    end
+
+    assert captured_options.maintenance
+    refute captured_options.init_only
+  end
+
+  test "run_setup with custom options preserves them" do
+    captured_options = nil
+    base_options = ClaudeAgent::Options.new(model: "opus", cwd: "/custom/path")
+
+    ClaudeAgent.stub(:query, ->(prompt:, options:, transport: nil) {
+      captured_options = options
+      []
+    }) do
+      ClaudeAgent.run_setup(trigger: :init, options: base_options)
+    end
+
+    assert_equal "opus", captured_options.model
+    assert_equal "/custom/path", captured_options.cwd
+    assert captured_options.init_only
+  end
+
+  test "run_setup raises on invalid trigger" do
+    error = assert_raises(ArgumentError) do
+      ClaudeAgent.run_setup(trigger: :invalid)
+    end
+    assert_match(/Invalid trigger/, error.message)
+  end
+
+  test "run_setup returns array of messages" do
+    responses = [
+      {
+        "type" => "result",
+        "subtype" => "success",
+        "duration_ms" => 100,
+        "duration_api_ms" => 80,
+        "is_error" => false,
+        "num_turns" => 0,
+        "session_id" => "test"
+      }
+    ]
+
+    ClaudeAgent.stub(:query, ->(prompt:, options:, transport: nil) {
+      responses.map { |r| ClaudeAgent::MessageParser.new.parse(r) }
+    }) do
+      result = ClaudeAgent.run_setup
+      assert_instance_of Array, result
+      assert_equal 1, result.length
+      assert_instance_of ClaudeAgent::ResultMessage, result.first
+    end
+  end
 end

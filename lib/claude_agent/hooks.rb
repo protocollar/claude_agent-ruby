@@ -15,6 +15,7 @@ module ClaudeAgent
     SubagentStop
     PreCompact
     PermissionRequest
+    Setup
   ].freeze
 
   # Matcher configuration for hooks
@@ -225,6 +226,37 @@ module ClaudeAgent
       @tool_name = tool_name
       @tool_input = tool_input
       @permission_suggestions = permission_suggestions
+    end
+  end
+
+  # Input for Setup hook (TypeScript SDK parity)
+  #
+  # Triggered during initial setup or maintenance operations.
+  #
+  # @example
+  #   input = SetupInput.new(trigger: "init", session_id: "abc-123")
+  #   input.trigger  # => "init"
+  #   input.init?    # => true
+  #
+  class SetupInput < BaseHookInput
+    attr_reader :trigger
+
+    # @param trigger [String] One of: "init", "maintenance"
+    def initialize(trigger:, **kwargs)
+      super(hook_event_name: "Setup", **kwargs)
+      @trigger = trigger
+    end
+
+    # Check if this is an init trigger
+    # @return [Boolean]
+    def init?
+      trigger == "init"
+    end
+
+    # Check if this is a maintenance trigger
+    # @return [Boolean]
+    def maintenance?
+      trigger == "maintenance"
     end
   end
 end

@@ -316,4 +316,70 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
   test "auth_status_message_in_types_constant" do
     assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::AuthStatusMessage
   end
+
+  # --- TaskNotificationMessage ---
+
+  test "task_notification_message" do
+    msg = ClaudeAgent::TaskNotificationMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      task_id: "task-456",
+      status: "completed",
+      output_file: "/path/to/output.txt",
+      summary: "Task completed successfully"
+    )
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal "task-456", msg.task_id
+    assert_equal "completed", msg.status
+    assert_equal "/path/to/output.txt", msg.output_file
+    assert_equal "Task completed successfully", msg.summary
+    assert_equal :task_notification, msg.type
+  end
+
+  test "task_notification_completed?" do
+    msg = ClaudeAgent::TaskNotificationMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      task_id: "task-456",
+      status: "completed",
+      output_file: "/path/to/output.txt",
+      summary: "Done"
+    )
+    assert msg.completed?
+    refute msg.failed?
+    refute msg.stopped?
+  end
+
+  test "task_notification_failed?" do
+    msg = ClaudeAgent::TaskNotificationMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      task_id: "task-456",
+      status: "failed",
+      output_file: "/path/to/output.txt",
+      summary: "Error occurred"
+    )
+    refute msg.completed?
+    assert msg.failed?
+    refute msg.stopped?
+  end
+
+  test "task_notification_stopped?" do
+    msg = ClaudeAgent::TaskNotificationMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      task_id: "task-456",
+      status: "stopped",
+      output_file: "/path/to/output.txt",
+      summary: "Manually stopped"
+    )
+    refute msg.completed?
+    refute msg.failed?
+    assert msg.stopped?
+  end
+
+  test "task_notification_message_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::TaskNotificationMessage
+  end
 end

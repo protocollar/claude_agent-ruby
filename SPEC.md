@@ -3,8 +3,8 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.9 (npm package)
-- Python SDK: v0.1.20 from GitHub (commit 04da88d)
+- TypeScript SDK: v0.2.12 (npm package)
+- Python SDK: v0.1.20 from GitHub (commit 05d2eb4)
 - Ruby SDK: This repository
 
 ---
@@ -30,50 +30,54 @@ This document provides a comprehensive specification of the Claude Agent SDK, co
 
 Configuration options for SDK queries and clients.
 
-| Option                            | TypeScript | Python | Ruby | Notes                                                       |
-|-----------------------------------|:----------:|:------:|:----:|-------------------------------------------------------------|
-| `model`                           |     ✅      |   ✅    |  ✅   | Claude model identifier                                     |
-| `fallbackModel`                   |     ✅      |   ✅    |  ✅   | Fallback if primary fails                                   |
-| `systemPrompt`                    |     ✅      |   ✅    |  ✅   | String or preset object                                     |
-| `appendSystemPrompt`              |     ✅      |   ❌    |  ✅   | Append to system prompt (TS SDK has via preset)             |
-| `tools`                           |     ✅      |   ✅    |  ✅   | Array or preset                                             |
-| `allowedTools`                    |     ✅      |   ✅    |  ✅   | Auto-allowed tools                                          |
-| `disallowedTools`                 |     ✅      |   ✅    |  ✅   | Blocked tools                                               |
-| `permissionMode`                  |     ✅      |   ✅    |  ✅   | default/acceptEdits/plan/bypassPermissions/delegate/dontAsk |
-| `allowDangerouslySkipPermissions` |     ✅      |   ❌    |  ✅   | Required for bypassPermissions                              |
-| `canUseTool`                      |     ✅      |   ✅    |  ✅   | Permission callback                                         |
-| `permissionPromptToolName`        |     ✅      |   ✅    |  ✅   | MCP tool for permission prompts                             |
-| `maxTurns`                        |     ✅      |   ✅    |  ✅   | Max conversation turns                                      |
-| `maxBudgetUsd`                    |     ✅      |   ✅    |  ✅   | Max USD budget                                              |
-| `maxThinkingTokens`               |     ✅      |   ✅    |  ✅   | Max thinking tokens                                         |
-| `continue`                        |     ✅      |   ✅    |  ✅   | Continue most recent conversation                           |
-| `resume`                          |     ✅      |   ✅    |  ✅   | Resume session by ID                                        |
-| `resumeSessionAt`                 |     ✅      |   ❌    |  ✅   | Resume to specific message UUID                             |
-| `forkSession`                     |     ✅      |   ✅    |  ✅   | Fork on resume                                              |
-| `persistSession`                  |     ✅      |   ❌    |  ✅   | Whether to persist to disk                                  |
-| `enableFileCheckpointing`         |     ✅      |   ✅    |  ✅   | Track file changes for rewind                               |
-| `includePartialMessages`          |     ✅      |   ✅    |  ✅   | Include stream events                                       |
-| `outputFormat`                    |     ✅      |   ✅    |  ✅   | JSON schema for structured output                           |
-| `mcpServers`                      |     ✅      |   ✅    |  ✅   | MCP server configurations                                   |
-| `strictMcpConfig`                 |     ✅      |   ❌    |  ✅   | Strict validation of MCP config                             |
-| `hooks`                           |     ✅      |   ✅    |  ✅   | Hook callbacks                                              |
-| `agents`                          |     ✅      |   ✅    |  ✅   | Custom subagent definitions                                 |
-| `cwd`                             |     ✅      |   ✅    |  ✅   | Working directory                                           |
-| `additionalDirectories`           |     ✅      |   ✅    |  ✅   | Extra allowed directories                                   |
-| `env`                             |     ✅      |   ✅    |  ✅   | Environment variables                                       |
-| `sandbox`                         |     ✅      |   ✅    |  ✅   | Sandbox settings                                            |
-| `settingSources`                  |     ✅      |   ✅    |  ✅   | Which settings to load                                      |
-| `plugins`                         |     ✅      |   ✅    |  ✅   | Plugin configurations                                       |
-| `betas`                           |     ✅      |   ✅    |  ✅   | Beta features (e.g., context-1m-2025-08-07)                 |
-| `agent`                           |     ✅      |   ❌    |  ✅   | Agent name for main thread                                  |
-| `abortController`                 |     ✅      |   ❌    |  ✅   | Cancellation controller                                     |
-| `stderr`                          |     ✅      |   ✅    |  ✅   | Stderr callback                                             |
-| `spawnClaudeCodeProcess`          |     ✅      |   ❌    |  ✅   | Custom spawn function                                       |
-| `pathToClaudeCodeExecutable`      |     ✅      |   ✅    |  ✅   | Custom CLI path                                             |
-| `executable`                      |     ✅      |  N/A   | N/A  | JS runtime (node/bun/deno) - JS-specific                    |
-| `executableArgs`                  |     ✅      |  N/A   | N/A  | JS runtime args - JS-specific                               |
-| `extraArgs`                       |     ✅      |   ✅    |  ✅   | Extra CLI arguments                                         |
-| `user`                            |     ❌      |   ✅    |  ✅   | User identifier                                             |
+| Option                            | TypeScript | Python | Ruby | Notes                                                        |
+|-----------------------------------|:----------:|:------:|:----:|--------------------------------------------------------------|
+| `model`                           |     ✅      |   ✅    |  ✅   | Claude model identifier                                      |
+| `fallbackModel`                   |     ✅      |   ✅    |  ✅   | Fallback if primary fails                                    |
+| `systemPrompt`                    |     ✅      |   ✅    |  ✅   | String or preset object                                      |
+| `appendSystemPrompt`              |     ✅      |   ❌    |  ✅   | Append to system prompt (TS SDK has via preset)              |
+| `tools`                           |     ✅      |   ✅    |  ✅   | Array or preset                                              |
+| `allowedTools`                    |     ✅      |   ✅    |  ✅   | Auto-allowed tools                                           |
+| `disallowedTools`                 |     ✅      |   ✅    |  ✅   | Blocked tools                                                |
+| `permissionMode`                  |     ✅      |   ✅    |  ✅   | default/acceptEdits/plan/bypassPermissions/delegate/dontAsk  |
+| `allowDangerouslySkipPermissions` |     ✅      |   ❌    |  ✅   | Required for bypassPermissions                               |
+| `canUseTool`                      |     ✅      |   ✅    |  ✅   | Permission callback                                          |
+| `permissionPromptToolName`        |     ✅      |   ✅    |  ✅   | MCP tool for permission prompts                              |
+| `maxTurns`                        |     ✅      |   ✅    |  ✅   | Max conversation turns                                       |
+| `maxBudgetUsd`                    |     ✅      |   ✅    |  ✅   | Max USD budget                                               |
+| `maxThinkingTokens`               |     ✅      |   ✅    |  ✅   | Max thinking tokens                                          |
+| `continue`                        |     ✅      |   ✅    |  ✅   | Continue most recent conversation                            |
+| `resume`                          |     ✅      |   ✅    |  ✅   | Resume session by ID                                         |
+| `resumeSessionAt`                 |     ✅      |   ❌    |  ✅   | Resume to specific message UUID                              |
+| `forkSession`                     |     ✅      |   ✅    |  ✅   | Fork on resume                                               |
+| `persistSession`                  |     ✅      |   ❌    |  ✅   | Whether to persist to disk                                   |
+| `enableFileCheckpointing`         |     ✅      |   ✅    |  ✅   | Track file changes for rewind                                |
+| `includePartialMessages`          |     ✅      |   ✅    |  ✅   | Include stream events                                        |
+| `outputFormat`                    |     ✅      |   ✅    |  ✅   | JSON schema for structured output                            |
+| `mcpServers`                      |     ✅      |   ✅    |  ✅   | MCP server configurations                                    |
+| `strictMcpConfig`                 |     ✅      |   ❌    |  ✅   | Strict validation of MCP config                              |
+| `hooks`                           |     ✅      |   ✅    |  ✅   | Hook callbacks                                               |
+| `agents`                          |     ✅      |   ✅    |  ✅   | Custom subagent definitions                                  |
+| `cwd`                             |     ✅      |   ✅    |  ✅   | Working directory                                            |
+| `additionalDirectories`           |     ✅      |   ✅    |  ✅   | Extra allowed directories                                    |
+| `env`                             |     ✅      |   ✅    |  ✅   | Environment variables                                        |
+| `sandbox`                         |     ✅      |   ✅    |  ✅   | Sandbox settings                                             |
+| `settings`                        |     ✅      |   ❌    |  ✅   | Settings file path or JSON string (e.g., plansDirectory)     |
+| `settingSources`                  |     ✅      |   ✅    |  ✅   | Which settings to load                                       |
+| `plugins`                         |     ✅      |   ✅    |  ✅   | Plugin configurations                                        |
+| `betas`                           |     ✅      |   ✅    |  ✅   | Beta features (e.g., context-1m-2025-08-07)                  |
+| `agent`                           |     ✅      |   ❌    |  ✅   | Agent name for main thread                                   |
+| `abortController`                 |     ✅      |   ❌    |  ✅   | Cancellation controller                                      |
+| `stderr`                          |     ✅      |   ✅    |  ✅   | Stderr callback                                              |
+| `spawnClaudeCodeProcess`          |     ✅      |   ❌    |  ✅   | Custom spawn function                                        |
+| `pathToClaudeCodeExecutable`      |     ✅      |   ✅    |  ✅   | Custom CLI path                                              |
+| `executable`                      |     ✅      |  N/A   | N/A  | JS runtime (node/bun/deno) - JS-specific                     |
+| `executableArgs`                  |     ✅      |  N/A   | N/A  | JS runtime args - JS-specific                                |
+| `extraArgs`                       |     ✅      |   ✅    |  ✅   | Extra CLI arguments                                          |
+| `user`                            |     ✅      |   ✅    |  ✅   | User identifier (V2 Session API)                             |
+| `init`                            |     ✅      |   ❌    |  ✅   | Run Setup hooks (init trigger), then continue (hidden CLI)   |
+| `initOnly`                        |     ✅      |   ❌    |  ✅   | Run Setup hooks (init trigger), then exit (hidden CLI)       |
+| `maintenance`                     |     ✅      |   ❌    |  ✅   | Run Setup hooks (maintenance trigger), continue (hidden CLI) |
 
 ---
 
@@ -94,6 +98,7 @@ Messages exchanged between SDK and CLI.
 | `ToolProgressMessage`    |     ✅      |   ❌    |  ✅   | Long-running tool progress      |
 | `HookResponseMessage`    |     ✅      |   ❌    |  ✅   | Hook execution output           |
 | `AuthStatusMessage`      |     ✅      |   ❌    |  ✅   | Authentication status           |
+| `TaskNotificationMessage`|     ✅      |   ❌    |  ✅   | Background task completion      |
 
 ### Message Fields
 
@@ -203,20 +208,21 @@ Event hooks for intercepting and modifying SDK behavior.
 
 ### Hook Events
 
-| Event                | TypeScript | Python | Ruby | Notes                  |
-|----------------------|:----------:|:------:|:----:|------------------------|
-| `PreToolUse`         |     ✅      |   ✅    |  ✅   | Before tool execution  |
-| `PostToolUse`        |     ✅      |   ✅    |  ✅   | After tool execution   |
-| `PostToolUseFailure` |     ✅      |   ❌    |  ✅   | After tool failure     |
-| `Notification`       |     ✅      |   ❌    |  ✅   | System notifications   |
-| `UserPromptSubmit`   |     ✅      |   ✅    |  ✅   | User message submitted |
-| `SessionStart`       |     ✅      |   ❌    |  ✅   | Session starts         |
-| `SessionEnd`         |     ✅      |   ❌    |  ✅   | Session ends           |
-| `Stop`               |     ✅      |   ✅    |  ✅   | Agent stops            |
-| `SubagentStart`      |     ✅      |   ❌    |  ✅   | Subagent starts        |
-| `SubagentStop`       |     ✅      |   ✅    |  ✅   | Subagent stops         |
-| `PreCompact`         |     ✅      |   ✅    |  ✅   | Before compaction      |
-| `PermissionRequest`  |     ✅      |   ❌    |  ✅   | Permission requested   |
+| Event                | TypeScript | Python | Ruby | Notes                     |
+|----------------------|:----------:|:------:|:----:|---------------------------|
+| `PreToolUse`         |     ✅      |   ✅    |  ✅   | Before tool execution     |
+| `PostToolUse`        |     ✅      |   ✅    |  ✅   | After tool execution      |
+| `PostToolUseFailure` |     ✅      |   ❌    |  ✅   | After tool failure        |
+| `Notification`       |     ✅      |   ❌    |  ✅   | System notifications      |
+| `UserPromptSubmit`   |     ✅      |   ✅    |  ✅   | User message submitted    |
+| `SessionStart`       |     ✅      |   ❌    |  ✅   | Session starts            |
+| `SessionEnd`         |     ✅      |   ❌    |  ✅   | Session ends              |
+| `Stop`               |     ✅      |   ✅    |  ✅   | Agent stops               |
+| `SubagentStart`      |     ✅      |   ❌    |  ✅   | Subagent starts           |
+| `SubagentStop`       |     ✅      |   ✅    |  ✅   | Subagent stops            |
+| `PreCompact`         |     ✅      |   ✅    |  ✅   | Before compaction         |
+| `PermissionRequest`  |     ✅      |   ❌    |  ✅   | Permission requested      |
+| `Setup`              |     ✅      |   ❌    |  ✅   | Initial setup/maintenance |
 
 ### Hook Input Types
 
@@ -234,6 +240,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `SubagentStopHookInput`       |     ✅      |   ✅    |  ✅   |
 | `PreCompactHookInput`         |     ✅      |   ✅    |  ✅   |
 | `PermissionRequestHookInput`  |     ✅      |   ❌    |  ✅   |
+| `SetupHookInput`              |     ✅      |   ❌    |  ✅   |
 
 ### Hook Output Types
 
@@ -248,6 +255,62 @@ Event hooks for intercepting and modifying SDK behavior.
 | `systemMessage`      |     ✅      |   ✅    |  ✅   | System message        |
 | `reason`             |     ✅      |   ✅    |  ✅   | Reason feedback       |
 | `hookSpecificOutput` |     ✅      |   ✅    |  ✅   | Event-specific output |
+
+### Hook-Specific Output Fields
+
+Event-specific fields returned via `hookSpecificOutput`:
+
+#### PreToolUseHookSpecificOutput
+
+| Field                      | TypeScript | Python | Ruby | Notes                              |
+|----------------------------|:----------:|:------:|:----:|------------------------------------|
+| `permissionDecision`       |     ✅      |   ❌    |  ✅   | `allow`, `deny`, or `ask`          |
+| `permissionDecisionReason` |     ✅      |   ❌    |  ✅   | Reason for permission decision     |
+| `updatedInput`             |     ✅      |   ✅    |  ✅   | Modified tool input                |
+| `additionalContext`        |     ✅      |   ❌    |  ✅   | Context string returned to model   |
+
+#### PostToolUseHookSpecificOutput
+
+| Field                  | TypeScript | Python | Ruby | Notes                            |
+|------------------------|:----------:|:------:|:----:|----------------------------------|
+| `additionalContext`    |     ✅      |   ❌    |  ✅   | Context string returned to model |
+| `updatedMCPToolOutput` |     ✅      |   ❌    |  ✅   | Modified MCP tool output         |
+
+#### PostToolUseFailureHookSpecificOutput
+
+| Field               | TypeScript | Python | Ruby | Notes                            |
+|---------------------|:----------:|:------:|:----:|----------------------------------|
+| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
+
+#### SessionStartHookSpecificOutput
+
+| Field               | TypeScript | Python | Ruby | Notes                            |
+|---------------------|:----------:|:------:|:----:|----------------------------------|
+| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
+
+#### SetupHookSpecificOutput
+
+| Field               | TypeScript | Python | Ruby | Notes                            |
+|---------------------|:----------:|:------:|:----:|----------------------------------|
+| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
+
+#### SubagentStartHookSpecificOutput
+
+| Field               | TypeScript | Python | Ruby | Notes                            |
+|---------------------|:----------:|:------:|:----:|----------------------------------|
+| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
+
+#### UserPromptSubmitHookSpecificOutput
+
+| Field               | TypeScript | Python | Ruby | Notes                            |
+|---------------------|:----------:|:------:|:----:|----------------------------------|
+| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
+
+#### PermissionRequestHookSpecificOutput
+
+| Field      | TypeScript | Python | Ruby | Notes                                    |
+|------------|:----------:|:------:|:----:|------------------------------------------|
+| `decision` |     ✅      |   ❌    |  ✅   | `{ behavior: 'allow'/'deny', ... }` obj  |
 
 ### Hook Matcher
 
@@ -415,6 +478,8 @@ Custom subagent definitions.
 | `model`                               |     ✅      |   ✅    |  ✅   | Model override (sonnet/opus/haiku/inherit) |
 | `mcpServers`                          |     ✅      |   ❌    |  ✅   | Agent-specific MCP servers                 |
 | `criticalSystemReminder_EXPERIMENTAL` |     ✅      |   ❌    |  ✅   | Critical reminder (experimental)           |
+| `skills`                              |     ✅      |   ❌    |  ✅   | Skills to preload into agent context       |
+| `maxTurns`                            |     ✅      |   ❌    |  ✅   | Max agentic turns before stopping          |
 
 ---
 
@@ -543,10 +608,13 @@ Public API surface for SDK clients.
 - Primary reference for API surface (most comprehensive)
 - Source is bundled/minified, but `sdk.d.ts` provides complete type definitions
 - Includes unstable V2 session API
-- Version 0.2.9 adds `agent` option for specifying main thread agent
 - Adds `deno` as supported executable option
 - Includes experimental `criticalSystemReminder_EXPERIMENTAL` for agent definitions
 - `SessionStartHookInput` includes `model` field
+- v0.2.12 adds `Setup` hook event for init/maintenance
+- v0.2.12 adds `skills` and `maxTurns` to AgentDefinition
+- v0.2.12 adds `TaskNotificationMessage` for background task completion
+- v0.2.12 adds `user` option to SDKSessionOptions
 
 ### Python SDK
 - Full source available (v0.1.20)
@@ -561,6 +629,6 @@ Public API surface for SDK clients.
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol support
 - Dedicated Client class for multi-turn conversations
-- Full hook event support including all 12 events
+- Full hook event support including all 13 events
 - Full V2 Session API support (unstable)
 - `executable`/`executableArgs` marked N/A (JS runtime options not applicable to Ruby)

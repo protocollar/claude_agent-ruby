@@ -306,4 +306,32 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     )
     assert_nil input.permission_suggestions
   end
+
+  # --- SetupInput ---
+
+  test "setup_input" do
+    input = ClaudeAgent::SetupInput.new(
+      trigger: "init",
+      session_id: "abc-123"
+    )
+    assert_equal "Setup", input.hook_event_name
+    assert_equal "init", input.trigger
+    assert_equal "abc-123", input.session_id
+  end
+
+  test "setup_input_init?" do
+    input = ClaudeAgent::SetupInput.new(trigger: "init")
+    assert input.init?
+    refute input.maintenance?
+  end
+
+  test "setup_input_maintenance?" do
+    input = ClaudeAgent::SetupInput.new(trigger: "maintenance")
+    refute input.init?
+    assert input.maintenance?
+  end
+
+  test "setup_event_in_hook_events" do
+    assert_includes ClaudeAgent::HOOK_EVENTS, "Setup"
+  end
 end

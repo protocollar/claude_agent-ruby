@@ -265,6 +265,48 @@ class TestClaudeAgentTypes < ActiveSupport::TestCase
     refute h.key?(:criticalSystemReminder_EXPERIMENTAL)
   end
 
+  test "agent_definition_with_skills_and_max_turns" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Research agent",
+      prompt: "You are a research expert...",
+      skills: [ "web-search", "summarization" ],
+      max_turns: 10
+    )
+    assert_equal [ "web-search", "summarization" ], agent.skills
+    assert_equal 10, agent.max_turns
+  end
+
+  test "agent_definition_skills_and_max_turns_defaults" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Simple agent",
+      prompt: "You help"
+    )
+    assert_nil agent.skills
+    assert_nil agent.max_turns
+  end
+
+  test "agent_definition_to_h_with_skills_and_max_turns" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Research agent",
+      prompt: "Research things",
+      skills: [ "web-search" ],
+      max_turns: 5
+    )
+    h = agent.to_h
+    assert_equal [ "web-search" ], h[:skills]
+    assert_equal 5, h[:maxTurns]
+  end
+
+  test "agent_definition_to_h_omits_nil_skills_and_max_turns" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Simple agent",
+      prompt: "You help"
+    )
+    h = agent.to_h
+    refute h.key?(:skills)
+    refute h.key?(:maxTurns)
+  end
+
   # --- API Key Sources ---
 
   test "api_key_sources_constant" do

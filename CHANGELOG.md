@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `TaskNotificationMessage` for background task completion notifications
+- `Setup` hook event with `SetupInput` for init/maintenance triggers
+- `skills` and `max_turns` fields in `AgentDefinition` (TypeScript SDK v0.2.12 parity)
+- `init`, `init_only`, `maintenance` options for running Setup hooks
+- `ClaudeAgent.run_setup` convenience method for CI/CD pipelines
+- Hook-specific output fields documentation (`additionalContext`, `permissionDecision`, `updatedMCPToolOutput`, etc.)
+- Document `settings` option accepts JSON strings (for plansDirectory, etc.)
+
 ## [0.3.0] - 2026-01-16
 
 ### Added

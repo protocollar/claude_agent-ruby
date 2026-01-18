@@ -2,6 +2,48 @@
 
 module ClaudeAgent
   class << self
+    # Run Setup hooks and exit
+    #
+    # This is a convenience method for running Setup hooks without starting
+    # a conversation. Useful for CI/CD pipelines or scripts that need to
+    # ensure setup is complete before proceeding.
+    #
+    # @param trigger [Symbol] The setup trigger (:init or :maintenance)
+    # @param options [Options, nil] Additional configuration options
+    # @return [Array<Message>] All messages received during setup
+    #
+    # @example Run init setup
+    #   messages = ClaudeAgent.run_setup
+    #   result = messages.last
+    #   puts "Setup completed" if result.success?
+    #
+    # @example Run init setup with custom options
+    #   options = ClaudeAgent::Options.new(cwd: "/my/project")
+    #   ClaudeAgent.run_setup(trigger: :init, options: options)
+    #
+    # @note The :maintenance trigger requires --maintenance flag which
+    #   continues into a conversation. For maintenance-only behavior,
+    #   use options with maintenance: true and handle accordingly.
+    #
+    def run_setup(trigger: :init, options: nil)
+      options ||= Options.new
+
+      case trigger
+      when :init
+        # Create new options with init_only set
+        setup_options = Options.new(**options_to_hash(options).merge(init_only: true))
+      when :maintenance
+        # Note: There's no --maintenance-only flag, so we use --maintenance
+        # which will continue into a conversation. The caller should handle this.
+        setup_options = Options.new(**options_to_hash(options).merge(maintenance: true))
+      else
+        raise ArgumentError, "Invalid trigger: #{trigger}. Must be :init or :maintenance"
+      end
+
+      # Run with an empty prompt - setup hooks run before the prompt is processed
+      query(prompt: "", options: setup_options).to_a
+    end
+
     # One-shot query to Claude Code CLI
     #
     # This is a simple, stateless interface for sending a single prompt
@@ -84,6 +126,18 @@ module ClaudeAgent
             transport.close
           end
         end
+      end
+    end
+
+    private
+
+    # Convert an Options object to a hash for merging
+    # @param options [Options] The options object
+    # @return [Hash] Hash of option values
+    def options_to_hash(options)
+      Options::ATTRIBUTES.each_with_object({}) do |attr, hash|
+        value = options.send(attr)
+        hash[attr] = value unless value.nil?
       end
     end
   end
