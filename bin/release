@@ -8,7 +8,8 @@ set -euo pipefail
 # 1. Updates lib/claude_agent/version.rb
 # 2. Updates Gemfile.lock
 # 3. Commits, tags, and pushes to main
-# 4. Builds and publishes the gem to RubyGems
+# 4. Creates a GitHub release
+# 5. Builds and publishes the gem to RubyGems
 
 VERSION=${1:-}
 
@@ -33,17 +34,26 @@ if git tag -l "v$VERSION" | grep -q "v$VERSION"; then
   exit 1
 fi
 
+# Prompt for OTP upfront
+read -p "Enter RubyGems OTP code: " OTP
+
+if [[ -z "$OTP" ]]; then
+  echo "OTP is required"
+  exit 1
+fi
+
 echo "Releasing $VERSION..."
 
 printf "# frozen_string_literal: true\n\nmodule ClaudeAgent\n  VERSION = \"$VERSION\"\nend\n" > lib/claude_agent/version.rb
-bundle
+bundle install
 git add Gemfile.lock lib/claude_agent/version.rb
 git commit -m "Bump version for $VERSION"
 git push
 git tag v$VERSION
 git push --tags
+gh release create "v$VERSION" --title "v$VERSION" --notes-from-tag
 gem build claude_agent.gemspec
-gem push "claude_agent-$VERSION.gem" --host https://rubygems.org
+gem push "claude_agent-$VERSION.gem" --host https://rubygems.org --otp "$OTP"
 rm "claude_agent-$VERSION.gem"
 
 echo "Released claude_agent $VERSION"
