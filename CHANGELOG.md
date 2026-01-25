@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-01-25
+
+### Added
+- `HookStartedMessage` for hook lifecycle visibility
+- `HookProgressMessage` for hook progress updates
+- `ToolUseSummaryMessage` for tool use summaries
+- `mcp_reconnect` and `mcp_toggle` control methods for MCP server lifecycle management
+- `hook_id`, `output`, and `outcome` fields on `HookResponseMessage`
+- Helper methods on `HookResponseMessage`: `success?`, `error?`, `cancelled?`
+
 ## [0.4.3] - 2026-01-18
 
 ### Changed
