@@ -249,11 +249,14 @@ module ClaudeAgent
       HookResponseMessage.new(
         uuid: raw["uuid"] || "",
         session_id: fetch_dual(raw, :session_id, ""),
+        hook_id: fetch_dual(raw, :hook_id),
         hook_name: fetch_dual(raw, :hook_name, ""),
         hook_event: fetch_dual(raw, :hook_event, ""),
         stdout: raw["stdout"] || "",
         stderr: raw["stderr"] || "",
-        exit_code: fetch_dual(raw, :exit_code)
+        output: raw["output"] || "",
+        exit_code: fetch_dual(raw, :exit_code),
+        outcome: raw["outcome"]
       )
     end
 

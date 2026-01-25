@@ -337,36 +337,71 @@ module ClaudeAgent
   #   msg = HookResponseMessage.new(
   #     uuid: "msg-123",
   #     session_id: "session-abc",
+  #     hook_id: "hook-456",
   #     hook_name: "my-hook",
   #     hook_event: "PreToolUse",
   #     stdout: "Hook output",
   #     stderr: "",
-  #     exit_code: 0
+  #     output: "Combined output",
+  #     exit_code: 0,
+  #     outcome: "success"
   #   )
+  #   msg.success?    # => true
+  #   msg.error?      # => false
+  #   msg.cancelled?  # => false
+  #
+  # Outcome values:
+  # - "success" - Hook completed successfully
+  # - "error" - Hook encountered an error
+  # - "cancelled" - Hook was cancelled
   #
   HookResponseMessage = Data.define(
     :uuid,
     :session_id,
+    :hook_id,
     :hook_name,
     :hook_event,
     :stdout,
     :stderr,
-    :exit_code
+    :output,
+    :exit_code,
+    :outcome
   ) do
     def initialize(
       uuid:,
       session_id:,
+      hook_id: nil,
       hook_name:,
       hook_event:,
       stdout: "",
       stderr: "",
-      exit_code: nil
+      output: "",
+      exit_code: nil,
+      outcome: nil
     )
       super
     end
 
     def type
       :hook_response
+    end
+
+    # Check if hook completed successfully
+    # @return [Boolean]
+    def success?
+      outcome == "success"
+    end
+
+    # Check if hook encountered an error
+    # @return [Boolean]
+    def error?
+      outcome == "error"
+    end
+
+    # Check if hook was cancelled
+    # @return [Boolean]
+    def cancelled?
+      outcome == "cancelled"
     end
   end
 

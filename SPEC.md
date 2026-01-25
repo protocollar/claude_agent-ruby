@@ -7,6 +7,8 @@ This document provides a comprehensive specification of the Claude Agent SDK, co
 - Python SDK: v0.1.22 from GitHub (commit 6a0140a)
 - Ruby SDK: This repository
 
+**Last Updated:** 2025-01-25
+
 ---
 
 ## Table of Contents
@@ -133,6 +135,34 @@ Messages exchanged between SDK and CLI.
 | `error_max_turns`                     |     ✅      |   ✅    |  ✅   | Max turns exceeded                 |
 | `error_max_budget_usd`                |     ✅      |   ✅    |  ✅   | Budget exceeded                    |
 | `error_max_structured_output_retries` |     ✅      |   ❌    |  ✅   | Structured output retries exceeded |
+
+#### HookResponseMessage Fields
+
+| Field        | TypeScript | Python | Ruby | Notes                                    |
+|--------------|:----------:|:------:|:----:|------------------------------------------|
+| `uuid`       |     ✅      |   ❌    |  ✅   | Message UUID                             |
+| `session_id` |     ✅      |   ❌    |  ✅   | Session ID                               |
+| `hook_id`    |     ✅      |   ❌    |  ✅   | Unique hook execution ID                 |
+| `hook_name`  |     ✅      |   ❌    |  ✅   | Hook name                                |
+| `hook_event` |     ✅      |   ❌    |  ✅   | Event type (PreToolUse, PostToolUse...)  |
+| `output`     |     ✅      |   ❌    |  ✅   | Combined output string                   |
+| `stdout`     |     ✅      |   ❌    |  ✅   | Standard output                          |
+| `stderr`     |     ✅      |   ❌    |  ✅   | Standard error                           |
+| `exit_code`  |     ✅      |   ❌    |  ✅   | Hook process exit code                   |
+| `outcome`    |     ✅      |   ❌    |  ✅   | 'success' / 'error' / 'cancelled'        |
+
+#### HookProgressMessage Fields
+
+| Field        | TypeScript | Python | Ruby | Notes                                    |
+|--------------|:----------:|:------:|:----:|------------------------------------------|
+| `uuid`       |     ✅      |   ❌    |  ✅   | Message UUID                             |
+| `session_id` |     ✅      |   ❌    |  ✅   | Session ID                               |
+| `hook_id`    |     ✅      |   ❌    |  ✅   | Unique hook execution ID                 |
+| `hook_name`  |     ✅      |   ❌    |  ✅   | Hook name                                |
+| `hook_event` |     ✅      |   ❌    |  ✅   | Event type                               |
+| `output`     |     ✅      |   ❌    |  ✅   | Combined output so far                   |
+| `stdout`     |     ✅      |   ❌    |  ✅   | Standard output so far                   |
+| `stderr`     |     ✅      |   ❌    |  ✅   | Standard error so far                    |
 
 ---
 
