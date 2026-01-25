@@ -177,4 +177,37 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     assert_equal 2, config["PostToolUse"][0][:hookCallbackIds].length
     refute config["PostToolUse"][0].key?(:timeout)
   end
+
+  test "mcp_reconnect sends correct request format" do
+    @transport.connect
+
+    # Write the request message directly (bypassing the full protocol machinery)
+    @protocol.send(:write_message, {
+      type: "control_request",
+      request_id: "test-req",
+      request: { subtype: "mcp_reconnect", serverName: "my-server" }
+    })
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" }
+    assert_not_nil msg
+    assert_equal "mcp_reconnect", msg["request"]["subtype"]
+    assert_equal "my-server", msg["request"]["serverName"]
+  end
+
+  test "mcp_toggle sends correct request format" do
+    @transport.connect
+
+    # Write the request message directly (bypassing the full protocol machinery)
+    @protocol.send(:write_message, {
+      type: "control_request",
+      request_id: "test-req",
+      request: { subtype: "mcp_toggle", serverName: "my-server", enabled: false }
+    })
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" }
+    assert_not_nil msg
+    assert_equal "mcp_toggle", msg["request"]["subtype"]
+    assert_equal "my-server", msg["request"]["serverName"]
+    assert_equal false, msg["request"]["enabled"]
+  end
 end

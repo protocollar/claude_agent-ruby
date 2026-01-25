@@ -11,7 +11,7 @@ module ClaudeAgent
     # Parse a raw message hash into a typed message object
     #
     # @param raw [Hash] Raw message from CLI
-    # @return [UserMessage, UserMessageReplay, AssistantMessage, SystemMessage, ResultMessage, StreamEvent, CompactBoundaryMessage, StatusMessage, ToolProgressMessage, HookResponseMessage, AuthStatusMessage, TaskNotificationMessage]
+    # @return [UserMessage, UserMessageReplay, AssistantMessage, SystemMessage, ResultMessage, StreamEvent, CompactBoundaryMessage, StatusMessage, ToolProgressMessage, HookResponseMessage, AuthStatusMessage, TaskNotificationMessage, HookStartedMessage, HookProgressMessage, ToolUseSummaryMessage]
     # @raise [MessageParseError] If message cannot be parsed
     def parse(raw)
       type = raw["type"]
@@ -32,6 +32,10 @@ module ClaudeAgent
           parse_hook_response_message(raw)
         when "task_notification"
           parse_task_notification_message(raw)
+        when "hook_started"
+          parse_hook_started_message(raw)
+        when "hook_progress"
+          parse_hook_progress_message(raw)
         else
           parse_system_message(raw)
         end
@@ -43,6 +47,8 @@ module ClaudeAgent
         parse_tool_progress_message(raw)
       when "auth_status"
         parse_auth_status_message(raw)
+      when "tool_use_summary"
+        parse_tool_use_summary_message(raw)
       else
         raise MessageParseError.new("Unknown message type: #{type}", raw_message: raw)
       end
@@ -269,6 +275,38 @@ module ClaudeAgent
         status: raw["status"] || "unknown",
         output_file: fetch_dual(raw, :output_file, ""),
         summary: raw["summary"] || ""
+      )
+    end
+
+    def parse_hook_started_message(raw)
+      HookStartedMessage.new(
+        uuid: raw["uuid"] || "",
+        session_id: fetch_dual(raw, :session_id, ""),
+        hook_id: fetch_dual(raw, :hook_id, ""),
+        hook_name: fetch_dual(raw, :hook_name, ""),
+        hook_event: fetch_dual(raw, :hook_event, "")
+      )
+    end
+
+    def parse_hook_progress_message(raw)
+      HookProgressMessage.new(
+        uuid: raw["uuid"] || "",
+        session_id: fetch_dual(raw, :session_id, ""),
+        hook_id: fetch_dual(raw, :hook_id, ""),
+        hook_name: fetch_dual(raw, :hook_name, ""),
+        hook_event: fetch_dual(raw, :hook_event, ""),
+        stdout: raw["stdout"] || "",
+        stderr: raw["stderr"] || "",
+        output: raw["output"] || ""
+      )
+    end
+
+    def parse_tool_use_summary_message(raw)
+      ToolUseSummaryMessage.new(
+        uuid: raw["uuid"] || "",
+        session_id: fetch_dual(raw, :session_id, ""),
+        summary: raw["summary"] || "",
+        preceding_tool_use_ids: fetch_dual(raw, :preceding_tool_use_ids, [])
       )
     end
   end

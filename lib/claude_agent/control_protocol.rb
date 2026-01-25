@@ -363,6 +363,38 @@ module ClaudeAgent
       )
     end
 
+    # Reconnect to an MCP server (TypeScript SDK parity)
+    #
+    # Attempts to reconnect to a disconnected or errored MCP server.
+    #
+    # @param server_name [String] Name of the MCP server to reconnect
+    # @return [Hash] Response from the CLI
+    #
+    # @example
+    #   protocol.mcp_reconnect("my-server")
+    #
+    def mcp_reconnect(server_name)
+      send_control_request(subtype: "mcp_reconnect", serverName: server_name)
+    end
+
+    # Enable or disable an MCP server (TypeScript SDK parity)
+    #
+    # Toggles an MCP server on or off without removing its configuration.
+    #
+    # @param server_name [String] Name of the MCP server to toggle
+    # @param enabled [Boolean] Whether to enable (true) or disable (false) the server
+    # @return [Hash] Response from the CLI
+    #
+    # @example Enable a server
+    #   protocol.mcp_toggle("my-server", enabled: true)
+    #
+    # @example Disable a server
+    #   protocol.mcp_toggle("my-server", enabled: false)
+    #
+    def mcp_toggle(server_name, enabled:)
+      send_control_request(subtype: "mcp_toggle", serverName: server_name, enabled: enabled)
+    end
+
     # Dynamically set MCP servers for this session (TypeScript SDK parity)
     #
     # This replaces the current set of dynamically-added MCP servers.

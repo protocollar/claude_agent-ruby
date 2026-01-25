@@ -581,4 +581,159 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     refute msg.failed?
     assert msg.stopped?
   end
+
+  # --- HookStartedMessage parsing ---
+
+  test "parse_hook_started_message" do
+    raw = {
+      "type" => "system",
+      "subtype" => "hook_started",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "hook_id" => "hook-456",
+      "hook_name" => "my-hook",
+      "hook_event" => "PreToolUse"
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::HookStartedMessage, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal "hook-456", msg.hook_id
+    assert_equal "my-hook", msg.hook_name
+    assert_equal "PreToolUse", msg.hook_event
+    assert_equal :hook_started, msg.type
+  end
+
+  test "parse_hook_started_message_camel_case" do
+    raw = {
+      "type" => "system",
+      "subtype" => "hook_started",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "hookId" => "hook-789",
+      "hookName" => "format-hook",
+      "hookEvent" => "PostToolUse"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "hook-789", msg.hook_id
+    assert_equal "format-hook", msg.hook_name
+    assert_equal "PostToolUse", msg.hook_event
+  end
+
+  # --- HookProgressMessage parsing ---
+
+  test "parse_hook_progress_message" do
+    raw = {
+      "type" => "system",
+      "subtype" => "hook_progress",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "hook_id" => "hook-456",
+      "hook_name" => "my-hook",
+      "hook_event" => "PreToolUse",
+      "stdout" => "Hook output",
+      "stderr" => "Warning message",
+      "output" => "Combined output"
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::HookProgressMessage, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal "hook-456", msg.hook_id
+    assert_equal "my-hook", msg.hook_name
+    assert_equal "PreToolUse", msg.hook_event
+    assert_equal "Hook output", msg.stdout
+    assert_equal "Warning message", msg.stderr
+    assert_equal "Combined output", msg.output
+    assert_equal :hook_progress, msg.type
+  end
+
+  test "parse_hook_progress_message_camel_case" do
+    raw = {
+      "type" => "system",
+      "subtype" => "hook_progress",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "hookId" => "hook-789",
+      "hookName" => "format-hook",
+      "hookEvent" => "PostToolUse",
+      "stdout" => "Output",
+      "stderr" => "",
+      "output" => "Output"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "hook-789", msg.hook_id
+    assert_equal "format-hook", msg.hook_name
+    assert_equal "PostToolUse", msg.hook_event
+  end
+
+  test "parse_hook_progress_message_defaults" do
+    raw = {
+      "type" => "system",
+      "subtype" => "hook_progress",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "hook_id" => "hook-456",
+      "hook_name" => "my-hook",
+      "hook_event" => "PreToolUse"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "", msg.stdout
+    assert_equal "", msg.stderr
+    assert_equal "", msg.output
+  end
+
+  # --- ToolUseSummaryMessage parsing ---
+
+  test "parse_tool_use_summary_message" do
+    raw = {
+      "type" => "tool_use_summary",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "summary" => "Read 3 files",
+      "preceding_tool_use_ids" => [ "tool-1", "tool-2", "tool-3" ]
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::ToolUseSummaryMessage, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal "Read 3 files", msg.summary
+    assert_equal [ "tool-1", "tool-2", "tool-3" ], msg.preceding_tool_use_ids
+    assert_equal :tool_use_summary, msg.type
+  end
+
+  test "parse_tool_use_summary_message_camel_case" do
+    raw = {
+      "type" => "tool_use_summary",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "summary" => "Wrote 2 files",
+      "precedingToolUseIds" => [ "tool-a", "tool-b" ]
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "Wrote 2 files", msg.summary
+    assert_equal [ "tool-a", "tool-b" ], msg.preceding_tool_use_ids
+  end
+
+  test "parse_tool_use_summary_message_defaults" do
+    raw = {
+      "type" => "tool_use_summary",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "summary" => "Read files"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal [], msg.preceding_tool_use_ids
+  end
 end
