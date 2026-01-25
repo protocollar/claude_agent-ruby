@@ -442,23 +442,30 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
       "subtype" => "hook_response",
       "uuid" => "msg-123",
       "session_id" => "sess-abc",
+      "hook_id" => "hook-456",
       "hook_name" => "my-hook",
       "hook_event" => "PreToolUse",
       "stdout" => "Hook output",
       "stderr" => "Warning message",
-      "exit_code" => 0
+      "output" => "Combined output",
+      "exit_code" => 0,
+      "outcome" => "success"
     }
     msg = @parser.parse(raw)
 
     assert_instance_of ClaudeAgent::HookResponseMessage, msg
     assert_equal "msg-123", msg.uuid
     assert_equal "sess-abc", msg.session_id
+    assert_equal "hook-456", msg.hook_id
     assert_equal "my-hook", msg.hook_name
     assert_equal "PreToolUse", msg.hook_event
     assert_equal "Hook output", msg.stdout
     assert_equal "Warning message", msg.stderr
+    assert_equal "Combined output", msg.output
     assert_equal 0, msg.exit_code
+    assert_equal "success", msg.outcome
     assert_equal :hook_response, msg.type
+    assert msg.success?
   end
 
   test "parse_hook_response_message_camel_case" do
@@ -467,18 +474,43 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
       "subtype" => "hook_response",
       "uuid" => "msg-456",
       "sessionId" => "sess-xyz",
+      "hookId" => "hook-789",
       "hookName" => "format-hook",
       "hookEvent" => "PostToolUse",
       "stdout" => "Formatted",
       "stderr" => "",
-      "exitCode" => 1
+      "output" => "Formatted",
+      "exitCode" => 1,
+      "outcome" => "error"
     }
     msg = @parser.parse(raw)
 
     assert_equal "sess-xyz", msg.session_id
+    assert_equal "hook-789", msg.hook_id
     assert_equal "format-hook", msg.hook_name
     assert_equal "PostToolUse", msg.hook_event
     assert_equal 1, msg.exit_code
+    assert_equal "error", msg.outcome
+    assert msg.error?
+  end
+
+  test "parse_hook_response_message_defaults" do
+    raw = {
+      "type" => "system",
+      "subtype" => "hook_response",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "hook_name" => "my-hook",
+      "hook_event" => "PreToolUse"
+    }
+    msg = @parser.parse(raw)
+
+    assert_nil msg.hook_id
+    assert_equal "", msg.stdout
+    assert_equal "", msg.stderr
+    assert_equal "", msg.output
+    assert_nil msg.exit_code
+    assert_nil msg.outcome
   end
 
   # --- AuthStatusMessage parsing ---

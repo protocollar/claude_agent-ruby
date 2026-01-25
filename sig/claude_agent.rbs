@@ -534,14 +534,20 @@ module ClaudeAgent
   class HookResponseMessage
     attr_reader uuid: String
     attr_reader session_id: String
+    attr_reader hook_id: String?
     attr_reader hook_name: String
     attr_reader hook_event: String
     attr_reader stdout: String
     attr_reader stderr: String
+    attr_reader output: String
     attr_reader exit_code: Integer?
+    attr_reader outcome: String?
 
-    def initialize: (uuid: String, session_id: String, hook_name: String, hook_event: String, ?stdout: String, ?stderr: String, ?exit_code: Integer?) -> void
+    def initialize: (uuid: String, session_id: String, ?hook_id: String?, hook_name: String, hook_event: String, ?stdout: String, ?stderr: String, ?output: String, ?exit_code: Integer?, ?outcome: String?) -> void
     def type: () -> :hook_response
+    def success?: () -> bool
+    def error?: () -> bool
+    def cancelled?: () -> bool
   end
 
   # Auth status message (TypeScript SDK parity)
