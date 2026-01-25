@@ -468,6 +468,117 @@ module ClaudeAgent
     end
   end
 
+  # Hook started message (TypeScript SDK parity)
+  #
+  # Sent when a hook execution starts.
+  #
+  # @example
+  #   msg = HookStartedMessage.new(
+  #     uuid: "msg-123",
+  #     session_id: "session-abc",
+  #     hook_id: "hook-456",
+  #     hook_name: "my-hook",
+  #     hook_event: "PreToolUse"
+  #   )
+  #
+  HookStartedMessage = Data.define(
+    :uuid,
+    :session_id,
+    :hook_id,
+    :hook_name,
+    :hook_event
+  ) do
+    def initialize(
+      uuid:,
+      session_id:,
+      hook_id:,
+      hook_name:,
+      hook_event:
+    )
+      super
+    end
+
+    def type
+      :hook_started
+    end
+  end
+
+  # Hook progress message (TypeScript SDK parity)
+  #
+  # Reports progress during hook execution.
+  #
+  # @example
+  #   msg = HookProgressMessage.new(
+  #     uuid: "msg-123",
+  #     session_id: "session-abc",
+  #     hook_id: "hook-456",
+  #     hook_name: "my-hook",
+  #     hook_event: "PreToolUse",
+  #     stdout: "Hook output so far...",
+  #     stderr: "",
+  #     output: "Combined output"
+  #   )
+  #
+  HookProgressMessage = Data.define(
+    :uuid,
+    :session_id,
+    :hook_id,
+    :hook_name,
+    :hook_event,
+    :stdout,
+    :stderr,
+    :output
+  ) do
+    def initialize(
+      uuid:,
+      session_id:,
+      hook_id:,
+      hook_name:,
+      hook_event:,
+      stdout: "",
+      stderr: "",
+      output: ""
+    )
+      super
+    end
+
+    def type
+      :hook_progress
+    end
+  end
+
+  # Tool use summary message (TypeScript SDK parity)
+  #
+  # Contains a summary of tool use for collapsed display.
+  #
+  # @example
+  #   msg = ToolUseSummaryMessage.new(
+  #     uuid: "msg-123",
+  #     session_id: "session-abc",
+  #     summary: "Read 3 files",
+  #     preceding_tool_use_ids: ["tool-1", "tool-2", "tool-3"]
+  #   )
+  #
+  ToolUseSummaryMessage = Data.define(
+    :uuid,
+    :session_id,
+    :summary,
+    :preceding_tool_use_ids
+  ) do
+    def initialize(
+      uuid:,
+      session_id:,
+      summary:,
+      preceding_tool_use_ids: []
+    )
+      super
+    end
+
+    def type
+      :tool_use_summary
+    end
+  end
+
   # All message types
   MESSAGE_TYPES = [
     UserMessage,
@@ -481,6 +592,9 @@ module ClaudeAgent
     ToolProgressMessage,
     HookResponseMessage,
     AuthStatusMessage,
-    TaskNotificationMessage
+    TaskNotificationMessage,
+    HookStartedMessage,
+    HookProgressMessage,
+    ToolUseSummaryMessage
   ].freeze
 end

@@ -382,4 +382,96 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
   test "task_notification_message_in_types_constant" do
     assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::TaskNotificationMessage
   end
+
+  # --- HookStartedMessage ---
+
+  test "hook_started_message" do
+    msg = ClaudeAgent::HookStartedMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      hook_id: "hook-456",
+      hook_name: "my-hook",
+      hook_event: "PreToolUse"
+    )
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal "hook-456", msg.hook_id
+    assert_equal "my-hook", msg.hook_name
+    assert_equal "PreToolUse", msg.hook_event
+    assert_equal :hook_started, msg.type
+  end
+
+  test "hook_started_message_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::HookStartedMessage
+  end
+
+  # --- HookProgressMessage ---
+
+  test "hook_progress_message" do
+    msg = ClaudeAgent::HookProgressMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      hook_id: "hook-456",
+      hook_name: "my-hook",
+      hook_event: "PreToolUse",
+      stdout: "Hook output",
+      stderr: "Warning",
+      output: "Combined output"
+    )
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal "hook-456", msg.hook_id
+    assert_equal "my-hook", msg.hook_name
+    assert_equal "PreToolUse", msg.hook_event
+    assert_equal "Hook output", msg.stdout
+    assert_equal "Warning", msg.stderr
+    assert_equal "Combined output", msg.output
+    assert_equal :hook_progress, msg.type
+  end
+
+  test "hook_progress_message_defaults" do
+    msg = ClaudeAgent::HookProgressMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      hook_id: "hook-456",
+      hook_name: "my-hook",
+      hook_event: "PreToolUse"
+    )
+    assert_equal "", msg.stdout
+    assert_equal "", msg.stderr
+    assert_equal "", msg.output
+  end
+
+  test "hook_progress_message_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::HookProgressMessage
+  end
+
+  # --- ToolUseSummaryMessage ---
+
+  test "tool_use_summary_message" do
+    msg = ClaudeAgent::ToolUseSummaryMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      summary: "Read 3 files",
+      preceding_tool_use_ids: [ "tool-1", "tool-2", "tool-3" ]
+    )
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal "Read 3 files", msg.summary
+    assert_equal [ "tool-1", "tool-2", "tool-3" ], msg.preceding_tool_use_ids
+    assert_equal :tool_use_summary, msg.type
+  end
+
+  test "tool_use_summary_message_defaults" do
+    msg = ClaudeAgent::ToolUseSummaryMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      summary: "Read files"
+    )
+    assert_equal [], msg.preceding_tool_use_ids
+  end
+
+  test "tool_use_summary_message_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::ToolUseSummaryMessage
+  end
 end

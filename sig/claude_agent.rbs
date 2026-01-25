@@ -393,7 +393,7 @@ module ClaudeAgent
   CONTENT_BLOCK_TYPES: Array[Class]
 
   # Message types
-  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage
+  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage
 
   MESSAGE_TYPES: Array[Class]
 
@@ -554,6 +554,60 @@ module ClaudeAgent
 
     def initialize: (uuid: String, session_id: String, is_authenticating: bool, ?output: Array[String], ?error: String?) -> void
     def type: () -> :auth_status
+  end
+
+  # Task notification message (TypeScript SDK parity)
+  class TaskNotificationMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader task_id: String
+    attr_reader status: String
+    attr_reader output_file: String
+    attr_reader summary: String
+
+    def initialize: (uuid: String, session_id: String, task_id: String, status: String, output_file: String, summary: String) -> void
+    def type: () -> :task_notification
+    def completed?: () -> bool
+    def failed?: () -> bool
+    def stopped?: () -> bool
+  end
+
+  # Hook started message (TypeScript SDK parity)
+  class HookStartedMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader hook_id: String
+    attr_reader hook_name: String
+    attr_reader hook_event: String
+
+    def initialize: (uuid: String, session_id: String, hook_id: String, hook_name: String, hook_event: String) -> void
+    def type: () -> :hook_started
+  end
+
+  # Hook progress message (TypeScript SDK parity)
+  class HookProgressMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader hook_id: String
+    attr_reader hook_name: String
+    attr_reader hook_event: String
+    attr_reader stdout: String
+    attr_reader stderr: String
+    attr_reader output: String
+
+    def initialize: (uuid: String, session_id: String, hook_id: String, hook_name: String, hook_event: String, ?stdout: String, ?stderr: String, ?output: String) -> void
+    def type: () -> :hook_progress
+  end
+
+  # Tool use summary message (TypeScript SDK parity)
+  class ToolUseSummaryMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader summary: String
+    attr_reader preceding_tool_use_ids: Array[String]
+
+    def initialize: (uuid: String, session_id: String, summary: String, ?preceding_tool_use_ids: Array[String]) -> void
+    def type: () -> :tool_use_summary
   end
 
   # Message parser
@@ -765,6 +819,8 @@ module ClaudeAgent
     def rewind_files: (String user_message_id, ?dry_run: bool) -> RewindFilesResult
     def set_max_thinking_tokens: (Integer? tokens) -> Hash[String, untyped]
     def set_mcp_servers: (Hash[String, untyped] servers) -> McpSetServersResult
+    def mcp_reconnect: (String server_name) -> Hash[String, untyped]
+    def mcp_toggle: (String server_name, enabled: bool) -> Hash[String, untyped]
     def supported_commands: () -> Array[SlashCommand]
     def supported_models: () -> Array[ModelInfo]
     def mcp_server_status: () -> Array[McpServerStatus]
@@ -798,6 +854,8 @@ module ClaudeAgent
     def rewind_files: (String user_message_id, ?dry_run: bool) -> RewindFilesResult
     def set_max_thinking_tokens: (Integer? tokens) -> Hash[String, untyped]
     def set_mcp_servers: (Hash[String, untyped] servers) -> McpSetServersResult
+    def mcp_reconnect: (String server_name) -> Hash[String, untyped]
+    def mcp_toggle: (String server_name, enabled: bool) -> Hash[String, untyped]
     def supported_commands: () -> Array[SlashCommand]
     def supported_models: () -> Array[ModelInfo]
     def mcp_server_status: () -> Array[McpServerStatus]

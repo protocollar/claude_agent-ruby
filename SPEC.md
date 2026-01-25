@@ -3,8 +3,8 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.12 (npm package)
-- Python SDK: v0.1.20 from GitHub (commit 05d2eb4)
+- TypeScript SDK: v0.2.19 (npm package)
+- Python SDK: v0.1.22 from GitHub (commit 6a0140a)
 - Ruby SDK: This repository
 
 ---
@@ -58,6 +58,7 @@ Configuration options for SDK queries and clients.
 | `strictMcpConfig`                 |     ✅      |   ❌    |  ✅   | Strict validation of MCP config                              |
 | `hooks`                           |     ✅      |   ✅    |  ✅   | Hook callbacks                                               |
 | `agents`                          |     ✅      |   ✅    |  ✅   | Custom subagent definitions                                  |
+| `agent`                           |     ✅      |   ❌    |  ✅   | Agent name for main thread                                   |
 | `cwd`                             |     ✅      |   ✅    |  ✅   | Working directory                                            |
 | `additionalDirectories`           |     ✅      |   ✅    |  ✅   | Extra allowed directories                                    |
 | `env`                             |     ✅      |   ✅    |  ✅   | Environment variables                                        |
@@ -66,7 +67,6 @@ Configuration options for SDK queries and clients.
 | `settingSources`                  |     ✅      |   ✅    |  ✅   | Which settings to load                                       |
 | `plugins`                         |     ✅      |   ✅    |  ✅   | Plugin configurations                                        |
 | `betas`                           |     ✅      |   ✅    |  ✅   | Beta features (e.g., context-1m-2025-08-07)                  |
-| `agent`                           |     ✅      |   ❌    |  ✅   | Agent name for main thread                                   |
 | `abortController`                 |     ✅      |   ❌    |  ✅   | Cancellation controller                                      |
 | `stderr`                          |     ✅      |   ✅    |  ✅   | Stderr callback                                              |
 | `spawnClaudeCodeProcess`          |     ✅      |   ❌    |  ✅   | Custom spawn function                                        |
@@ -85,20 +85,23 @@ Configuration options for SDK queries and clients.
 
 Messages exchanged between SDK and CLI.
 
-| Message Type             | TypeScript | Python | Ruby | Notes                           |
-|--------------------------|:----------:|:------:|:----:|---------------------------------|
-| `UserMessage`            |     ✅      |   ✅    |  ✅   | User input                      |
-| `UserMessageReplay`      |     ✅      |   ❌    |  ✅   | Replayed user message on resume |
-| `AssistantMessage`       |     ✅      |   ✅    |  ✅   | Claude response                 |
-| `SystemMessage`          |     ✅      |   ✅    |  ✅   | System/init messages            |
-| `ResultMessage`          |     ✅      |   ✅    |  ✅   | Final result with usage         |
-| `StreamEvent`            |     ✅      |   ✅    |  ✅   | Partial streaming events        |
-| `CompactBoundaryMessage` |     ✅      |   ❌    |  ✅   | Conversation compaction marker  |
-| `StatusMessage`          |     ✅      |   ❌    |  ✅   | Status updates (compacting)     |
-| `ToolProgressMessage`    |     ✅      |   ❌    |  ✅   | Long-running tool progress      |
-| `HookResponseMessage`    |     ✅      |   ❌    |  ✅   | Hook execution output           |
-| `AuthStatusMessage`      |     ✅      |   ❌    |  ✅   | Authentication status           |
-| `TaskNotificationMessage`|     ✅      |   ❌    |  ✅   | Background task completion      |
+| Message Type              | TypeScript | Python | Ruby | Notes                              |
+|---------------------------|:----------:|:------:|:----:|------------------------------------|
+| `UserMessage`             |     ✅      |   ✅    |  ✅   | User input                         |
+| `UserMessageReplay`       |     ✅      |   ❌    |  ✅   | Replayed user message on resume    |
+| `AssistantMessage`        |     ✅      |   ✅    |  ✅   | Claude response                    |
+| `SystemMessage`           |     ✅      |   ✅    |  ✅   | System/init messages               |
+| `ResultMessage`           |     ✅      |   ✅    |  ✅   | Final result with usage            |
+| `StreamEvent`             |     ✅      |   ✅    |  ✅   | Partial streaming events           |
+| `CompactBoundaryMessage`  |     ✅      |   ❌    |  ✅   | Conversation compaction marker     |
+| `StatusMessage`           |     ✅      |   ❌    |  ✅   | Status updates (compacting)        |
+| `ToolProgressMessage`     |     ✅      |   ❌    |  ✅   | Long-running tool progress         |
+| `HookStartedMessage`      |     ✅      |   ❌    |  ✅   | Hook execution started             |
+| `HookProgressMessage`     |     ✅      |   ❌    |  ✅   | Hook progress during execution     |
+| `HookResponseMessage`     |     ✅      |   ❌    |  ✅   | Hook execution output              |
+| `AuthStatusMessage`       |     ✅      |   ❌    |  ✅   | Authentication status              |
+| `TaskNotificationMessage` |     ✅      |   ❌    |  ✅   | Background task completion         |
+| `ToolUseSummaryMessage`   |     ✅      |   ❌    |  ✅   | Summary of tool use (collapsed)    |
 
 ### Message Fields
 
@@ -185,6 +188,8 @@ Bidirectional control protocol for SDK-CLI communication.
 | `mcp_message`             |     ✅      |   ✅    |  ✅   | Route MCP message                 |
 | `mcp_set_servers`         |     ✅      |   ❌    |  ✅   | Dynamically set MCP servers       |
 | `mcp_status`              |     ✅      |   ❌    |  ✅   | Get MCP server status             |
+| `mcp_reconnect`           |     ✅      |   ❌    |  ✅   | Reconnect to MCP server           |
+| `mcp_toggle`              |     ✅      |   ❌    |  ✅   | Enable/disable MCP server         |
 | `supported_commands`      |     ✅      |   ❌    |  ✅   | Get available slash commands      |
 | `supported_models`        |     ✅      |   ❌    |  ✅   | Get available models              |
 | `account_info`            |     ✅      |   ❌    |  ✅   | Get account information           |
@@ -264,7 +269,7 @@ Event-specific fields returned via `hookSpecificOutput`:
 
 | Field                      | TypeScript | Python | Ruby | Notes                              |
 |----------------------------|:----------:|:------:|:----:|------------------------------------|
-| `permissionDecision`       |     ✅      |   ❌    |  ✅   | `allow`, `deny`, or `ask`          |
+| `permissionDecision`       |     ✅      |   ✅    |  ✅   | `allow`, `deny`, or `ask`          |
 | `permissionDecisionReason` |     ✅      |   ❌    |  ✅   | Reason for permission decision     |
 | `updatedInput`             |     ✅      |   ✅    |  ✅   | Modified tool input                |
 | `additionalContext`        |     ✅      |   ❌    |  ✅   | Context string returned to model   |
@@ -273,7 +278,7 @@ Event-specific fields returned via `hookSpecificOutput`:
 
 | Field                  | TypeScript | Python | Ruby | Notes                            |
 |------------------------|:----------:|:------:|:----:|----------------------------------|
-| `additionalContext`    |     ✅      |   ❌    |  ✅   | Context string returned to model |
+| `additionalContext`    |     ✅      |   ✅    |  ✅   | Context string returned to model |
 | `updatedMCPToolOutput` |     ✅      |   ❌    |  ✅   | Modified MCP tool output         |
 
 #### PostToolUseFailureHookSpecificOutput
@@ -304,13 +309,19 @@ Event-specific fields returned via `hookSpecificOutput`:
 
 | Field               | TypeScript | Python | Ruby | Notes                            |
 |---------------------|:----------:|:------:|:----:|----------------------------------|
-| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
+| `additionalContext` |     ✅      |   ✅    |  ✅   | Context string returned to model |
 
 #### PermissionRequestHookSpecificOutput
 
 | Field      | TypeScript | Python | Ruby | Notes                                    |
 |------------|:----------:|:------:|:----:|------------------------------------------|
 | `decision` |     ✅      |   ❌    |  ✅   | `{ behavior: 'allow'/'deny', ... }` obj  |
+
+#### NotificationHookSpecificOutput
+
+| Field               | TypeScript | Python | Ruby | Notes                            |
+|---------------------|:----------:|:------:|:----:|----------------------------------|
+| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
 
 ### Hook Matcher
 
@@ -569,6 +580,7 @@ Public API surface for SDK clients.
 | `rewindFiles()`          |     ✅      |   ✅    |  ✅   | Rewind file changes    |
 | `setMcpServers()`        |     ✅      |   ❌    |  ✅   | Dynamic MCP servers    |
 | `streamInput()`          |     ✅      |   ❌    |  ✅   | Stream user input      |
+| `close()`                |     ✅      |   ❌    |  ✅   | Close query/session    |
 
 ### Client Class
 
@@ -611,21 +623,24 @@ Public API surface for SDK clients.
 - Adds `deno` as supported executable option
 - Includes experimental `criticalSystemReminder_EXPERIMENTAL` for agent definitions
 - `SessionStartHookInput` includes `model` field
-- v0.2.12 adds `Setup` hook event for init/maintenance
-- v0.2.12 adds `skills` and `maxTurns` to AgentDefinition
-- v0.2.12 adds `TaskNotificationMessage` for background task completion
-- v0.2.12 adds `user` option to SDKSessionOptions
+- v0.2.12+ adds `Setup` hook event for init/maintenance
+- v0.2.12+ adds `skills` and `maxTurns` to AgentDefinition
+- v0.2.12+ adds `TaskNotificationMessage` for background task completion
+- v0.2.12+ adds `user` option to SDKSessionOptions
+- v0.2.19 adds `mcp_reconnect` and `mcp_toggle` control requests
+- v0.2.19 adds `HookStartedMessage`, `HookProgressMessage`, and `ToolUseSummaryMessage`
 
 ### Python SDK
-- Full source available (v0.1.20)
+- Full source available (v0.1.22)
 - Fewer control protocol features than TypeScript
 - Does not support SessionStart/SessionEnd/Notification hooks due to setup limitations
 - Missing several permission modes (delegate, dontAsk)
 - `excludedCommands` in sandbox now supported
 - `tool_use_id` now included in PreToolUseHookInput
+- `additionalContext` now supported in UserPromptSubmitHookSpecificOutput
 
 ### Ruby SDK (This Repository)
-- Full TypeScript SDK feature parity achieved
+- Complete TypeScript SDK feature parity
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol support
 - Dedicated Client class for multi-turn conversations
