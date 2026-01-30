@@ -11,7 +11,7 @@ module ClaudeAgent
     # Parse a raw message hash into a typed message object
     #
     # @param raw [Hash] Raw message from CLI
-    # @return [UserMessage, UserMessageReplay, AssistantMessage, SystemMessage, ResultMessage, StreamEvent, CompactBoundaryMessage, StatusMessage, ToolProgressMessage, HookResponseMessage, AuthStatusMessage, TaskNotificationMessage, HookStartedMessage, HookProgressMessage, ToolUseSummaryMessage]
+    # @return [UserMessage, UserMessageReplay, AssistantMessage, SystemMessage, ResultMessage, StreamEvent, CompactBoundaryMessage, StatusMessage, ToolProgressMessage, HookResponseMessage, AuthStatusMessage, TaskNotificationMessage, HookStartedMessage, HookProgressMessage, ToolUseSummaryMessage, FilesPersistedEvent]
     # @raise [MessageParseError] If message cannot be parsed
     def parse(raw)
       type = raw["type"]
@@ -36,6 +36,8 @@ module ClaudeAgent
           parse_hook_started_message(raw)
         when "hook_progress"
           parse_hook_progress_message(raw)
+        when "files_persisted"
+          parse_files_persisted_event(raw)
         else
           parse_system_message(raw)
         end
@@ -310,6 +312,16 @@ module ClaudeAgent
         session_id: fetch_dual(raw, :session_id, ""),
         summary: raw["summary"] || "",
         preceding_tool_use_ids: fetch_dual(raw, :preceding_tool_use_ids, [])
+      )
+    end
+
+    def parse_files_persisted_event(raw)
+      FilesPersistedEvent.new(
+        uuid: raw["uuid"] || "",
+        session_id: fetch_dual(raw, :session_id, ""),
+        files: raw["files"] || [],
+        failed: raw["failed"] || [],
+        processed_at: fetch_dual(raw, :processed_at)
       )
     end
   end
