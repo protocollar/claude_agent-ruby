@@ -38,6 +38,7 @@ class TestIntegrationMessages < IntegrationTestCase
     assert ClaudeAgent::MESSAGE_TYPES.include?(ClaudeAgent::HookStartedMessage)
     assert ClaudeAgent::MESSAGE_TYPES.include?(ClaudeAgent::HookProgressMessage)
     assert ClaudeAgent::MESSAGE_TYPES.include?(ClaudeAgent::ToolUseSummaryMessage)
+    assert ClaudeAgent::MESSAGE_TYPES.include?(ClaudeAgent::FilesPersistedEvent)
   end
 
   test "TaskNotificationMessage type" do
@@ -193,5 +194,34 @@ class TestIntegrationMessages < IntegrationTestCase
     )
 
     assert_equal [], msg.preceding_tool_use_ids
+  end
+
+  test "FilesPersistedEvent type" do
+    msg = ClaudeAgent::FilesPersistedEvent.new(
+      uuid: "msg-123",
+      session_id: "sess-456",
+      files: [ { "filename" => "test.rb", "file_id" => "file-789" } ],
+      failed: [ { "filename" => "bad.rb", "error" => "Permission denied" } ],
+      processed_at: "2026-01-30T12:00:00Z"
+    )
+
+    assert_equal :files_persisted, msg.type
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-456", msg.session_id
+    assert_equal 1, msg.files.length
+    assert_equal "test.rb", msg.files.first["filename"]
+    assert_equal 1, msg.failed.length
+    assert_equal "2026-01-30T12:00:00Z", msg.processed_at
+  end
+
+  test "FilesPersistedEvent defaults" do
+    msg = ClaudeAgent::FilesPersistedEvent.new(
+      uuid: "msg-123",
+      session_id: "sess-456"
+    )
+
+    assert_equal [], msg.files
+    assert_equal [], msg.failed
+    assert_nil msg.processed_at
   end
 end

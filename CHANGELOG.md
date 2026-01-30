@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `FilesPersistedEvent` message type for file persistence confirmation (TypeScript SDK v0.2.25 parity)
+- `claudeai-proxy` MCP server type support via Hash-based config passthrough
+
+### Changed
+- Updated SPEC.md to reference TypeScript SDK v0.2.25 and Python SDK v0.1.25
+
 ## [0.5.0] - 2026-01-25
 
 ### Added

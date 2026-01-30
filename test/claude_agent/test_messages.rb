@@ -522,4 +522,38 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
   test "tool_use_summary_message_in_types_constant" do
     assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::ToolUseSummaryMessage
   end
+
+  # --- FilesPersistedEvent ---
+
+  test "files_persisted_event" do
+    files = [ { "filename" => "test.rb", "file_id" => "file-456" } ]
+    failed = [ { "filename" => "bad.rb", "error" => "Permission denied" } ]
+    msg = ClaudeAgent::FilesPersistedEvent.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      files: files,
+      failed: failed,
+      processed_at: "2026-01-30T12:00:00Z"
+    )
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal files, msg.files
+    assert_equal failed, msg.failed
+    assert_equal "2026-01-30T12:00:00Z", msg.processed_at
+    assert_equal :files_persisted, msg.type
+  end
+
+  test "files_persisted_event_defaults" do
+    msg = ClaudeAgent::FilesPersistedEvent.new(
+      uuid: "msg-123",
+      session_id: "session-abc"
+    )
+    assert_equal [], msg.files
+    assert_equal [], msg.failed
+    assert_nil msg.processed_at
+  end
+
+  test "files_persisted_event_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::FilesPersistedEvent
+  end
 end

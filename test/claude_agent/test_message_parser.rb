@@ -768,4 +768,64 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
 
     assert_equal [], msg.preceding_tool_use_ids
   end
+
+  # --- FilesPersistedEvent parsing ---
+
+  test "parse_files_persisted_event" do
+    raw = {
+      "type" => "system",
+      "subtype" => "files_persisted",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "files" => [
+        { "filename" => "test.rb", "file_id" => "file-456" }
+      ],
+      "failed" => [
+        { "filename" => "bad.rb", "error" => "Permission denied" }
+      ],
+      "processed_at" => "2026-01-30T12:00:00Z"
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::FilesPersistedEvent, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal 1, msg.files.size
+    assert_equal "test.rb", msg.files.first["filename"]
+    assert_equal "file-456", msg.files.first["file_id"]
+    assert_equal 1, msg.failed.size
+    assert_equal "bad.rb", msg.failed.first["filename"]
+    assert_equal "2026-01-30T12:00:00Z", msg.processed_at
+    assert_equal :files_persisted, msg.type
+  end
+
+  test "parse_files_persisted_event_camel_case" do
+    raw = {
+      "type" => "system",
+      "subtype" => "files_persisted",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "files" => [],
+      "failed" => [],
+      "processedAt" => "2026-01-30T13:00:00Z"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "2026-01-30T13:00:00Z", msg.processed_at
+  end
+
+  test "parse_files_persisted_event_defaults" do
+    raw = {
+      "type" => "system",
+      "subtype" => "files_persisted",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal [], msg.files
+    assert_equal [], msg.failed
+    assert_nil msg.processed_at
+  end
 end

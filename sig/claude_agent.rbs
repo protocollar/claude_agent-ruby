@@ -393,7 +393,7 @@ module ClaudeAgent
   CONTENT_BLOCK_TYPES: Array[Class]
 
   # Message types
-  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage
+  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent
 
   MESSAGE_TYPES: Array[Class]
 
@@ -614,6 +614,18 @@ module ClaudeAgent
 
     def initialize: (uuid: String, session_id: String, summary: String, ?preceding_tool_use_ids: Array[String]) -> void
     def type: () -> :tool_use_summary
+  end
+
+  # Files persisted event (TypeScript SDK v0.2.25 parity)
+  class FilesPersistedEvent
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader files: Array[Hash[String, String]]
+    attr_reader failed: Array[Hash[String, String]]
+    attr_reader processed_at: String?
+
+    def initialize: (uuid: String, session_id: String, ?files: Array[Hash[String, String]], ?failed: Array[Hash[String, String]], ?processed_at: String?) -> void
+    def type: () -> :files_persisted
   end
 
   # Message parser

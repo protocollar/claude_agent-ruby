@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.19 (npm package)
-- Python SDK: v0.1.22 from GitHub (commit 6a0140a)
+- TypeScript SDK: v0.2.25 (npm package)
+- Python SDK: v0.1.25 from GitHub (commit 1bf665c)
 - Ruby SDK: This repository
 
-**Last Updated:** 2025-01-25
+**Last Updated:** 2026-01-30
 
 ---
 
@@ -65,7 +65,7 @@ Configuration options for SDK queries and clients.
 | `additionalDirectories`           |     ✅      |   ✅    |  ✅   | Extra allowed directories                                    |
 | `env`                             |     ✅      |   ✅    |  ✅   | Environment variables                                        |
 | `sandbox`                         |     ✅      |   ✅    |  ✅   | Sandbox settings                                             |
-| `settings`                        |     ✅      |   ❌    |  ✅   | Settings file path or JSON string (e.g., plansDirectory)     |
+| `settings`                        |     ✅      |   ✅    |  ✅   | Settings file path or JSON string (e.g., plansDirectory)     |
 | `settingSources`                  |     ✅      |   ✅    |  ✅   | Which settings to load                                       |
 | `plugins`                         |     ✅      |   ✅    |  ✅   | Plugin configurations                                        |
 | `betas`                           |     ✅      |   ✅    |  ✅   | Beta features (e.g., context-1m-2025-08-07)                  |
@@ -104,6 +104,7 @@ Messages exchanged between SDK and CLI.
 | `AuthStatusMessage`       |     ✅      |   ❌    |  ✅   | Authentication status              |
 | `TaskNotificationMessage` |     ✅      |   ❌    |  ✅   | Background task completion         |
 | `ToolUseSummaryMessage`   |     ✅      |   ❌    |  ✅   | Summary of tool use (collapsed)    |
+| `FilesPersistedEvent`     |     ✅      |   ❌    |  ✅   | File persistence confirmation      |
 
 ### Message Fields
 
@@ -212,12 +213,12 @@ Bidirectional control protocol for SDK-CLI communication.
 | `can_use_tool`            |     ✅      |   ✅    |  ✅   | Permission callback               |
 | `hook_callback`           |     ✅      |   ✅    |  ✅   | Execute hook callback             |
 | `set_permission_mode`     |     ✅      |   ✅    |  ✅   | Change permission mode            |
-| `set_model`               |     ✅      |   ❌    |  ✅   | Change model                      |
+| `set_model`               |     ✅      |   ✅    |  ✅   | Change model                      |
 | `set_max_thinking_tokens` |     ✅      |   ❌    |  ✅   | Change thinking tokens limit      |
 | `rewind_files`            |     ✅      |   ✅    |  ✅   | Rewind file checkpoints           |
 | `mcp_message`             |     ✅      |   ✅    |  ✅   | Route MCP message                 |
 | `mcp_set_servers`         |     ✅      |   ❌    |  ✅   | Dynamically set MCP servers       |
-| `mcp_status`              |     ✅      |   ❌    |  ✅   | Get MCP server status             |
+| `mcp_status`              |     ✅      |   ✅    |  ✅   | Get MCP server status             |
 | `mcp_reconnect`           |     ✅      |   ❌    |  ✅   | Reconnect to MCP server           |
 | `mcp_toggle`              |     ✅      |   ❌    |  ✅   | Enable/disable MCP server         |
 | `supported_commands`      |     ✅      |   ❌    |  ✅   | Get available slash commands      |
@@ -247,7 +248,7 @@ Event hooks for intercepting and modifying SDK behavior.
 |----------------------|:----------:|:------:|:----:|---------------------------|
 | `PreToolUse`         |     ✅      |   ✅    |  ✅   | Before tool execution     |
 | `PostToolUse`        |     ✅      |   ✅    |  ✅   | After tool execution      |
-| `PostToolUseFailure` |     ✅      |   ❌    |  ✅   | After tool failure        |
+| `PostToolUseFailure` |     ✅      |   ✅    |  ✅   | After tool failure        |
 | `Notification`       |     ✅      |   ❌    |  ✅   | System notifications      |
 | `UserPromptSubmit`   |     ✅      |   ✅    |  ✅   | User message submitted    |
 | `SessionStart`       |     ✅      |   ❌    |  ✅   | Session starts            |
@@ -265,7 +266,7 @@ Event hooks for intercepting and modifying SDK behavior.
 |-------------------------------|:----------:|:------:|:----:|
 | `PreToolUseHookInput`         |     ✅      |   ✅    |  ✅   |
 | `PostToolUseHookInput`        |     ✅      |   ✅    |  ✅   |
-| `PostToolUseFailureHookInput` |     ✅      |   ❌    |  ✅   |
+| `PostToolUseFailureHookInput` |     ✅      |   ✅    |  ✅   |
 | `NotificationHookInput`       |     ✅      |   ❌    |  ✅   |
 | `UserPromptSubmitHookInput`   |     ✅      |   ✅    |  ✅   |
 | `SessionStartHookInput`       |     ✅      |   ❌    |  ✅   |
@@ -300,7 +301,7 @@ Event-specific fields returned via `hookSpecificOutput`:
 | Field                      | TypeScript | Python | Ruby | Notes                              |
 |----------------------------|:----------:|:------:|:----:|------------------------------------|
 | `permissionDecision`       |     ✅      |   ✅    |  ✅   | `allow`, `deny`, or `ask`          |
-| `permissionDecisionReason` |     ✅      |   ❌    |  ✅   | Reason for permission decision     |
+| `permissionDecisionReason` |     ✅      |   ✅    |  ✅   | Reason for permission decision     |
 | `updatedInput`             |     ✅      |   ✅    |  ✅   | Modified tool input                |
 | `additionalContext`        |     ✅      |   ❌    |  ✅   | Context string returned to model   |
 
@@ -315,7 +316,7 @@ Event-specific fields returned via `hookSpecificOutput`:
 
 | Field               | TypeScript | Python | Ruby | Notes                            |
 |---------------------|:----------:|:------:|:----:|----------------------------------|
-| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
+| `additionalContext` |     ✅      |   ✅    |  ✅   | Context string returned to model |
 
 #### SessionStartHookSpecificOutput
 
@@ -436,12 +437,13 @@ Model Context Protocol server support.
 
 ### MCP Server Types
 
-| Type    | TypeScript | Python | Ruby | Notes                 |
-|---------|:----------:|:------:|:----:|-----------------------|
-| `stdio` |     ✅      |   ✅    |  ✅   | Subprocess with stdio |
-| `sse`   |     ✅      |   ✅    |  ✅   | Server-sent events    |
-| `http`  |     ✅      |   ✅    |  ✅   | HTTP transport        |
-| `sdk`   |     ✅      |   ✅    |  ✅   | In-process SDK server |
+| Type             | TypeScript | Python | Ruby | Notes                            |
+|------------------|:----------:|:------:|:----:|----------------------------------|
+| `stdio`          |     ✅      |   ✅    |  ✅   | Subprocess with stdio            |
+| `sse`            |     ✅      |   ✅    |  ✅   | Server-sent events               |
+| `http`           |     ✅      |   ✅    |  ✅   | HTTP transport                   |
+| `sdk`            |     ✅      |   ✅    |  ✅   | In-process SDK server            |
+| `claudeai-proxy` |     ✅      |   ❌    |  ✅   | Claude.ai proxy server (managed) |
 
 ### MCP Server Config Fields
 
@@ -595,41 +597,41 @@ Public API surface for SDK clients.
 | One-shot query function | ✅ `query()` | ✅ `query()` | ✅ `ClaudeAgent.query()` | Simple prompts     |
 | Returns async generator |      ✅      |      ✅      |     ✅ (Enumerator)      | Streaming messages |
 
-### Query Control Methods (TypeScript)
+### Query Control Methods
 
 | Method                   | TypeScript | Python | Ruby | Notes                  |
 |--------------------------|:----------:|:------:|:----:|------------------------|
-| `interrupt()`            |     ✅      |   ❌    |  ✅   | Interrupt execution    |
-| `setPermissionMode()`    |     ✅      |   ❌    |  ✅   | Change permission mode |
-| `setModel()`             |     ✅      |   ❌    |  ✅   | Change model           |
+| `interrupt()`            |     ✅      |   ✅    |  ✅   | Interrupt execution    |
+| `setPermissionMode()`    |     ✅      |   ✅    |  ✅   | Change permission mode |
+| `setModel()`             |     ✅      |   ✅    |  ✅   | Change model           |
 | `setMaxThinkingTokens()` |     ✅      |   ❌    |  ✅   | Set thinking limit     |
 | `supportedCommands()`    |     ✅      |   ❌    |  ✅   | Get slash commands     |
 | `supportedModels()`      |     ✅      |   ❌    |  ✅   | Get available models   |
-| `mcpServerStatus()`      |     ✅      |   ❌    |  ✅   | Get MCP status         |
+| `mcpServerStatus()`      |     ✅      |   ✅    |  ✅   | Get MCP status         |
 | `accountInfo()`          |     ✅      |   ❌    |  ✅   | Get account info       |
 | `rewindFiles()`          |     ✅      |   ✅    |  ✅   | Rewind file changes    |
 | `setMcpServers()`        |     ✅      |   ❌    |  ✅   | Dynamic MCP servers    |
-| `streamInput()`          |     ✅      |   ❌    |  ✅   | Stream user input      |
-| `close()`                |     ✅      |   ❌    |  ✅   | Close query/session    |
+| `streamInput()`          |     ✅      |   ✅    |  ✅   | Stream user input      |
+| `close()`                |     ✅      |   ✅    |  ✅   | Close query/session    |
 
 ### Client Class
 
-| Feature              | TypeScript |       Python        |          Ruby           | Notes                          |
-|----------------------|:----------:|:-------------------:|:-----------------------:|--------------------------------|
-| Multi-turn client    |     ❌      | ✅ `ClaudeSDKClient` | ✅ `ClaudeAgent::Client` | Interactive sessions           |
-| `connect()`          |    N/A     |          ✅          |            ✅            | Start session                  |
-| `disconnect()`       |    N/A     |          ✅          |            ✅            | End session                    |
-| `send_message()`     |    N/A     |          ✅          |            ✅            | Send user message              |
-| `receive_response()` |    N/A     |          ✅          |            ✅            | Receive until result           |
-| `stream_input()`     |    N/A     |          ❌          |            ✅            | Stream input messages          |
-| `abort!()`           |    N/A     |          ❌          |            ✅            | Abort operations               |
-| Control methods      |    N/A     |       Partial       |            ✅            | All TypeScript control methods |
+| Feature              | TypeScript |       Python        |          Ruby           | Notes                                                                            |
+|----------------------|:----------:|:-------------------:|:-----------------------:|----------------------------------------------------------------------------------|
+| Multi-turn client    |     ❌      | ✅ `ClaudeSDKClient` | ✅ `ClaudeAgent::Client` | Interactive sessions                                                             |
+| `connect()`          |    N/A     |          ✅          |            ✅            | Start session                                                                    |
+| `disconnect()`       |    N/A     |          ✅          |            ✅            | End session                                                                      |
+| `send_message()`     |    N/A     |          ✅          |            ✅            | Send user message                                                                |
+| `receive_response()` |    N/A     |          ✅          |            ✅            | Receive until result                                                             |
+| `stream_input()`     |    N/A     |          ❌          |            ✅            | Stream input messages                                                            |
+| `abort!()`           |    N/A     |          ❌          |            ✅            | Abort operations                                                                 |
+| Control methods      |    N/A     |       Partial       |            ✅            | interrupt, setPermissionMode, setModel, rewindFiles (Python); all methods (Ruby) |
 
 ### Transport
 
 | Feature               | TypeScript | Python | Ruby | Notes                    |
 |-----------------------|:----------:|:------:|:----:|--------------------------|
-| `Transport` interface |     ✅      |   ❌    |  ✅   | Transport abstraction    |
+| `Transport` interface |     ✅      |   ✅    |  ✅   | Transport abstraction    |
 | Process transport     |     ✅      |   ✅    |  ✅   | Subprocess communication |
 | Custom spawn          |     ✅      |   ❌    |  ✅   | VM/container support     |
 
@@ -659,21 +661,32 @@ Public API surface for SDK clients.
 - v0.2.12+ adds `user` option to SDKSessionOptions
 - v0.2.19 adds `mcp_reconnect` and `mcp_toggle` control requests
 - v0.2.19 adds `HookStartedMessage`, `HookProgressMessage`, and `ToolUseSummaryMessage`
+- v0.2.25 adds `SDKFilesPersistedEvent` message type for file persistence confirmation
+- v0.2.25 adds `McpClaudeAIProxyServerConfig` (`claudeai-proxy` type) for managed proxy servers
 
 ### Python SDK
-- Full source available (v0.1.22)
-- Fewer control protocol features than TypeScript
-- Does not support SessionStart/SessionEnd/Notification hooks due to setup limitations
+- Full source available (v0.1.25)
+- Now has `Transport` abstract class and several query control methods
+- Supports `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`, `stream_input()`, `close()`, `get_mcp_status()` in query
+- Client also supports `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`
+- Does not support SessionStart/SessionEnd/Notification/SubagentStart/PermissionRequest/Setup hooks
 - Missing several permission modes (delegate, dontAsk)
+- Missing `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `strictMcpConfig`
+- Missing `init`/`initOnly`/`maintenance` Setup hook options
 - `excludedCommands` in sandbox now supported
-- `tool_use_id` now included in PreToolUseHookInput
-- `additionalContext` now supported in UserPromptSubmitHookSpecificOutput
+- v0.1.25 adds `PostToolUseFailure` hook event support
+- v0.1.25 adds `permissionDecisionReason` to `PreToolUseHookSpecificOutput`
+- `additionalContext` supported in `UserPromptSubmitHookSpecificOutput`
+- `PreToolUseHookInput` does not include `tool_use_id` (unlike TypeScript)
+- `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`
 
 ### Ruby SDK (This Repository)
-- Complete TypeScript SDK feature parity
+- Full TypeScript SDK feature parity
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol support
 - Dedicated Client class for multi-turn conversations
 - Full hook event support including all 13 events
 - Full V2 Session API support (unstable)
 - `executable`/`executableArgs` marked N/A (JS runtime options not applicable to Ruby)
+- Added: `FilesPersistedEvent` message type (new in TS v0.2.25)
+- `claudeai-proxy` MCP server type handled transparently via Hash-based config passthrough (new in TS v0.2.25)

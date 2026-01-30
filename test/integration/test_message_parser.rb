@@ -219,4 +219,22 @@ class TestIntegrationMessageParser < IntegrationTestCase
     assert auth.is_authenticating
     assert_equal [ "Waiting for browser..." ], auth.output
   end
+
+  test "message parser - files persisted event" do
+    raw = {
+      "type" => "system",
+      "subtype" => "files_persisted",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "files" => [ { "filename" => "test.rb", "file_id" => "file-456" } ],
+      "failed" => [],
+      "processed_at" => "2026-01-30T12:00:00Z"
+    }
+    msg = @parser.parse(raw)
+    assert_kind_of ClaudeAgent::FilesPersistedEvent, msg
+    assert_equal :files_persisted, msg.type
+    assert_equal 1, msg.files.length
+    assert_equal "test.rb", msg.files.first["filename"]
+    assert_equal "2026-01-30T12:00:00Z", msg.processed_at
+  end
 end
