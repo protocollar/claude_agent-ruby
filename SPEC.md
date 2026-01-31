@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.25 (npm package)
-- Python SDK: v0.1.25 from GitHub (commit 1bf665c)
+- TypeScript SDK: v0.2.27 (npm package)
+- Python SDK: v0.1.26 from GitHub (commit 438ddf7)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-01-31
 
 ---
 
@@ -424,7 +424,7 @@ Permission handling and updates.
 |------------------|:----------:|:------:|:----:|---------------------------|
 | `signal`         |     ✅      |   ✅    |  ✅   | Abort signal              |
 | `suggestions`    |     ✅      |   ✅    |  ✅   | Permission suggestions    |
-| `blockedPath`    |     ✅      |   ✅    |  ✅   | Blocked file path         |
+| `blockedPath`    |     ✅      |   ❌    |  ✅   | Blocked file path         |
 | `decisionReason` |     ✅      |   ❌    |  ✅   | Why permission triggered  |
 | `toolUseID`      |     ✅      |   ❌    |  ✅   | Tool call ID              |
 | `agentID`        |     ✅      |   ❌    |  ✅   | Subagent ID if applicable |
@@ -474,11 +474,12 @@ Model Context Protocol server support.
 
 ### SDK MCP Server
 
-| Feature              | TypeScript | Python |         Ruby         | Notes                  |
-|----------------------|:----------:|:------:|:--------------------:|------------------------|
-| `createSdkMcpServer` |     ✅      |   ❌    |          ✅           | Create SDK server      |
-| `tool()` helper      |     ✅      |   ❌    |          ✅           | Create tool definition |
-| Tool input schema    |  ✅ (Zod)   |   ❌    | ✅ (Hash/JSON Schema) | Schema definition      |
+| Feature              | TypeScript | Python |         Ruby         | Notes                    |
+|----------------------|:----------:|:------:|:--------------------:|--------------------------|
+| `createSdkMcpServer` |     ✅      |   ❌    |          ✅           | Create SDK server        |
+| `tool()` helper      |     ✅      |   ❌    |          ✅           | Create tool definition   |
+| Tool input schema    |  ✅ (Zod)   |   ❌    | ✅ (Hash/JSON Schema) | Schema definition        |
+| Tool annotations     |     ✅      |   ❌    |          ✅           | MCP tool hints (v0.2.27) |
 
 ---
 
@@ -611,6 +612,8 @@ Public API surface for SDK clients.
 | `accountInfo()`          |     ✅      |   ❌    |  ✅   | Get account info       |
 | `rewindFiles()`          |     ✅      |   ✅    |  ✅   | Rewind file changes    |
 | `setMcpServers()`        |     ✅      |   ❌    |  ✅   | Dynamic MCP servers    |
+| `reconnectMcpServer()`   |     ✅      |   ❌    |  ✅   | Reconnect MCP server   |
+| `toggleMcpServer()`      |     ✅      |   ❌    |  ✅   | Enable/disable MCP     |
 | `streamInput()`          |     ✅      |   ✅    |  ✅   | Stream user input      |
 | `close()`                |     ✅      |   ✅    |  ✅   | Close query/session    |
 
@@ -663,9 +666,12 @@ Public API surface for SDK clients.
 - v0.2.19 adds `HookStartedMessage`, `HookProgressMessage`, and `ToolUseSummaryMessage`
 - v0.2.25 adds `SDKFilesPersistedEvent` message type for file persistence confirmation
 - v0.2.25 adds `McpClaudeAIProxyServerConfig` (`claudeai-proxy` type) for managed proxy servers
+- v0.2.21 adds `reconnectMcpServer()` and `toggleMcpServer()` query methods
+- v0.2.21 adds `config`, `scope`, `tools` fields and `disabled` status to `McpServerStatus`
+- v0.2.27 adds optional `annotations` support to `tool()` helper for MCP tool hints
 
 ### Python SDK
-- Full source available (v0.1.25)
+- Full source available (v0.1.26)
 - Now has `Transport` abstract class and several query control methods
 - Supports `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`, `stream_input()`, `close()`, `get_mcp_status()` in query
 - Client also supports `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`
@@ -676,6 +682,7 @@ Public API surface for SDK clients.
 - `excludedCommands` in sandbox now supported
 - v0.1.25 adds `PostToolUseFailure` hook event support
 - v0.1.25 adds `permissionDecisionReason` to `PreToolUseHookSpecificOutput`
+- v0.1.26 bumps bundled CLI to v2.1.27 (no new SDK features beyond PostToolUseFailure)
 - `additionalContext` supported in `UserPromptSubmitHookSpecificOutput`
 - `PreToolUseHookInput` does not include `tool_use_id` (unlike TypeScript)
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`
@@ -690,3 +697,4 @@ Public API surface for SDK clients.
 - `executable`/`executableArgs` marked N/A (JS runtime options not applicable to Ruby)
 - Added: `FilesPersistedEvent` message type (new in TS v0.2.25)
 - `claudeai-proxy` MCP server type handled transparently via Hash-based config passthrough (new in TS v0.2.25)
+- Added: MCP tool `annotations` support (new in TS v0.2.27)

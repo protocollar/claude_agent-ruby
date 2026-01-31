@@ -34,16 +34,18 @@ module ClaudeAgent
     #   end
     #
     class Tool
-      attr_reader :name, :description, :schema, :handler
+      attr_reader :name, :description, :schema, :annotations, :handler
 
       # @param name [String] Tool name (must be unique within server)
       # @param description [String] Description of what the tool does
       # @param schema [Hash] Input schema (simple Ruby types or JSON Schema)
+      # @param annotations [Hash, nil] MCP tool annotations (readOnlyHint, destructiveHint, etc.)
       # @param handler [Proc] Block to execute when tool is called
-      def initialize(name:, description:, schema: {}, &handler)
+      def initialize(name:, description:, schema: {}, annotations: nil, &handler)
         @name = name.to_s
         @description = description.to_s
         @schema = normalize_schema(schema)
+        @annotations = annotations
         @handler = handler || ->(args) { raise "No handler defined for tool #{name}" }
       end
 
@@ -60,11 +62,13 @@ module ClaudeAgent
       # Convert to MCP tool definition format
       # @return [Hash]
       def to_mcp_definition
-        {
+        definition = {
           name: @name,
           description: @description,
           inputSchema: @schema
         }
+        definition[:annotations] = @annotations if @annotations.present?
+        definition
       end
 
       private

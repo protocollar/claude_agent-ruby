@@ -5,7 +5,7 @@ Ruby gem for building AI-powered applications with the [Claude Agent SDK](https:
 ## Requirements
 
 - Ruby 3.2+ (uses `Data.define`)
-- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code/getting-started) v2.0.0+
+- [Claude Code CLI](https://code.claude.com/docs/en/getting-started) v2.0.0+
 
 ## Installation
 
@@ -226,6 +226,19 @@ result.errors          # Array of error messages (if any)
 result.permission_denials  # Array of SDKPermissionDenial (if any)
 ```
 
+### UserMessageReplay
+
+Replayed user messages when resuming a session with existing history:
+
+```ruby
+replay.content             # Message content
+replay.uuid                # Message UUID
+replay.session_id          # Session identifier
+replay.parent_tool_use_id  # Parent tool use ID (if tool result)
+replay.replay?             # true if this is a replayed message
+replay.synthetic?          # true if this is a synthetic message
+```
+
 ### SystemMessage
 
 Internal system events:
@@ -287,6 +300,48 @@ hook_response.hook_event # Hook event type
 hook_response.stdout     # Hook stdout
 hook_response.stderr     # Hook stderr
 hook_response.exit_code  # Exit code
+```
+
+### HookStartedMessage
+
+Hook execution start notification:
+
+```ruby
+hook_started.hook_id    # Hook identifier
+hook_started.hook_name  # Hook name
+hook_started.hook_event # Hook event type
+```
+
+### HookProgressMessage
+
+Progress during hook execution:
+
+```ruby
+hook_progress.hook_id    # Hook identifier
+hook_progress.hook_name  # Hook name
+hook_progress.hook_event # Hook event type
+hook_progress.stdout     # Hook stdout so far
+hook_progress.stderr     # Hook stderr so far
+hook_progress.output     # Combined output
+```
+
+### ToolUseSummaryMessage
+
+Summary of tool use for collapsed display:
+
+```ruby
+summary.summary                  # Human-readable summary text
+summary.preceding_tool_use_ids   # Tool use IDs this summarizes
+```
+
+### FilesPersistedEvent
+
+Files persisted to storage during a session:
+
+```ruby
+persisted.files        # Array of successfully persisted file paths
+persisted.failed       # Array of files that failed to persist
+persisted.processed_at # Timestamp of persistence
 ```
 
 ### AuthStatusMessage
@@ -412,6 +467,33 @@ schema: {
   required: ["name"]
 }
 ```
+
+### Tool Annotations
+
+Annotate tools with hints about their behavior:
+
+```ruby
+tool = ClaudeAgent::MCP::Tool.new(
+  name: "search",
+  description: "Search the web",
+  schema: { query: String },
+  annotations: {
+    readOnlyHint: true,       # Tool only reads data, no side effects
+    destructiveHint: false,   # Tool does not destroy/delete data
+    idempotentHint: true,     # Repeated calls with same args have same effect
+    openWorldHint: true,      # Tool interacts with external systems
+    title: "Web Search"       # Human-readable display name
+  }
+) { |args| "Results for #{args['query']}" }
+
+# Or with the convenience method
+tool = ClaudeAgent::MCP.tool(
+  "search", "Search the web", { query: String },
+  annotations: { readOnlyHint: true, openWorldHint: true }
+) { |args| "Results" }
+```
+
+All annotation fields are optional hints — omit any that don't apply.
 
 ### Tool Return Values
 
@@ -621,6 +703,13 @@ result = client.set_mcp_servers({
   "my-server" => { type: "stdio", command: "node", args: ["server.js"] }
 })
 puts "Added: #{result.added}, Removed: #{result.removed}"
+
+# Reconnect a disconnected MCP server
+client.mcp_reconnect("my-server")
+
+# Enable or disable an MCP server
+client.mcp_toggle("my-server", enabled: false)  # Disable
+client.mcp_toggle("my-server", enabled: true)   # Re-enable
 
 # Query capabilities
 client.supported_commands.each { |cmd| puts "#{cmd.name}: #{cmd.description}" }
