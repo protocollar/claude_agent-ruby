@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- MCP tool annotations support (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`, `title`) on `MCP::Tool` and `MCP.tool` convenience method (TypeScript SDK v0.2.27 parity)
+- README documentation for `UserMessageReplay`, `HookStartedMessage`, `HookProgressMessage`, `ToolUseSummaryMessage`, `FilesPersistedEvent` message types
+- README documentation for `mcp_reconnect` and `mcp_toggle` client methods
+- README documentation for MCP tool annotations
+
+### Changed
+- Updated SPEC.md to reference TypeScript SDK v0.2.27 and Python SDK v0.1.26
+
 ## [0.6.0] - 2026-01-30
 
 ### Added

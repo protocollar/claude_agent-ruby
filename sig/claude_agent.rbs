@@ -967,15 +967,16 @@ module ClaudeAgent
 
   # MCP module
   module MCP
-    def self.tool: (String name, String description, ?Hash[Symbol, untyped] schema) { (Hash[String, untyped]) -> untyped } -> Tool
+    def self.tool: (String name, String description, ?Hash[Symbol, untyped] schema, ?annotations: Hash[Symbol, untyped]?) { (Hash[String, untyped]) -> untyped } -> Tool
     def self.create_server: (name: String, ?tools: Array[Tool]) -> Server
 
     class Tool
       attr_reader name: String
       attr_reader description: String
       attr_reader schema: Hash[Symbol, untyped]
+      attr_reader annotations: Hash[Symbol, untyped]?
 
-      def initialize: (name: String, description: String, ?schema: Hash[Symbol, untyped]) { (Hash[String, untyped]) -> untyped } -> void
+      def initialize: (name: String, description: String, ?schema: Hash[Symbol, untyped], ?annotations: Hash[Symbol, untyped]?) { (Hash[String, untyped]) -> untyped } -> void
       def call: (Hash[String, untyped] arguments) -> Hash[Symbol, untyped]
       def to_mcp_definition: () -> Hash[Symbol, untyped]
     end

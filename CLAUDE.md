@@ -1,6 +1,6 @@
 # ClaudeAgent Ruby SDK
 
-Ruby SDK for building autonomous AI agents that interact with Claude Code CLI.
+Ruby SDK for building autonomous AI agents that interact with Claude Code CLI. See [README.md](README.md) for API usage, message types, configuration, and examples.
 
 ## Stack
 
@@ -32,16 +32,6 @@ bin/rbs-validate                   # Validate RBS signatures
 bin/release VERSION                # Release gem (e.g., bin/release 1.2.0)
 ```
 
-## Architecture
-
-| Component                   | Purpose                                            |
-|-----------------------------|----------------------------------------------------|
-| `Query`                     | One-shot stateless prompts                         |
-| `Client`                    | Multi-turn bidirectional conversations             |
-| `ControlProtocol`           | Handles handshake, hooks, permissions, MCP routing |
-| `Transport::Subprocess`     | Spawns CLI, manages stdin/stdout                   |
-| `MCP::Tool` / `MCP::Server` | Custom tool definitions                            |
-
 ## Conventions
 
 - **Immutable data types**: All messages and options use `Data.define`
@@ -49,25 +39,6 @@ bin/release VERSION                # Release gem (e.g., bin/release 1.2.0)
 - **Message polymorphism**: Use `case` statements or `is_a?()` for content block types
 - **Error hierarchy**: All errors inherit from `ClaudeAgent::Error` with context (exit code, stderr, etc.)
 - **Protocol flow**: Transport → ControlProtocol → MessageParser → typed message objects
-
-## Key Patterns
-
-```ruby
-# One-shot query
-result = ClaudeAgent.query("prompt", model: "sonnet")
-
-# Interactive client
-client = ClaudeAgent::Client.new(options)
-client.send_message("prompt") { |msg| handle(msg) }
-
-# Content blocks are polymorphic
-message.content.each do |block|
-  case block
-  when ClaudeAgent::TextBlock then ...
-  when ClaudeAgent::ToolUseBlock then ...
-  end
-end
-```
 
 ## Testing Notes
 

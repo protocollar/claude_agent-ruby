@@ -161,6 +161,14 @@ class TestClaudeAgentMCPServer < ActiveSupport::TestCase
     assert_equal 1, server.tools.length
   end
 
+  test "convenience_tool_with_annotations" do
+    annotations = { readOnlyHint: true, openWorldHint: true }
+    tool = ClaudeAgent::MCP.tool("search", "Search", { q: String }, annotations: annotations) { |args| "ok" }
+
+    assert_instance_of ClaudeAgent::MCP::Tool, tool
+    assert_equal annotations, tool.annotations
+  end
+
   test "add_tool_with_numeric_calculation" do
     message = {
       "jsonrpc" => "2.0",

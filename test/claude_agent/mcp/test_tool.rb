@@ -115,6 +115,49 @@ class TestClaudeAgentMCPTool < ActiveSupport::TestCase
     assert definition[:inputSchema]
   end
 
+  test "tool_with_annotations" do
+    annotations = {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: true
+    }
+
+    tool = ClaudeAgent::MCP::Tool.new(
+      name: "search",
+      description: "Search the web",
+      schema: { query: String },
+      annotations: annotations
+    ) { |args| "Results for #{args['query']}" }
+
+    assert_equal annotations, tool.annotations
+
+    definition = tool.to_mcp_definition
+    assert_equal annotations, definition[:annotations]
+  end
+
+  test "tool_without_annotations_omits_key" do
+    tool = ClaudeAgent::MCP::Tool.new(
+      name: "test",
+      description: "Test"
+    ) { |_| "ok" }
+
+    assert_nil tool.annotations
+
+    definition = tool.to_mcp_definition
+    refute definition.key?(:annotations)
+  end
+
+  test "tool_with_empty_annotations_omits_key" do
+    tool = ClaudeAgent::MCP::Tool.new(
+      name: "test",
+      description: "Test",
+      annotations: {}
+    ) { |_| "ok" }
+
+    definition = tool.to_mcp_definition
+    refute definition.key?(:annotations)
+  end
+
   test "type_conversions" do
     # Test various Ruby type conversions
     tool = ClaudeAgent::MCP::Tool.new(

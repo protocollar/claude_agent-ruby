@@ -150,8 +150,8 @@ module ClaudeAgent
     #     "Hello, #{args['name']}!"
     #   end
     #
-    def self.tool(name, description, schema = {}, &handler)
-      Tool.new(name: name, description: description, schema: schema, &handler)
+    def self.tool(name, description, schema = {}, annotations: nil, &handler)
+      Tool.new(name: name, description: description, schema: schema, annotations: annotations, &handler)
     end
 
     # Convenience method to create a server

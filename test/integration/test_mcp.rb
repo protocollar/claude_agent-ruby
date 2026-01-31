@@ -54,6 +54,40 @@ class TestIntegrationMcp < IntegrationTestCase
     assert_equal 2, response[:result][:tools].length
   end
 
+  test "MCP tool annotations in tools/list" do
+    annotations = { readOnlyHint: true, destructiveHint: false, openWorldHint: true }
+
+    tool = ClaudeAgent::MCP::Tool.new(
+      name: "search",
+      description: "Search the web",
+      schema: { query: String },
+      annotations: annotations
+    ) { |args| "Results for #{args['query']}" }
+
+    server = ClaudeAgent::MCP::Server.new(name: "annotated", tools: [ tool ])
+
+    response = server.handle_message({ "method" => "tools/list", "id" => 1 })
+    listed_tool = response[:result][:tools].first
+
+    assert_equal "search", listed_tool[:name]
+    assert_equal annotations, listed_tool[:annotations]
+  end
+
+  test "MCP tool without annotations omits key in tools/list" do
+    tool = ClaudeAgent::MCP::Tool.new(
+      name: "plain",
+      description: "No annotations"
+    ) { "ok" }
+
+    server = ClaudeAgent::MCP::Server.new(name: "plain", tools: [ tool ])
+
+    response = server.handle_message({ "method" => "tools/list", "id" => 1 })
+    listed_tool = response[:result][:tools].first
+
+    assert_equal "plain", listed_tool[:name]
+    refute listed_tool.key?(:annotations)
+  end
+
   test "McpSetServersResult type" do
     result = ClaudeAgent::McpSetServersResult.new(
       added: [ "server1", "server2" ],
