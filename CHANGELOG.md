@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-01-31
+
 ### Added
 - MCP tool annotations support (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`, `title`) on `MCP::Tool` and `MCP.tool` convenience method (TypeScript SDK v0.2.27 parity)
 - README documentation for `UserMessageReplay`, `HookStartedMessage`, `HookProgressMessage`, `ToolUseSummaryMessage`, `FilesPersistedEvent` message types
