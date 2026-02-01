@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.27 (npm package)
-- Python SDK: v0.1.26 from GitHub (commit 438ddf7)
+- TypeScript SDK: v0.2.29 (npm package)
+- Python SDK: v0.1.27 from GitHub (commit b82f9b9)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-01-31
+**Last Updated:** 2026-02-01
 
 ---
 
@@ -655,46 +655,22 @@ Public API surface for SDK clients.
 - Primary reference for API surface (most comprehensive)
 - Source is bundled/minified, but `sdk.d.ts` provides complete type definitions
 - Includes unstable V2 session API
-- Adds `deno` as supported executable option
-- Includes experimental `criticalSystemReminder_EXPERIMENTAL` for agent definitions
-- `SessionStartHookInput` includes `model` field
-- v0.2.12+ adds `Setup` hook event for init/maintenance
-- v0.2.12+ adds `skills` and `maxTurns` to AgentDefinition
-- v0.2.12+ adds `TaskNotificationMessage` for background task completion
-- v0.2.12+ adds `user` option to SDKSessionOptions
-- v0.2.19 adds `mcp_reconnect` and `mcp_toggle` control requests
-- v0.2.19 adds `HookStartedMessage`, `HookProgressMessage`, and `ToolUseSummaryMessage`
-- v0.2.25 adds `SDKFilesPersistedEvent` message type for file persistence confirmation
-- v0.2.25 adds `McpClaudeAIProxyServerConfig` (`claudeai-proxy` type) for managed proxy servers
-- v0.2.21 adds `reconnectMcpServer()` and `toggleMcpServer()` query methods
-- v0.2.21 adds `config`, `scope`, `tools` fields and `disabled` status to `McpServerStatus`
-- v0.2.27 adds optional `annotations` support to `tool()` helper for MCP tool hints
+- `executable`/`executableArgs` are JS-specific (`node`/`bun`/`deno`)
 
 ### Python SDK
-- Full source available (v0.1.26)
-- Now has `Transport` abstract class and several query control methods
-- Supports `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`, `stream_input()`, `close()`, `get_mcp_status()` in query
-- Client also supports `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`
-- Does not support SessionStart/SessionEnd/Notification/SubagentStart/PermissionRequest/Setup hooks
-- Missing several permission modes (delegate, dontAsk)
-- Missing `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `strictMcpConfig`
-- Missing `init`/`initOnly`/`maintenance` Setup hook options
-- `excludedCommands` in sandbox now supported
-- v0.1.25 adds `PostToolUseFailure` hook event support
-- v0.1.25 adds `permissionDecisionReason` to `PreToolUseHookSpecificOutput`
-- v0.1.26 bumps bundled CLI to v2.1.27 (no new SDK features beyond PostToolUseFailure)
-- `additionalContext` supported in `UserPromptSubmitHookSpecificOutput`
+- Full source available
+- Has `Transport` abstract class and several query control methods
+- Query supports: `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`, `stream_input()`, `close()`, `get_mcp_status()`
+- Client supports: `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`, `get_mcp_status()`
+- Missing hooks: SessionStart, SessionEnd, Notification, SubagentStart, PermissionRequest, Setup
+- Missing permission modes: `delegate`, `dontAsk`
+- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`
 - `PreToolUseHookInput` does not include `tool_use_id` (unlike TypeScript)
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`
 
 ### Ruby SDK (This Repository)
 - Full TypeScript SDK feature parity
 - Ruby-idiomatic patterns (Data.define, snake_case)
-- Complete control protocol support
+- Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
-- Full hook event support including all 13 events
-- Full V2 Session API support (unstable)
-- `executable`/`executableArgs` marked N/A (JS runtime options not applicable to Ruby)
-- Added: `FilesPersistedEvent` message type (new in TS v0.2.25)
-- `claudeai-proxy` MCP server type handled transparently via Hash-based config passthrough (new in TS v0.2.25)
-- Added: MCP tool `annotations` support (new in TS v0.2.27)
+- `executable`/`executableArgs` marked N/A (JS runtime options)
