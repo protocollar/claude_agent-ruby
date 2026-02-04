@@ -80,8 +80,8 @@ Configuration options for SDK queries and clients.
 | `init`                            |     ✅      |   ❌    |  ✅   | Run Setup hooks (init trigger), then continue (hidden CLI)   |
 | `initOnly`                        |     ✅      |   ❌    |  ✅   | Run Setup hooks (init trigger), then exit (hidden CLI)       |
 | `maintenance`                     |     ✅      |   ❌    |  ✅   | Run Setup hooks (maintenance trigger), continue (hidden CLI) |
-| `debug`                           |     ✅      |   ❌    |  ❌   | Enable verbose debug logging                                 |
-| `debugFile`                       |     ✅      |   ❌    |  ❌   | Write debug logs to specific file path                       |
+| `debug`                           |     ✅      |   ❌    |  ✅   | Enable verbose debug logging                                 |
+| `debugFile`                       |     ✅      |   ❌    |  ✅   | Write debug logs to specific file path                       |
 
 ---
 
@@ -128,7 +128,7 @@ Messages exchanged between SDK and CLI.
 | `errors`             |     ✅      |   ❌    |  ✅   | Error messages           |
 | `uuid`               |     ✅      |   ❌    |  ✅   | Message UUID             |
 | `session_id`         |     ✅      |   ✅    |  ✅   | Session ID               |
-| `stop_reason`        |     ✅      |   ❌    |  ❌   | Why model stopped        |
+| `stop_reason`        |     ✅      |   ❌    |  ✅   | Why model stopped        |
 
 #### Result Subtypes
 
@@ -671,9 +671,8 @@ Public API surface for SDK clients.
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`
 
 ### Ruby SDK (This Repository)
-- Near-full TypeScript SDK feature parity
+- Full TypeScript SDK v0.2.31 feature parity
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)
-- Missing (v0.2.30+): `debug`/`debugFile` options, `stop_reason` in ResultMessage

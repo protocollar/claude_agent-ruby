@@ -131,4 +131,42 @@ class TestIntegrationOptions < IntegrationTestCase
     args = bypass_options.to_cli_args
     assert args.include?("--dangerously-skip-permissions")
   end
+
+  test "options debug field" do
+    default_options = ClaudeAgent::Options.new
+    assert_equal false, default_options.debug
+
+    debug_options = ClaudeAgent::Options.new(debug: true)
+    assert_equal true, debug_options.debug
+
+    args = debug_options.to_cli_args
+    assert args.include?("--debug")
+
+    no_debug_args = default_options.to_cli_args
+    refute no_debug_args.include?("--debug")
+  end
+
+  test "options debug_file field" do
+    default_options = ClaudeAgent::Options.new
+    assert_nil default_options.debug_file
+
+    debug_file_options = ClaudeAgent::Options.new(debug_file: "/tmp/claude-debug.log")
+    assert_equal "/tmp/claude-debug.log", debug_file_options.debug_file
+
+    args = debug_file_options.to_cli_args
+    assert args.include?("--debug-file")
+    assert args.include?("/tmp/claude-debug.log")
+
+    no_debug_file_args = default_options.to_cli_args
+    refute no_debug_file_args.include?("--debug-file")
+  end
+
+  test "options debug and debug_file together" do
+    options = ClaudeAgent::Options.new(debug: true, debug_file: "/tmp/debug.log")
+
+    args = options.to_cli_args
+    assert args.include?("--debug")
+    assert args.include?("--debug-file")
+    assert args.include?("/tmp/debug.log")
+  end
 end

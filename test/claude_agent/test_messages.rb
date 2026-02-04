@@ -129,6 +129,31 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     refute msg.success?
   end
 
+  test "result_message_with_stop_reason" do
+    msg = ClaudeAgent::ResultMessage.new(
+      subtype: "success",
+      duration_ms: 1500,
+      duration_api_ms: 1200,
+      is_error: false,
+      num_turns: 3,
+      session_id: "session-abc",
+      stop_reason: "end_turn"
+    )
+    assert_equal "end_turn", msg.stop_reason
+  end
+
+  test "result_message_stop_reason_default_nil" do
+    msg = ClaudeAgent::ResultMessage.new(
+      subtype: "success",
+      duration_ms: 1500,
+      duration_api_ms: 1200,
+      is_error: false,
+      num_turns: 3,
+      session_id: "session-abc"
+    )
+    assert_nil msg.stop_reason
+  end
+
   test "stream_event" do
     event = ClaudeAgent::StreamEvent.new(
       uuid: "evt-123",

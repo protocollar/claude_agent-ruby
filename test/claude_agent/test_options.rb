@@ -417,4 +417,55 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     end
     assert_match(/Only one of init, init_only, or maintenance/, error.message)
   end
+
+  # --- Debug Options ---
+
+  test "debug_option_default_false" do
+    options = ClaudeAgent::Options.new
+    assert_equal false, options.debug
+  end
+
+  test "debug_file_option_default_nil" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.debug_file
+  end
+
+  test "debug_option_explicit_true" do
+    options = ClaudeAgent::Options.new(debug: true)
+    assert_equal true, options.debug
+  end
+
+  test "debug_file_option_with_path" do
+    options = ClaudeAgent::Options.new(debug_file: "/tmp/claude-debug.log")
+    assert_equal "/tmp/claude-debug.log", options.debug_file
+  end
+
+  test "to_cli_args_with_debug" do
+    options = ClaudeAgent::Options.new(debug: true)
+    args = options.to_cli_args
+    assert_includes args, "--debug"
+    refute_includes args, "--debug-file"
+  end
+
+  test "to_cli_args_with_debug_file" do
+    options = ClaudeAgent::Options.new(debug_file: "/tmp/debug.log")
+    args = options.to_cli_args
+    assert_includes args, "--debug-file"
+    assert_includes args, "/tmp/debug.log"
+  end
+
+  test "to_cli_args_with_debug_and_debug_file" do
+    options = ClaudeAgent::Options.new(debug: true, debug_file: "/tmp/debug.log")
+    args = options.to_cli_args
+    assert_includes args, "--debug"
+    assert_includes args, "--debug-file"
+    assert_includes args, "/tmp/debug.log"
+  end
+
+  test "to_cli_args_without_debug_options" do
+    options = ClaudeAgent::Options.new
+    args = options.to_cli_args
+    refute_includes args, "--debug"
+    refute_includes args, "--debug-file"
+  end
 end

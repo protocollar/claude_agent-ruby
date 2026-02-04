@@ -143,7 +143,8 @@ module ClaudeAgent
         structured_output: fetch_dual(raw, :structured_output),
         errors: raw["errors"],
         permission_denials: permission_denials,
-        model_usage: fetch_dual(raw, :model_usage)
+        model_usage: fetch_dual(raw, :model_usage),
+        stop_reason: fetch_dual(raw, :stop_reason)
       )
     end
 

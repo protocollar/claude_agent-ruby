@@ -301,6 +301,8 @@ module ClaudeAgent
     # Buffering & debugging
     attr_accessor max_buffer_size: Integer?
     attr_accessor stderr_callback: (^(String) -> void)?
+    attr_accessor debug: bool
+    attr_accessor debug_file: String?
 
     # Abort control (TypeScript SDK parity)
     attr_accessor abort_controller: AbortController?
@@ -463,6 +465,7 @@ module ClaudeAgent
     attr_reader errors: Array[String]?
     attr_reader permission_denials: Array[SDKPermissionDenial]?
     attr_reader model_usage: Hash[String, untyped]?
+    attr_reader stop_reason: String?
 
     def initialize: (
       subtype: String,
@@ -477,7 +480,8 @@ module ClaudeAgent
       ?structured_output: untyped,
       ?errors: Array[String]?,
       ?permission_denials: Array[SDKPermissionDenial]?,
-      ?model_usage: Hash[String, untyped]?
+      ?model_usage: Hash[String, untyped]?,
+      ?stop_reason: String?
     ) -> void
 
     def type: () -> :result
