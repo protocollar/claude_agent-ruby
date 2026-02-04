@@ -49,6 +49,11 @@ class TestIntegrationQuery < IntegrationTestCase
     if result.total_cost_usd
       assert result.total_cost_usd >= 0, "Cost should be non-negative"
     end
+
+    # stop_reason is optional but should be a string if present
+    if result.stop_reason
+      assert result.stop_reason.is_a?(String), "stop_reason should be a String"
+    end
   end
 
   test "system message parsing" do

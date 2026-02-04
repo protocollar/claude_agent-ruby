@@ -175,6 +175,53 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal 0.05, msg.total_cost_usd
   end
 
+  test "parse_result_message_with_stop_reason" do
+    raw = {
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 1500,
+      "duration_api_ms" => 1200,
+      "is_error" => false,
+      "num_turns" => 3,
+      "session_id" => "sess-123",
+      "stop_reason" => "end_turn"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "end_turn", msg.stop_reason
+  end
+
+  test "parse_result_message_with_stop_reason_camel_case" do
+    raw = {
+      "type" => "result",
+      "subtype" => "success",
+      "durationMs" => 1500,
+      "durationApiMs" => 1200,
+      "isError" => false,
+      "numTurns" => 3,
+      "sessionId" => "sess-123",
+      "stopReason" => "max_tokens"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "max_tokens", msg.stop_reason
+  end
+
+  test "parse_result_message_stop_reason_default_nil" do
+    raw = {
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 1500,
+      "duration_api_ms" => 1200,
+      "is_error" => false,
+      "num_turns" => 3,
+      "session_id" => "sess-123"
+    }
+    msg = @parser.parse(raw)
+
+    assert_nil msg.stop_reason
+  end
+
   test "parse_stream_event" do
     raw = {
       "type" => "stream_event",

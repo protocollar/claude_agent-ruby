@@ -41,7 +41,9 @@ module ClaudeAgent
       betas: [],
       init: false,
       init_only: false,
-      maintenance: false
+      maintenance: false,
+      debug: false,
+      debug_file: nil
     }.freeze
 
     # All configurable attributes
@@ -59,6 +61,7 @@ module ClaudeAgent
       persist_session betas max_buffer_size stderr_callback
       abort_controller spawn_claude_code_process
       init init_only maintenance
+      debug debug_file
     ].freeze
 
     attr_accessor(*ATTRIBUTES)
@@ -88,6 +91,7 @@ module ClaudeAgent
         args.concat(environment_args)
         args.concat(output_args)
         args.concat(setup_hook_args)
+        args.concat(debug_args)
         args.concat(extra_cli_args)
       end
     end
@@ -240,6 +244,13 @@ module ClaudeAgent
         args.push("--init") if init
         args.push("--init-only") if init_only
         args.push("--maintenance") if maintenance
+      end
+    end
+
+    def debug_args
+      [].tap do |args|
+        args.push("--debug") if debug
+        args.push("--debug-file", debug_file) if debug_file
       end
     end
 

@@ -123,6 +123,29 @@ class TestIntegrationMessages < IntegrationTestCase
     assert result.model_usage.key?("claude-sonnet-4-5-20250514")
   end
 
+  test "ResultMessage stop_reason field" do
+    result_with_stop_reason = ClaudeAgent::ResultMessage.new(
+      subtype: "success",
+      duration_ms: 1000,
+      duration_api_ms: 800,
+      is_error: false,
+      num_turns: 1,
+      session_id: "session_123",
+      stop_reason: "end_turn"
+    )
+    assert_equal "end_turn", result_with_stop_reason.stop_reason
+
+    result_without_stop_reason = ClaudeAgent::ResultMessage.new(
+      subtype: "success",
+      duration_ms: 1000,
+      duration_api_ms: 800,
+      is_error: false,
+      num_turns: 1,
+      session_id: "session_123"
+    )
+    assert_nil result_without_stop_reason.stop_reason
+  end
+
   test "HookStartedMessage type" do
     msg = ClaudeAgent::HookStartedMessage.new(
       uuid: "msg-123",

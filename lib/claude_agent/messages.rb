@@ -181,7 +181,8 @@ module ClaudeAgent
     :structured_output,
     :errors,             # Array<String> for error subtypes
     :permission_denials, # Array<SDKPermissionDenial>
-    :model_usage         # Hash with per-model usage breakdown
+    :model_usage,        # Hash with per-model usage breakdown
+    :stop_reason         # Why the model stopped generating (TypeScript SDK parity)
   ) do
     def initialize(
       subtype:,
@@ -196,7 +197,8 @@ module ClaudeAgent
       structured_output: nil,
       errors: nil,
       permission_denials: nil,
-      model_usage: nil
+      model_usage: nil,
+      stop_reason: nil
     )
       super
     end
