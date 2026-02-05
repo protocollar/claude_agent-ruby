@@ -307,6 +307,36 @@ class TestClaudeAgentTypes < ActiveSupport::TestCase
     refute h.key?(:maxTurns)
   end
 
+  # --- InitializationResult ---
+
+  test "initialization_result" do
+    commands = [ ClaudeAgent::SlashCommand.new(name: "commit", description: "Create a commit") ]
+    models = [ ClaudeAgent::ModelInfo.new(value: "claude-sonnet", display_name: "Claude Sonnet") ]
+    account = ClaudeAgent::AccountInfo.new(email: "user@example.com")
+
+    result = ClaudeAgent::InitializationResult.new(
+      commands: commands,
+      output_style: "default",
+      available_output_styles: [ "default", "concise" ],
+      models: models,
+      account: account
+    )
+    assert_equal commands, result.commands
+    assert_equal "default", result.output_style
+    assert_equal [ "default", "concise" ], result.available_output_styles
+    assert_equal models, result.models
+    assert_equal account, result.account
+  end
+
+  test "initialization_result_defaults" do
+    result = ClaudeAgent::InitializationResult.new
+    assert_equal [], result.commands
+    assert_nil result.output_style
+    assert_equal [], result.available_output_styles
+    assert_equal [], result.models
+    assert_nil result.account
+  end
+
   # --- API Key Sources ---
 
   test "api_key_sources_constant" do

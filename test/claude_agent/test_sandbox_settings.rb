@@ -28,6 +28,7 @@ class TestClaudeAgentSandboxSettings < ActiveSupport::TestCase
     refute config.allow_local_binding
     assert_equal [], config.allow_unix_sockets
     refute config.allow_all_unix_sockets
+    refute config.allow_managed_domains_only
     assert_nil config.http_proxy_port
     assert_nil config.socks_proxy_port
   end
@@ -52,6 +53,23 @@ class TestClaudeAgentSandboxSettings < ActiveSupport::TestCase
     config = ClaudeAgent::SandboxNetworkConfig.new
     h = config.to_h
     assert_equal({}, h)
+  end
+
+  test "sandbox_network_config_allow_managed_domains_only" do
+    config = ClaudeAgent::SandboxNetworkConfig.new(
+      allow_managed_domains_only: true,
+      allowed_domains: [ "api.example.com" ]
+    )
+    assert config.allow_managed_domains_only
+    h = config.to_h
+    assert h[:allowManagedDomainsOnly]
+    assert_equal [ "api.example.com" ], h[:allowedDomains]
+  end
+
+  test "sandbox_network_config_to_h_omits_false_allow_managed_domains_only" do
+    config = ClaudeAgent::SandboxNetworkConfig.new(allow_managed_domains_only: false)
+    h = config.to_h
+    refute h.key?(:allowManagedDomainsOnly)
   end
 
   # --- SandboxIgnoreViolations ---

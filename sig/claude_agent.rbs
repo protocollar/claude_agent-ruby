@@ -114,6 +114,16 @@ module ClaudeAgent
     def initialize: (?email: String?, ?organization: String?, ?subscription_type: String?, ?token_source: String?, ?api_key_source: String?) -> void
   end
 
+  class InitializationResult
+    attr_reader commands: Array[SlashCommand]
+    attr_reader output_style: String?
+    attr_reader available_output_styles: Array[String]
+    attr_reader models: Array[ModelInfo]
+    attr_reader account: AccountInfo?
+
+    def initialize: (?commands: Array[SlashCommand], ?output_style: String?, ?available_output_styles: Array[String], ?models: Array[ModelInfo], ?account: AccountInfo?) -> void
+  end
+
   class ModelUsage
     attr_reader input_tokens: Integer
     attr_reader output_tokens: Integer
@@ -175,10 +185,11 @@ module ClaudeAgent
     attr_reader allow_local_binding: bool
     attr_reader allow_unix_sockets: Array[String]
     attr_reader allow_all_unix_sockets: bool
+    attr_reader allow_managed_domains_only: bool
     attr_reader http_proxy_port: Integer?
     attr_reader socks_proxy_port: Integer?
 
-    def initialize: (?allowed_domains: Array[String], ?allow_local_binding: bool, ?allow_unix_sockets: Array[String], ?allow_all_unix_sockets: bool, ?http_proxy_port: Integer?, ?socks_proxy_port: Integer?) -> void
+    def initialize: (?allowed_domains: Array[String], ?allow_local_binding: bool, ?allow_unix_sockets: Array[String], ?allow_all_unix_sockets: bool, ?allow_managed_domains_only: bool, ?http_proxy_port: Integer?, ?socks_proxy_port: Integer?) -> void
     def to_h: () -> Hash[Symbol, untyped]
   end
 
@@ -810,8 +821,9 @@ module ClaudeAgent
     attr_reader tool_use_id: String?
     attr_reader agent_id: String?
     attr_reader signal: AbortSignal?
+    attr_reader description: String?
 
-    def initialize: (?permission_suggestions: untyped, ?blocked_path: String?, ?decision_reason: String?, ?tool_use_id: String?, ?agent_id: String?, ?signal: AbortSignal?) -> void
+    def initialize: (?permission_suggestions: untyped, ?blocked_path: String?, ?decision_reason: String?, ?tool_use_id: String?, ?agent_id: String?, ?signal: AbortSignal?, ?description: String?) -> void
   end
 
   # Client
@@ -847,6 +859,7 @@ module ClaudeAgent
     def supported_models: () -> Array[ModelInfo]
     def mcp_server_status: () -> Array[McpServerStatus]
     def account_info: () -> AccountInfo
+    def initialization_result: () -> InitializationResult
   end
 
   # Control protocol
@@ -882,6 +895,7 @@ module ClaudeAgent
     def supported_models: () -> Array[ModelInfo]
     def mcp_server_status: () -> Array[McpServerStatus]
     def account_info: () -> AccountInfo
+    def initialization_result: () -> InitializationResult
   end
 
   # Transport layer

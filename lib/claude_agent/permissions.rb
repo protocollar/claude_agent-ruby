@@ -156,7 +156,8 @@ module ClaudeAgent
     :decision_reason,
     :tool_use_id,
     :agent_id,
-    :signal
+    :signal,
+    :description
   ) do
     def initialize(
       permission_suggestions: nil,
@@ -164,7 +165,8 @@ module ClaudeAgent
       decision_reason: nil,
       tool_use_id: nil,
       agent_id: nil,
-      signal: nil
+      signal: nil,
+      description: nil
     )
       super
     end
