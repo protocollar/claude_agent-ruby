@@ -7,7 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-02-05
+
+### Added
+- `description` field on `ToolPermissionContext` (TypeScript SDK v0.2.32 parity)
+- `allow_managed_domains_only` field on `SandboxNetworkConfig`
+- `initialization_result` method on `ControlProtocol` and `Client` with `InitializationResult`, `SlashCommand`, `ModelInfo`, and `AccountInfo` types
+
+### Changed
+- Updated SPEC.md to reference TypeScript SDK v0.2.32 and Python SDK v0.1.30
+
 ## [0.7.1] - 2026-02-03
+
+### Added
+- `debug` option for verbose debug logging (`--debug` CLI flag)
+- `debug_file` option for writing debug logs to a file (`--debug-file` CLI flag)
+- `stop_reason` field on `ResultMessage` indicating why the model stopped generating
+
+### Changed
+- Updated SPEC.md to reference TypeScript SDK v0.2.31 and Python SDK v0.1.29
 
 ## [0.7.0] - 2026-01-31
 
