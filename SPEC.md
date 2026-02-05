@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.31 (npm package)
-- Python SDK: v0.1.29 from GitHub (commit 7519c96)
+- TypeScript SDK: v0.2.32 (npm package)
+- Python SDK: v0.1.30 from GitHub (commit 451f2f4)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-03
+**Last Updated:** 2026-02-05
 
 ---
 
@@ -236,6 +236,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `ModelInfo`           |     ✅      |   ❌    |  ✅   | Model information      |
 | `McpServerStatus`     |     ✅      |   ❌    |  ✅   | MCP server status      |
 | `AccountInfo`         |     ✅      |   ❌    |  ✅   | Account information    |
+| `InitializationResult`|     ✅      |   ❌    |  ✅   | Full init response     |
 | `McpSetServersResult` |     ✅      |   ❌    |  ✅   | Set servers result     |
 | `RewindFilesResult`   |     ✅      |   ✅    |  ✅   | Rewind result          |
 
@@ -306,14 +307,14 @@ Event-specific fields returned via `hookSpecificOutput`:
 | `permissionDecision`       |     ✅      |   ✅    |  ✅   | `allow`, `deny`, or `ask`          |
 | `permissionDecisionReason` |     ✅      |   ✅    |  ✅   | Reason for permission decision     |
 | `updatedInput`             |     ✅      |   ✅    |  ✅   | Modified tool input                |
-| `additionalContext`        |     ✅      |   ❌    |  ✅   | Context string returned to model   |
+| `additionalContext`        |     ✅      |   ✅    |  ✅   | Context string returned to model   |
 
 #### PostToolUseHookSpecificOutput
 
 | Field                  | TypeScript | Python | Ruby | Notes                            |
 |------------------------|:----------:|:------:|:----:|----------------------------------|
 | `additionalContext`    |     ✅      |   ✅    |  ✅   | Context string returned to model |
-| `updatedMCPToolOutput` |     ✅      |   ❌    |  ✅   | Modified MCP tool output         |
+| `updatedMCPToolOutput` |     ✅      |   ✅    |  ✅   | Modified MCP tool output         |
 
 #### PostToolUseFailureHookSpecificOutput
 
@@ -325,7 +326,7 @@ Event-specific fields returned via `hookSpecificOutput`:
 
 | Field               | TypeScript | Python | Ruby | Notes                            |
 |---------------------|:----------:|:------:|:----:|----------------------------------|
-| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
+| `additionalContext` |     ✅      |   ✅    |  ✅   | Context string returned to model |
 
 #### SetupHookSpecificOutput
 
@@ -337,7 +338,7 @@ Event-specific fields returned via `hookSpecificOutput`:
 
 | Field               | TypeScript | Python | Ruby | Notes                            |
 |---------------------|:----------:|:------:|:----:|----------------------------------|
-| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
+| `additionalContext` |     ✅      |   ✅    |  ✅   | Context string returned to model |
 
 #### UserPromptSubmitHookSpecificOutput
 
@@ -349,13 +350,13 @@ Event-specific fields returned via `hookSpecificOutput`:
 
 | Field      | TypeScript | Python | Ruby | Notes                                    |
 |------------|:----------:|:------:|:----:|------------------------------------------|
-| `decision` |     ✅      |   ❌    |  ✅   | `{ behavior: 'allow'/'deny', ... }` obj  |
+| `decision` |     ✅      |   ✅    |  ✅   | `{ behavior: 'allow'/'deny', ... }` obj  |
 
 #### NotificationHookSpecificOutput
 
 | Field               | TypeScript | Python | Ruby | Notes                            |
 |---------------------|:----------:|:------:|:----:|----------------------------------|
-| `additionalContext` |     ✅      |   ❌    |  ✅   | Context string returned to model |
+| `additionalContext` |     ✅      |   ✅    |  ✅   | Context string returned to model |
 
 ### Hook Matcher
 
@@ -423,14 +424,15 @@ Permission handling and updates.
 
 ### ToolPermissionContext
 
-| Field            | TypeScript | Python | Ruby | Notes                     |
-|------------------|:----------:|:------:|:----:|---------------------------|
-| `signal`         |     ✅      |   ✅    |  ✅   | Abort signal              |
-| `suggestions`    |     ✅      |   ✅    |  ✅   | Permission suggestions    |
-| `blockedPath`    |     ✅      |   ❌    |  ✅   | Blocked file path         |
-| `decisionReason` |     ✅      |   ❌    |  ✅   | Why permission triggered  |
-| `toolUseID`      |     ✅      |   ❌    |  ✅   | Tool call ID              |
-| `agentID`        |     ✅      |   ❌    |  ✅   | Subagent ID if applicable |
+| Field            | TypeScript | Python | Ruby | Notes                           |
+|------------------|:----------:|:------:|:----:|---------------------------------|
+| `signal`         |     ✅      |   ✅    |  ✅   | Abort signal                    |
+| `suggestions`    |     ✅      |   ✅    |  ✅   | Permission suggestions          |
+| `blockedPath`    |     ✅      |   ❌    |  ✅   | Blocked file path               |
+| `decisionReason` |     ✅      |   ❌    |  ✅   | Why permission triggered        |
+| `toolUseID`      |     ✅      |   ❌    |  ✅   | Tool call ID                    |
+| `agentID`        |     ✅      |   ❌    |  ✅   | Subagent ID if applicable       |
+| `description`    |     ✅      |   ❌    |  ✅   | Human-readable tool description |
 
 ---
 
@@ -479,10 +481,10 @@ Model Context Protocol server support.
 
 | Feature              | TypeScript | Python |         Ruby         | Notes                    |
 |----------------------|:----------:|:------:|:--------------------:|--------------------------|
-| `createSdkMcpServer` |     ✅      |   ❌    |          ✅           | Create SDK server        |
-| `tool()` helper      |     ✅      |   ❌    |          ✅           | Create tool definition   |
-| Tool input schema    |  ✅ (Zod)   |   ❌    | ✅ (Hash/JSON Schema) | Schema definition        |
-| Tool annotations     |     ✅      |   ❌    |          ✅           | MCP tool hints (v0.2.27) |
+| `createSdkMcpServer` |     ✅      |   ✅    |          ✅           | Create SDK server        |
+| `tool()` helper      |     ✅      |   ✅    |          ✅           | Create tool definition   |
+| Tool input schema    |  ✅ (Zod)   |   ✅    | ✅ (Hash/JSON Schema) | Schema definition        |
+| Tool annotations     |     ✅      |   ✅    |          ✅           | MCP tool hints (v0.2.27) |
 
 ---
 
@@ -549,14 +551,15 @@ Sandbox configuration for command execution isolation.
 
 ### SandboxNetworkConfig
 
-| Field                 | TypeScript | Python | Ruby |
-|-----------------------|:----------:|:------:|:----:|
-| `allowedDomains`      |     ✅      |   ❌    |  ✅   |
-| `allowUnixSockets`    |     ✅      |   ✅    |  ✅   |
-| `allowAllUnixSockets` |     ✅      |   ✅    |  ✅   |
-| `allowLocalBinding`   |     ✅      |   ✅    |  ✅   |
-| `httpProxyPort`       |     ✅      |   ✅    |  ✅   |
-| `socksProxyPort`      |     ✅      |   ✅    |  ✅   |
+| Field                     | TypeScript | Python | Ruby |
+|---------------------------|:----------:|:------:|:----:|
+| `allowedDomains`          |     ✅      |   ❌    |  ✅   |
+| `allowManagedDomainsOnly` |     ✅      |   ❌    |  ✅   |
+| `allowUnixSockets`        |     ✅      |   ✅    |  ✅   |
+| `allowAllUnixSockets`     |     ✅      |   ✅    |  ✅   |
+| `allowLocalBinding`       |     ✅      |   ✅    |  ✅   |
+| `httpProxyPort`           |     ✅      |   ✅    |  ✅   |
+| `socksProxyPort`          |     ✅      |   ✅    |  ✅   |
 
 ---
 
@@ -618,6 +621,7 @@ Public API surface for SDK clients.
 | `reconnectMcpServer()`   |     ✅      |   ❌    |  ✅   | Reconnect MCP server   |
 | `toggleMcpServer()`      |     ✅      |   ❌    |  ✅   | Enable/disable MCP     |
 | `streamInput()`          |     ✅      |   ✅    |  ✅   | Stream user input      |
+| `initializationResult()` |     ✅      |   ❌    |  ✅   | Full init response     |
 | `close()`                |     ✅      |   ✅    |  ✅   | Close query/session    |
 
 ### Client Class
@@ -669,9 +673,11 @@ Public API surface for SDK clients.
 - Missing permission modes: `delegate`, `dontAsk`
 - Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`
+- Now has `additionalContext` in `PreToolUseHookSpecificOutput` (added in v0.1.30)
+- Now has `create_sdk_mcp_server`, `tool()` helper, and MCP tool annotations (added in v0.1.30)
 
 ### Ruby SDK (This Repository)
-- Full TypeScript SDK v0.2.31 feature parity
+- Full TypeScript SDK v0.2.32 feature parity
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations

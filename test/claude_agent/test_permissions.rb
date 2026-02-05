@@ -270,4 +270,18 @@ class TestClaudeAgentPermissions < ActiveSupport::TestCase
     context = ClaudeAgent::ToolPermissionContext.new
     assert_nil context.signal
   end
+
+  test "tool_permission_context_with_description" do
+    context = ClaudeAgent::ToolPermissionContext.new(
+      description: "Read a file from the filesystem",
+      tool_use_id: "tool-123"
+    )
+    assert_equal "Read a file from the filesystem", context.description
+    assert_equal "tool-123", context.tool_use_id
+  end
+
+  test "tool_permission_context_description_default" do
+    context = ClaudeAgent::ToolPermissionContext.new
+    assert_nil context.description
+  end
 end

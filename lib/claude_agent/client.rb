@@ -268,6 +268,15 @@ module ClaudeAgent
       @protocol.account_info
     end
 
+    # Get full initialization result (TypeScript SDK parity)
+    #
+    # @return [InitializationResult]
+    def initialization_result
+      require_connection!
+
+      @protocol.initialization_result
+    end
+
     # Dynamically set MCP servers for this session (TypeScript SDK parity)
     #
     # This replaces the current set of dynamically-added MCP servers.

@@ -15,6 +15,7 @@ module ClaudeAgent
     :allow_local_binding,
     :allow_unix_sockets,
     :allow_all_unix_sockets,
+    :allow_managed_domains_only,
     :http_proxy_port,
     :socks_proxy_port
   ) do
@@ -23,6 +24,7 @@ module ClaudeAgent
       allow_local_binding: false,
       allow_unix_sockets: [],
       allow_all_unix_sockets: false,
+      allow_managed_domains_only: false,
       http_proxy_port: nil,
       socks_proxy_port: nil
     )
@@ -35,6 +37,7 @@ module ClaudeAgent
       result[:allowLocalBinding] = allow_local_binding if allow_local_binding
       result[:allowUnixSockets] = allow_unix_sockets unless allow_unix_sockets.empty?
       result[:allowAllUnixSockets] = allow_all_unix_sockets if allow_all_unix_sockets
+      result[:allowManagedDomainsOnly] = allow_managed_domains_only if allow_managed_domains_only
       result[:httpProxyPort] = http_proxy_port if http_proxy_port
       result[:socksProxyPort] = socks_proxy_port if socks_proxy_port
       result

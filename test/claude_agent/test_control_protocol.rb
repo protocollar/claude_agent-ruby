@@ -194,6 +194,20 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     assert_equal "my-server", msg["request"]["serverName"]
   end
 
+  test "initialization_result sends supported_commands request format" do
+    @transport.connect
+
+    @protocol.send(:write_message, {
+      type: "control_request",
+      request_id: "test-req",
+      request: { subtype: "supported_commands" }
+    })
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" }
+    assert_not_nil msg
+    assert_equal "supported_commands", msg["request"]["subtype"]
+  end
+
   test "mcp_toggle sends correct request format" do
     @transport.connect
 

@@ -324,6 +324,51 @@ module ClaudeAgent
       end
     end
 
+    # Get full initialization result (TypeScript SDK parity)
+    #
+    # Sends the supported_commands request and maps the full response including
+    # commands, output style, available output styles, models, and account info.
+    #
+    # @return [InitializationResult]
+    def initialization_result
+      response = send_control_request(subtype: "supported_commands")
+
+      commands = (response["commands"] || []).map do |cmd|
+        SlashCommand.new(
+          name: cmd["name"],
+          description: cmd["description"],
+          argument_hint: cmd["argumentHint"]
+        )
+      end
+
+      models = (response["models"] || []).map do |model|
+        ModelInfo.new(
+          value: model["value"],
+          display_name: model["displayName"],
+          description: model["description"]
+        )
+      end
+
+      account_data = response["account"]
+      account = if account_data
+        AccountInfo.new(
+          email: account_data["email"],
+          organization: account_data["organization"],
+          subscription_type: account_data["subscriptionType"],
+          token_source: account_data["tokenSource"],
+          api_key_source: account_data["apiKeySource"]
+        )
+      end
+
+      InitializationResult.new(
+        commands: commands,
+        output_style: response["output_style"],
+        available_output_styles: response["available_output_styles"] || [],
+        models: models,
+        account: account
+      )
+    end
+
     # Get available models (TypeScript SDK parity)
     # @return [Array<ModelInfo>]
     def supported_models
@@ -536,7 +581,8 @@ module ClaudeAgent
         blocked_path: request["blocked_path"],
         decision_reason: request["decision_reason"],
         tool_use_id: request["tool_use_id"],
-        agent_id: request["agent_id"]
+        agent_id: request["agent_id"],
+        description: request["description"]
       }
 
       result = options.can_use_tool.call(tool_name, input, context)

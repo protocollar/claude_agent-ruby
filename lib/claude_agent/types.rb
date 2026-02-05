@@ -80,6 +80,23 @@ module ClaudeAgent
     end
   end
 
+  # Composite initialization result from supported_commands request (TypeScript SDK parity)
+  #
+  # @example
+  #   result = InitializationResult.new(
+  #     commands: [SlashCommand.new(name: "commit")],
+  #     output_style: "default",
+  #     available_output_styles: ["default", "concise"],
+  #     models: [ModelInfo.new(value: "claude-sonnet")],
+  #     account: AccountInfo.new(email: "user@example.com")
+  #   )
+  #
+  InitializationResult = Data.define(:commands, :output_style, :available_output_styles, :models, :account) do
+    def initialize(commands: [], output_style: nil, available_output_styles: [], models: [], account: nil)
+      super
+    end
+  end
+
   # Per-model usage statistics returned in result messages (TypeScript SDK parity)
   #
   # @example
