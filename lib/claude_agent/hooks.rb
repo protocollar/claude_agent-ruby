@@ -16,6 +16,8 @@ module ClaudeAgent
     PreCompact
     PermissionRequest
     Setup
+    TeammateIdle
+    TaskCompleted
   ].freeze
 
   # Matcher configuration for hooks
@@ -257,6 +259,44 @@ module ClaudeAgent
     # @return [Boolean]
     def maintenance?
       trigger == "maintenance"
+    end
+  end
+
+  # Input for TeammateIdle hook (TypeScript SDK v0.2.33 parity)
+  #
+  # Fired when a teammate becomes idle.
+  #
+  class TeammateIdleInput < BaseHookInput
+    attr_reader :teammate_name, :team_name
+
+    # @param teammate_name [String] Name of the idle teammate
+    # @param team_name [String] Name of the team
+    def initialize(teammate_name:, team_name:, **kwargs)
+      super(hook_event_name: "TeammateIdle", **kwargs)
+      @teammate_name = teammate_name
+      @team_name = team_name
+    end
+  end
+
+  # Input for TaskCompleted hook (TypeScript SDK v0.2.33 parity)
+  #
+  # Fired when a task completes.
+  #
+  class TaskCompletedInput < BaseHookInput
+    attr_reader :task_id, :task_subject, :task_description, :teammate_name, :team_name
+
+    # @param task_id [String] ID of the completed task
+    # @param task_subject [String] Subject of the completed task
+    # @param task_description [String, nil] Description of the completed task
+    # @param teammate_name [String, nil] Name of the teammate that completed the task
+    # @param team_name [String, nil] Name of the team
+    def initialize(task_id:, task_subject:, task_description: nil, teammate_name: nil, team_name: nil, **kwargs)
+      super(hook_event_name: "TaskCompleted", **kwargs)
+      @task_id = task_id
+      @task_subject = task_subject
+      @task_description = task_description
+      @teammate_name = teammate_name
+      @team_name = team_name
     end
   end
 end

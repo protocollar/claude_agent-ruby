@@ -52,7 +52,7 @@ module ClaudeAgent
       system_prompt append_system_prompt
       model fallback_model
       permission_mode permission_prompt_tool_name can_use_tool allow_dangerously_skip_permissions
-      continue_conversation resume fork_session resume_session_at
+      continue_conversation resume fork_session resume_session_at session_id
       max_turns max_budget_usd max_thinking_tokens
       strict_mcp_config mcp_servers hooks
       settings sandbox cwd add_dirs env user agent
@@ -179,6 +179,7 @@ module ClaudeAgent
         args.push("--resume", resume) if resume
         args.push("--fork-session") if fork_session
         args.push("--resume-session-at", resume_session_at) if resume_session_at
+        args.push("--session-id", session_id) if session_id
       end
     end
 
@@ -285,6 +286,10 @@ module ClaudeAgent
 
       if max_budget_usd && (!max_budget_usd.is_a?(Numeric) || max_budget_usd <= 0)
         raise ConfigurationError, "max_budget_usd must be a positive number"
+      end
+
+      if session_id && (continue_conversation || resume) && !fork_session
+        raise ConfigurationError, "session_id cannot be used with continue or resume unless fork_session is also set"
       end
 
       setup_options = [ init, init_only, maintenance ].count { |opt| opt }

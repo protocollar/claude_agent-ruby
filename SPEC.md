@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.32 (npm package)
-- Python SDK: v0.1.30 from GitHub (commit 451f2f4)
+- TypeScript SDK: v0.2.34 (npm package)
+- Python SDK: v0.1.31 from GitHub (commit 4b19642)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-05
+**Last Updated:** 2026-02-06
 
 ---
 
@@ -50,6 +50,7 @@ Configuration options for SDK queries and clients.
 | `maxThinkingTokens`               |     ✅      |   ✅    |  ✅   | Max thinking tokens                                          |
 | `continue`                        |     ✅      |   ✅    |  ✅   | Continue most recent conversation                            |
 | `resume`                          |     ✅      |   ✅    |  ✅   | Resume session by ID                                         |
+| `sessionId`                       |     ✅      |   ❌    |  ✅   | Custom UUID for conversations (v0.2.33)                      |
 | `resumeSessionAt`                 |     ✅      |   ❌    |  ✅   | Resume to specific message UUID                              |
 | `forkSession`                     |     ✅      |   ✅    |  ✅   | Fork on resume                                               |
 | `persistSession`                  |     ✅      |   ❌    |  ✅   | Whether to persist to disk                                   |
@@ -230,15 +231,15 @@ Bidirectional control protocol for SDK-CLI communication.
 
 ### Return Types
 
-| Type                  | TypeScript | Python | Ruby | Notes                  |
-|-----------------------|:----------:|:------:|:----:|------------------------|
-| `SlashCommand`        |     ✅      |   ❌    |  ✅   | Available command info |
-| `ModelInfo`           |     ✅      |   ❌    |  ✅   | Model information      |
-| `McpServerStatus`     |     ✅      |   ❌    |  ✅   | MCP server status      |
-| `AccountInfo`         |     ✅      |   ❌    |  ✅   | Account information    |
-| `InitializationResult`|     ✅      |   ❌    |  ✅   | Full init response     |
-| `McpSetServersResult` |     ✅      |   ❌    |  ✅   | Set servers result     |
-| `RewindFilesResult`   |     ✅      |   ✅    |  ✅   | Rewind result          |
+| Type                   | TypeScript | Python | Ruby | Notes                  |
+|------------------------|:----------:|:------:|:----:|------------------------|
+| `SlashCommand`         |     ✅      |   ❌    |  ✅   | Available command info |
+| `ModelInfo`            |     ✅      |   ❌    |  ✅   | Model information      |
+| `McpServerStatus`      |     ✅      |   ❌    |  ✅   | MCP server status      |
+| `AccountInfo`          |     ✅      |   ❌    |  ✅   | Account information    |
+| `InitializationResult` |     ✅      |   ❌    |  ✅   | Full init response     |
+| `McpSetServersResult`  |     ✅      |   ❌    |  ✅   | Set servers result     |
+| `RewindFilesResult`    |     ✅      |   ✅    |  ✅   | Rewind result          |
 
 ---
 
@@ -263,6 +264,8 @@ Event hooks for intercepting and modifying SDK behavior.
 | `PreCompact`         |     ✅      |   ✅    |  ✅   | Before compaction         |
 | `PermissionRequest`  |     ✅      |   ✅    |  ✅   | Permission requested      |
 | `Setup`              |     ✅      |   ❌    |  ✅   | Initial setup/maintenance |
+| `TeammateIdle`       |     ✅      |   ❌    |  ✅   | Teammate idle (v0.2.33)   |
+| `TaskCompleted`      |     ✅      |   ❌    |  ✅   | Task completed (v0.2.33)  |
 
 ### Hook Input Types
 
@@ -281,6 +284,8 @@ Event hooks for intercepting and modifying SDK behavior.
 | `PreCompactHookInput`         |     ✅      |   ✅    |  ✅   |
 | `PermissionRequestHookInput`  |     ✅      |   ✅    |  ✅   |
 | `SetupHookInput`              |     ✅      |   ❌    |  ✅   |
+| `TeammateIdleHookInput`       |     ✅      |   ❌    |  ✅   |
+| `TaskCompletedHookInput`      |     ✅      |   ❌    |  ✅   |
 
 ### Hook Output Types
 
@@ -668,16 +673,16 @@ Public API surface for SDK clients.
 - Full source available
 - Has `Transport` abstract class and several query control methods
 - Query supports: `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`, `stream_input()`, `close()`, `get_mcp_status()`
-- Client supports: `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`, `get_mcp_status()`
-- Missing hooks: SessionStart, SessionEnd, Setup
+- Client supports: `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`, `get_mcp_status()`, `get_server_info()`
+- Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted
 - Missing permission modes: `delegate`, `dontAsk`
-- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`
+- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`
-- Now has `additionalContext` in `PreToolUseHookSpecificOutput` (added in v0.1.30)
-- Now has `create_sdk_mcp_server`, `tool()` helper, and MCP tool annotations (added in v0.1.30)
+- Has `additionalContext` in `PreToolUseHookSpecificOutput` (added in v0.1.30)
+- Has `create_sdk_mcp_server`, `tool()` helper, and MCP tool annotations (added in v0.1.30/v0.1.31)
 
 ### Ruby SDK (This Repository)
-- Full TypeScript SDK v0.2.32 feature parity
+- Full TypeScript SDK v0.2.34 feature parity (v0.2.34 contains no new SDK features beyond a Claude Code version bump)
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations

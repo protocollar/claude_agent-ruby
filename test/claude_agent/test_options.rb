@@ -418,6 +418,61 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     assert_match(/Only one of init, init_only, or maintenance/, error.message)
   end
 
+  # --- Session ID ---
+
+  test "session_id_option_default_nil" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.session_id
+  end
+
+  test "session_id_option_with_value" do
+    options = ClaudeAgent::Options.new(session_id: "custom-uuid-123")
+    assert_equal "custom-uuid-123", options.session_id
+  end
+
+  test "to_cli_args_with_session_id" do
+    options = ClaudeAgent::Options.new(session_id: "my-session")
+    args = options.to_cli_args
+    assert_includes args, "--session-id"
+    assert_includes args, "my-session"
+  end
+
+  test "to_cli_args_without_session_id" do
+    options = ClaudeAgent::Options.new
+    args = options.to_cli_args
+    refute_includes args, "--session-id"
+  end
+
+  test "session_id_with_continue_raises_without_fork" do
+    assert_raises(ClaudeAgent::ConfigurationError) do
+      ClaudeAgent::Options.new(session_id: "abc", continue_conversation: true)
+    end
+  end
+
+  test "session_id_with_resume_raises_without_fork" do
+    assert_raises(ClaudeAgent::ConfigurationError) do
+      ClaudeAgent::Options.new(session_id: "abc", resume: "sess-123")
+    end
+  end
+
+  test "session_id_with_continue_and_fork_is_valid" do
+    options = ClaudeAgent::Options.new(
+      session_id: "abc",
+      continue_conversation: true,
+      fork_session: true
+    )
+    assert_equal "abc", options.session_id
+  end
+
+  test "session_id_with_resume_and_fork_is_valid" do
+    options = ClaudeAgent::Options.new(
+      session_id: "abc",
+      resume: "sess-123",
+      fork_session: true
+    )
+    assert_equal "abc", options.session_id
+  end
+
   # --- Debug Options ---
 
   test "debug_option_default_false" do
