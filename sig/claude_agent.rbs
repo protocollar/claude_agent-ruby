@@ -265,6 +265,7 @@ module ClaudeAgent
     attr_accessor resume: String?
     attr_accessor fork_session: bool
     attr_accessor resume_session_at: String?
+    attr_accessor session_id: String?
     attr_accessor persist_session: bool
 
     # Limits & budget
@@ -766,6 +767,31 @@ module ClaudeAgent
     attr_reader permission_suggestions: untyped
 
     def initialize: (tool_name: String, tool_input: Hash[String, untyped], ?permission_suggestions: untyped, **untyped) -> void
+  end
+
+  class SetupInput < BaseHookInput
+    attr_reader trigger: String
+
+    def initialize: (trigger: String, **untyped) -> void
+    def init?: () -> bool
+    def maintenance?: () -> bool
+  end
+
+  class TeammateIdleInput < BaseHookInput
+    attr_reader teammate_name: String
+    attr_reader team_name: String
+
+    def initialize: (teammate_name: String, team_name: String, **untyped) -> void
+  end
+
+  class TaskCompletedInput < BaseHookInput
+    attr_reader task_id: String
+    attr_reader task_subject: String
+    attr_reader task_description: String?
+    attr_reader teammate_name: String?
+    attr_reader team_name: String?
+
+    def initialize: (task_id: String, task_subject: String, ?task_description: String?, ?teammate_name: String?, ?team_name: String?, **untyped) -> void
   end
 
   # Permission types

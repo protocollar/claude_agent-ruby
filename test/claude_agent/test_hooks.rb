@@ -334,4 +334,85 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
   test "setup_event_in_hook_events" do
     assert_includes ClaudeAgent::HOOK_EVENTS, "Setup"
   end
+
+  # --- TeammateIdleInput ---
+
+  test "teammate_idle_event_in_hook_events" do
+    assert_includes ClaudeAgent::HOOK_EVENTS, "TeammateIdle"
+  end
+
+  test "teammate_idle_input" do
+    input = ClaudeAgent::TeammateIdleInput.new(
+      teammate_name: "alice",
+      team_name: "backend-team",
+      session_id: "sess-456"
+    )
+    assert_equal "TeammateIdle", input.hook_event_name
+    assert_equal "alice", input.teammate_name
+    assert_equal "backend-team", input.team_name
+    assert_equal "sess-456", input.session_id
+  end
+
+  test "teammate_idle_input_inherits_base_fields" do
+    input = ClaudeAgent::TeammateIdleInput.new(
+      teammate_name: "bob",
+      team_name: "frontend-team",
+      transcript_path: "/path/to/transcript",
+      cwd: "/home/user",
+      permission_mode: "default"
+    )
+    assert_equal "/path/to/transcript", input.transcript_path
+    assert_equal "/home/user", input.cwd
+    assert_equal "default", input.permission_mode
+  end
+
+  # --- TaskCompletedInput ---
+
+  test "task_completed_event_in_hook_events" do
+    assert_includes ClaudeAgent::HOOK_EVENTS, "TaskCompleted"
+  end
+
+  test "task_completed_input" do
+    input = ClaudeAgent::TaskCompletedInput.new(
+      task_id: "task-789",
+      task_subject: "Fix login bug",
+      task_description: "The login form fails on mobile",
+      teammate_name: "alice",
+      team_name: "backend-team",
+      session_id: "sess-789"
+    )
+    assert_equal "TaskCompleted", input.hook_event_name
+    assert_equal "task-789", input.task_id
+    assert_equal "Fix login bug", input.task_subject
+    assert_equal "The login form fails on mobile", input.task_description
+    assert_equal "alice", input.teammate_name
+    assert_equal "backend-team", input.team_name
+    assert_equal "sess-789", input.session_id
+  end
+
+  test "task_completed_input_with_required_fields_only" do
+    input = ClaudeAgent::TaskCompletedInput.new(
+      task_id: "task-001",
+      task_subject: "Update docs"
+    )
+    assert_equal "TaskCompleted", input.hook_event_name
+    assert_equal "task-001", input.task_id
+    assert_equal "Update docs", input.task_subject
+    assert_nil input.task_description
+    assert_nil input.teammate_name
+    assert_nil input.team_name
+  end
+
+  test "task_completed_input_inherits_base_fields" do
+    input = ClaudeAgent::TaskCompletedInput.new(
+      task_id: "task-002",
+      task_subject: "Deploy service",
+      transcript_path: "/path/to/transcript",
+      cwd: "/home/user",
+      permission_mode: "acceptEdits"
+    )
+    assert_equal "/path/to/transcript", input.transcript_path
+    assert_equal "/home/user", input.cwd
+    assert_equal "acceptEdits", input.permission_mode
+  end
 end
