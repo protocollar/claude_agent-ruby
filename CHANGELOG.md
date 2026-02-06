@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-02-06
+
 ### Added
 - `session_id` option for custom conversation UUIDs (`--session-id` CLI flag)
 - `TeammateIdle` hook event with `TeammateIdleInput` (TypeScript SDK v0.2.33 parity)
