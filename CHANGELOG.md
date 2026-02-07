@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-02-07
+
 ### Added
 - Configurable logging via `ClaudeAgent.logger` (module-level) and `Options#logger` (per-query)
   - `NullLogger` default for zero overhead when logging is not configured
