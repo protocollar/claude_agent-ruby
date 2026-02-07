@@ -1,5 +1,6 @@
 dependencies:
   - name: json
+  - name: logger
   - name: timeout
   - name: open3
   - name: mutex_m

@@ -8,6 +8,11 @@ module ClaudeAgent
   #   message = parser.parse({"type" => "assistant", "message" => {...}})
   #
   class MessageParser
+    # @param logger [Logger, nil] Optional logger instance
+    def initialize(logger: nil)
+      @logger = logger
+    end
+
     # Parse a raw message hash into a typed message object
     #
     # @param raw [Hash] Raw message from CLI
@@ -15,6 +20,7 @@ module ClaudeAgent
     # @raise [MessageParseError] If message cannot be parsed
     def parse(raw)
       type = raw["type"]
+      logger.debug("parser") { "Parsing message: #{type}" }
 
       case type
       when "user"
@@ -52,11 +58,16 @@ module ClaudeAgent
       when "tool_use_summary"
         parse_tool_use_summary_message(raw)
       else
+        logger.error("parser") { "Unknown message type: #{type}" }
         raise MessageParseError.new("Unknown message type: #{type}", raw_message: raw)
       end
     end
 
     private
+
+    def logger
+      @logger || ClaudeAgent.logger
+    end
 
     # Fetch a value from a hash, trying both snake_case and camelCase keys
     # @param raw [Hash] The hash to fetch from

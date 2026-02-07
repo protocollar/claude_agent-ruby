@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Configurable logging via `ClaudeAgent.logger` (module-level) and `Options#logger` (per-query)
+  - `NullLogger` default for zero overhead when logging is not configured
+  - `ClaudeAgent.debug!` convenience method for quick stderr debug logging
+  - Backward-compatible with `CLAUDE_AGENT_DEBUG` env var
+  - Log points across transport, control protocol, message parser, MCP server, query, and client
+
 ### Fixed
 - `can_use_tool` callback now works without hooks or MCP servers configured
   - `PermissionResultAllow` and `PermissionResultDeny` (`Data.define` types) are now correctly recognized in `handle_can_use_tool` instead of silently falling through to allow

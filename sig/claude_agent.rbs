@@ -1,6 +1,28 @@
 module ClaudeAgent
   VERSION: String
 
+  # Null logger that discards all output with zero overhead
+  class NullLogger < Logger
+    def initialize: () -> void
+    def add: (?Integer? severity, ?untyped message, ?String? progname) -> true
+    def debug: (*untyped) -> true
+    def info: (*untyped) -> true
+    def warn: (*untyped) -> true
+    def error: (*untyped) -> true
+    def fatal: (*untyped) -> true
+    def unknown: (*untyped) -> true
+    def debug?: () -> false
+    def info?: () -> false
+    def warn?: () -> false
+    def error?: () -> false
+    def fatal?: () -> false
+  end
+
+  # Module-level logger
+  def self.logger: () -> Logger
+  def self.logger=: (Logger logger) -> Logger
+  def self.debug!: (?output: IO) -> Logger
+
   # One-shot query to Claude Code CLI
   def self.query: (
     prompt: String,
@@ -316,6 +338,9 @@ module ClaudeAgent
     attr_accessor debug: bool
     attr_accessor debug_file: String?
 
+    # Logging
+    attr_accessor logger: Logger?
+
     # Abort control (TypeScript SDK parity)
     attr_accessor abort_controller: AbortController?
 
@@ -328,6 +353,7 @@ module ClaudeAgent
     def has_hooks?: () -> bool
     def has_sdk_mcp_servers?: () -> bool
     def abort_signal: () -> AbortSignal?
+    def effective_logger: () -> Logger
   end
 
   # Content block types
@@ -646,7 +672,7 @@ module ClaudeAgent
 
   # Message parser
   class MessageParser
-    def initialize: () -> void
+    def initialize: (?logger: Logger?) -> void
     def parse: (Hash[String, untyped] raw) -> message
   end
 
@@ -1029,7 +1055,7 @@ module ClaudeAgent
       attr_reader name: String
       attr_reader tools: Hash[String, Tool]
 
-      def initialize: (name: String, ?tools: Array[Tool]) -> void
+      def initialize: (name: String, ?tools: Array[Tool], ?logger: Logger?) -> void
       def add_tool: (Tool tool) -> void
       def remove_tool: (String name) -> Tool?
       def handle_message: (Hash[String, untyped] message) -> Hash[Symbol, untyped]?

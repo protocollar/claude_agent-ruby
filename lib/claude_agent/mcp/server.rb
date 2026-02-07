@@ -34,9 +34,11 @@ module ClaudeAgent
 
       # @param name [String] Server name
       # @param tools [Array<Tool>] Tools to expose
-      def initialize(name:, tools: [])
+      # @param logger [Logger, nil] Optional logger instance
+      def initialize(name:, tools: [], logger: nil)
         @name = name.to_s
         @tools = {}
+        @logger = logger
         tools.each { |tool| add_tool(tool) }
       end
 
@@ -61,6 +63,7 @@ module ClaudeAgent
         method = message["method"]
         params = message["params"] || {}
         id = message["id"]
+        logger.debug("mcp.#{@name}") { "Handling: #{method}" }
 
         result = case method
         when "initialize"
@@ -114,13 +117,19 @@ module ClaudeAgent
 
         tool = @tools[tool_name]
         unless tool
+          logger.warn("mcp.#{@name}") { "Unknown tool: #{tool_name}" }
           return {
             content: [ { type: "text", text: "Unknown tool: #{tool_name}" } ],
             isError: true
           }
         end
 
+        logger.info("mcp.#{@name}") { "Tool call: #{tool_name}" }
         tool.call(arguments)
+      end
+
+      def logger
+        @logger || ClaudeAgent.logger
       end
 
       def jsonrpc_response(id, result)

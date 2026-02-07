@@ -62,6 +62,7 @@ module ClaudeAgent
       abort_controller spawn_claude_code_process
       init init_only maintenance
       debug debug_file
+      logger
     ].freeze
 
     attr_accessor(*ATTRIBUTES)
@@ -125,6 +126,12 @@ module ClaudeAgent
     # @return [AbortSignal, nil]
     def abort_signal
       abort_controller&.signal
+    end
+
+    # Resolved logger: per-instance override or module-level default
+    # @return [Logger]
+    def effective_logger
+      @logger || ClaudeAgent.logger
     end
 
     private

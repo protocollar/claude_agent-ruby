@@ -43,7 +43,7 @@ RuboCop::RakeTask.new
 namespace :rbs do
   desc "Validate RBS signatures (syntax + type resolution)"
   task :validate do
-    sh "bundle exec rbs -I sig validate"
+    sh "bundle exec rbs -r logger -I sig validate"
   end
 
   desc "Parse RBS files (syntax check only, faster)"

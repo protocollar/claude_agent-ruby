@@ -85,6 +85,9 @@ module ClaudeAgent
       Enumerator.new do |yielder|
         # Set entrypoint environment variable
         ENV["CLAUDE_CODE_ENTRYPOINT"] = "sdk-rb"
+        query_logger = options.effective_logger
+        query_logger.info("query") { "Starting query" }
+        query_start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
         # Always use streaming mode with control protocol (Python/TypeScript SDK parity)
         protocol = ControlProtocol.new(transport: transport, options: options)
@@ -100,8 +103,14 @@ module ClaudeAgent
           protocol.send_user_message(prompt)
 
           protocol.each_message do |message|
+            query_logger.debug("query") { "Received: #{message.class.name.split("::").last}" }
             yielder << message
-            break if message.is_a?(ResultMessage)
+
+            if message.is_a?(ResultMessage)
+              elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - query_start
+              query_logger.info("query") { "Query complete (#{elapsed.round(2)}s, cost=$#{message.total_cost_usd || "?"})" }
+              break
+            end
           end
         ensure
           protocol.stop
