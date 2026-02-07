@@ -88,6 +88,9 @@ module ClaudeAgent
         end
 
         @connected = true
+        logger.info("transport") { "Process spawned (pid=#{@wait_thread&.pid || @process&.pid rescue "?"})" }
+        logger.debug("transport") { "Command: #{cmd.join(" ")}" }
+        logger.debug("transport") { "Working dir: #{working_directory}" }
 
         # Always start stderr reader to prevent pipe buffer from filling up
         start_stderr_reader if @stderr
@@ -115,6 +118,7 @@ module ClaudeAgent
         raise CLIConnectionError, "Not connected" unless @connected
         raise CLIConnectionError, "stdin closed" unless @stdin && !@stdin.closed?
 
+        logger.debug("transport") { "Write: #{data.bytesize} bytes" }
         @mutex.synchronize do
           @stdin.write(data)
           @stdin.write("\n") unless data.end_with?("\n")
@@ -139,8 +143,10 @@ module ClaudeAgent
 
           begin
             message = JSON.parse(line)
+            logger.debug("transport") { "Received: #{message["type"] || "unknown"}" }
             yield message
           rescue JSON::ParserError
+            logger.warn("transport") { "JSON parse error, buffering (#{@buffer.bytesize} bytes)" }
             # Buffer partial JSON (in case of split lines)
             @buffer << line
             if @buffer.bytesize > @max_buffer_size
@@ -192,6 +198,7 @@ module ClaudeAgent
         @connected = false
         @stdin = @stdout = @stderr = @wait_thread = nil
 
+        logger.info("transport") { "Transport closed (exit_status=#{exit_status.inspect})" }
         exit_status
       end
 
@@ -264,6 +271,7 @@ module ClaudeAgent
       # Force kill the CLI process (SIGKILL)
       # @return [void]
       def kill
+        logger.warn("transport") { "Force killing CLI process" }
         # Use custom process kill if available
         if @process&.respond_to?(:kill)
           @mutex.synchronize { @killed = true }
@@ -302,6 +310,10 @@ module ClaudeAgent
         paths.find { |p| !p.empty? && File.executable?(p) } || "claude"
       end
 
+      def logger
+        @options.effective_logger
+      end
+
       def check_cli_version!
         version_output = `#{@cli_path} -v 2>&1`.strip
         # Parse version like "claude 2.1.0" or just "2.1.0"
@@ -312,6 +324,7 @@ module ClaudeAgent
         end
 
         found_version = version_match[1]
+        logger.debug("transport") { "CLI version: #{found_version}" }
         unless version_satisfies?(found_version, MINIMUM_CLI_VERSION)
           raise CLIVersionError.new(found_version)
         end

@@ -72,9 +72,11 @@ module ClaudeAgent
 
       ENV["CLAUDE_CODE_ENTRYPOINT"] = "sdk-rb-client"
 
+      logger.info("client") { "Connecting" }
       @protocol = ControlProtocol.new(transport: @transport, options: @options)
       @server_info = @protocol.start(streaming: true)
       @connected = true
+      logger.info("client") { "Connected" }
 
       send_message(prompt) if prompt
     end
@@ -85,6 +87,7 @@ module ClaudeAgent
     def disconnect
       return unless @connected
 
+      logger.info("client") { "Disconnecting" }
       @protocol&.stop
       @protocol = nil
       @connected = false
@@ -105,6 +108,7 @@ module ClaudeAgent
     # @return [void]
     def send_message(content, session_id: "default", uuid: nil)
       require_connection!
+      logger.debug("client") { "Sending message (session=#{session_id})" }
       @protocol.send_user_message(content, session_id: session_id, uuid: uuid)
     end
 
@@ -335,6 +339,10 @@ module ClaudeAgent
     end
 
     private
+
+    def logger
+      @options.effective_logger
+    end
 
     def require_connection!
       raise CLIConnectionError, "Not connected" unless @connected

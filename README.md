@@ -818,12 +818,73 @@ session = ClaudeAgent.unstable_v2_create_session(options)
 | `RewindFilesResult`   | Result of rewind_files (can_rewind, error, files_changed, insertions, deletions) |
 | `SDKPermissionDenial` | Permission denial info (tool_name, tool_use_id, tool_input)                      |
 
+## Logging
+
+The SDK includes optional logging with zero overhead when disabled. All log output is silent by default.
+
+### Quick Debug
+
+```ruby
+# Enable debug logging to stderr
+ClaudeAgent.debug!
+
+# Or to a file
+ClaudeAgent.debug!(output: File.open("claude_agent.log", "a"))
+```
+
+### Custom Logger
+
+Set any `Logger`-compatible instance at the module level:
+
+```ruby
+ClaudeAgent.logger = Logger.new($stderr, level: :info)
+```
+
+### Per-Query Logger
+
+Override the module-level logger for a specific query or client:
+
+```ruby
+my_logger = Logger.new("query.log", level: :debug)
+
+ClaudeAgent.query(prompt: "Hello", options: ClaudeAgent::Options.new(logger: my_logger))
+
+# Or with Client
+client = ClaudeAgent::Client.new(options: ClaudeAgent::Options.new(logger: my_logger))
+```
+
+### Log Output
+
+When enabled, the SDK logs events across transport, protocol, parsing, MCP, and query layers:
+
+```
+[ClaudeAgent] [12:00:00.123] INFO  -- transport: Process spawned (pid=12345)
+[ClaudeAgent] [12:00:00.456] DEBUG -- protocol: Sending control request: initialize (req_1_abc)
+[ClaudeAgent] [12:00:01.789] INFO  -- protocol: Permission decision for Bash: allow
+[ClaudeAgent] [12:00:02.100] INFO  -- query: Query complete (3.45s, cost=$0.012)
+```
+
+### Log Levels
+
+| Level | What's Logged |
+|-------|---------------|
+| ERROR | Control request failures, unknown message types |
+| WARN  | Force kills, JSON parse errors during buffering, unknown MCP tools |
+| INFO  | Process spawn/close, protocol start/stop, permission decisions, tool calls, query start/completion with timing |
+| DEBUG | Full commands, message types received, control request/response routing, reader thread lifecycle |
+
 ## Environment Variables
 
 The SDK sets these automatically:
 
 - `CLAUDE_CODE_ENTRYPOINT=sdk-rb`
 - `CLAUDE_AGENT_SDK_VERSION=<version>`
+
+Enable debug logging via environment variable:
+
+```bash
+export CLAUDE_AGENT_DEBUG=1
+```
 
 Skip version checking (for development):
 

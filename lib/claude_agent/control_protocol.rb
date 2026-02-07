@@ -30,7 +30,7 @@ module ClaudeAgent
     def initialize(transport:, options: nil)
       @transport = transport
       @options = options || Options.new
-      @parser = MessageParser.new
+      @parser = MessageParser.new(logger: @options.effective_logger)
       @server_info = nil
 
       # Control protocol state
@@ -57,15 +57,18 @@ module ClaudeAgent
     # @param prompt [String, nil] Initial prompt for non-streaming mode
     # @return [Hash, nil] Server info from initialization
     def start(streaming: true, prompt: nil)
+      logger.info("protocol") { "Starting control protocol (streaming=#{streaming})" }
       @transport.connect(streaming: streaming, prompt: prompt)
       @running = true
 
       # Start background reader thread
       @reader_thread = Thread.new { reader_loop }
+      logger.debug("protocol") { "Reader thread started" }
 
       # Always send initialize in streaming mode (Python/TypeScript SDK parity)
       if streaming
         @server_info = send_initialize
+        logger.info("protocol") { "Initialize complete" }
       end
 
       @server_info
@@ -74,6 +77,7 @@ module ClaudeAgent
     # Stop the control protocol
     # @return [void]
     def stop
+      logger.info("protocol") { "Stopping control protocol" }
       @running = false
       @transport.end_input
       @reader_thread&.join(5)
@@ -143,8 +147,7 @@ module ClaudeAgent
           # Re-raise abort errors
           raise
         rescue => e
-          # Log parsing errors but continue
-          warn "[ClaudeAgent] Message parse error: #{e.message}" if ENV["CLAUDE_AGENT_DEBUG"]
+          logger.warn("protocol") { "Message parse error: #{e.message}" }
         end
       end
     end
@@ -472,6 +475,10 @@ module ClaudeAgent
 
     private
 
+    def logger
+      @options.effective_logger
+    end
+
     # Background thread that reads messages and routes them
     def reader_loop
       @transport.read_messages do |raw|
@@ -484,19 +491,22 @@ module ClaudeAgent
         break unless @running
 
         if raw["type"] == "control_request"
+          logger.debug("protocol") { "Control request received: #{raw.dig("request", "subtype")}" }
           handle_control_request(raw)
         elsif raw["type"] == "control_response"
+          logger.debug("protocol") { "Control response received: #{raw.dig("response", "request_id")}" }
           handle_control_response(raw)
         else
           # SDK message - queue for consumer
+          logger.debug("protocol") { "Queued message: #{raw["type"]}" }
           @message_queue.push(raw)
         end
       end
     rescue IOError, Errno::EPIPE
-      # Transport closed
+      logger.debug("protocol") { "Reader thread exiting: transport closed" }
       @running = false
     rescue AbortError
-      # Abort signal raised
+      logger.debug("protocol") { "Reader thread exiting: abort signal" }
       @running = false
     end
 
@@ -565,7 +575,10 @@ module ClaudeAgent
     # @param request [Hash] Request data
     # @return [Hash] Response
     def handle_can_use_tool(request)
-      return { behavior: "allow" } unless options.can_use_tool
+      unless options.can_use_tool
+        logger.info("protocol") { "Permission decision for #{request["tool_name"]}: allow (no callback)" }
+        return { behavior: "allow" }
+      end
 
       tool_name = request["tool_name"]
       input = request["input"] || {}
@@ -581,6 +594,7 @@ module ClaudeAgent
       result = options.can_use_tool.call(tool_name, input, context)
 
       normalized = result.to_h
+      logger.info("protocol") { "Permission decision for #{tool_name}: #{normalized[:behavior]}" }
 
       if normalized[:behavior] == "allow" && !normalized.key?(:updatedInput)
         normalized[:updatedInput] = input
@@ -598,7 +612,11 @@ module ClaudeAgent
       tool_use_id = request["tool_use_id"]
 
       callback = @hook_callbacks[callback_id]
-      return {} unless callback
+      unless callback
+        logger.debug("protocol") { "Hook callback not found: #{callback_id}" }
+        return {}
+      end
+      logger.debug("protocol") { "Hook callback: #{callback_id}" }
 
       context = { tool_use_id: tool_use_id }
       result = callback.call(input, context)
@@ -613,6 +631,7 @@ module ClaudeAgent
     def handle_mcp_message(request)
       server_name = request["server_name"]
       message = request["message"]
+      logger.debug("protocol") { "MCP message for #{server_name}: #{message["method"]}" }
 
       # Find SDK MCP server
       server_config = options.mcp_servers[server_name]
@@ -694,6 +713,7 @@ module ClaudeAgent
       @abort_signal&.check!
 
       request_id = generate_request_id
+      logger.debug("protocol") { "Sending control request: #{subtype} (#{request_id})" }
 
       request = {
         type: "control_request",
@@ -730,6 +750,7 @@ module ClaudeAgent
       end
 
       if response["subtype"] == "error"
+        logger.error("protocol") { "Control request failed: #{subtype} - #{response["error"]}" }
         raise Error, response["error"] || "Unknown error"
       end
 
