@@ -86,45 +86,25 @@ module ClaudeAgent
         # Set entrypoint environment variable
         ENV["CLAUDE_CODE_ENTRYPOINT"] = "sdk-rb"
 
-        # Determine mode based on hooks/MCP servers
-        streaming = options.has_hooks? || options.has_sdk_mcp_servers?
-
-        if streaming
-          # Use streaming mode with control protocol
-          protocol = ControlProtocol.new(transport: transport, options: options)
-          begin
-            # Register abort handler if abort controller is provided
-            if options.abort_signal
-              options.abort_signal.on_abort do
-                protocol.abort! rescue nil
-              end
+        # Always use streaming mode with control protocol (Python/TypeScript SDK parity)
+        protocol = ControlProtocol.new(transport: transport, options: options)
+        begin
+          # Register abort handler if abort controller is provided
+          if options.abort_signal
+            options.abort_signal.on_abort do
+              protocol.abort! rescue nil
             end
-
-            protocol.start(streaming: true)
-            protocol.send_user_message(prompt)
-            transport.end_input unless options.has_hooks? || options.has_sdk_mcp_servers?
-
-            protocol.each_message do |message|
-              yielder << message
-              break if message.is_a?(ResultMessage)
-            end
-          ensure
-            protocol.stop
           end
-        else
-          # Simple mode - just send prompt and read responses
-          parser = MessageParser.new
-          begin
-            transport.connect(streaming: false, prompt: prompt)
 
-            transport.read_messages do |raw|
-              message = parser.parse(raw)
-              yielder << message
-              break if message.is_a?(ResultMessage)
-            end
-          ensure
-            transport.close
+          protocol.start(streaming: true)
+          protocol.send_user_message(prompt)
+
+          protocol.each_message do |message|
+            yielder << message
+            break if message.is_a?(ResultMessage)
           end
+        ensure
+          protocol.stop
         end
       end
     end

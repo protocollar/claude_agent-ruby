@@ -21,7 +21,7 @@ module ClaudeAgent
     def to_h
       h = { behavior: "allow" }
       h[:updatedInput] = updated_input if updated_input
-      h[:updatedPermissions] = updated_permissions&.map { |p| p.respond_to?(:to_h) ? p.to_h : p } if updated_permissions
+      h[:updatedPermissions] = updated_permissions&.map(&:to_h) if updated_permissions
       h[:toolUseID] = tool_use_id if tool_use_id
       h
     end
