@@ -81,7 +81,7 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
   test "handle can use tool with callback allow" do
     options = ClaudeAgent::Options.new(
       can_use_tool: ->(name, input, context) {
-        { behavior: "allow", updated_input: input.merge("modified" => true) }
+        ClaudeAgent::PermissionResultAllow.new(updated_input: input.merge("modified" => true))
       }
     )
     protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
@@ -96,7 +96,7 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
   test "handle can use tool with callback deny" do
     options = ClaudeAgent::Options.new(
       can_use_tool: ->(name, input, context) {
-        { behavior: "deny", message: "Not allowed", interrupt: true }
+        ClaudeAgent::PermissionResultDeny.new(message: "Not allowed", interrupt: true)
       }
     )
     protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
@@ -176,6 +176,117 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     assert_equal 1, config["PostToolUse"].length
     assert_equal 2, config["PostToolUse"][0][:hookCallbackIds].length
     refute config["PostToolUse"][0].key?(:timeout)
+  end
+
+  # --- can_use_tool with PermissionResultAllow ---
+
+  test "handle can use tool with PermissionResultAllow" do
+    options = ClaudeAgent::Options.new(
+      can_use_tool: ->(name, input, context) {
+        ClaudeAgent::PermissionResultAllow.new
+      }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+
+    request = { "tool_name" => "Read", "input" => { "file_path" => "/tmp" } }
+    result = protocol.send(:handle_can_use_tool, request)
+
+    assert_equal "allow", result[:behavior]
+    # Falls back to original input when updatedInput not provided (Python SDK parity)
+    assert_equal({ "file_path" => "/tmp" }, result[:updatedInput])
+  end
+
+  test "handle can use tool with PermissionResultAllow with updated_input" do
+    options = ClaudeAgent::Options.new(
+      can_use_tool: ->(name, input, context) {
+        ClaudeAgent::PermissionResultAllow.new(updated_input: { "safe" => true })
+      }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+
+    request = { "tool_name" => "Read", "input" => { "file_path" => "/tmp" } }
+    result = protocol.send(:handle_can_use_tool, request)
+
+    assert_equal "allow", result[:behavior]
+    assert_equal({ "safe" => true }, result[:updatedInput])
+  end
+
+  test "handle can use tool with PermissionResultAllow with updated_permissions" do
+    options = ClaudeAgent::Options.new(
+      can_use_tool: ->(name, input, context) {
+        ClaudeAgent::PermissionResultAllow.new(
+          updated_permissions: [
+            ClaudeAgent::PermissionUpdate.new(type: "addRules", rules: [ { tool_name: "Read" } ], behavior: "allow")
+          ]
+        )
+      }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+
+    request = { "tool_name" => "Read", "input" => {} }
+    result = protocol.send(:handle_can_use_tool, request)
+
+    assert_equal "allow", result[:behavior]
+    assert result[:updatedPermissions].is_a?(Array)
+    assert_equal 1, result[:updatedPermissions].length
+  end
+
+  # --- can_use_tool with PermissionResultDeny ---
+
+  test "handle can use tool with PermissionResultDeny" do
+    options = ClaudeAgent::Options.new(
+      can_use_tool: ->(name, input, context) {
+        ClaudeAgent::PermissionResultDeny.new(message: "Blocked", interrupt: true)
+      }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+
+    request = { "tool_name" => "Bash", "input" => { "command" => "rm -rf /" } }
+    result = protocol.send(:handle_can_use_tool, request)
+
+    assert_equal "deny", result[:behavior]
+    assert_equal "Blocked", result[:message]
+    assert_equal true, result[:interrupt]
+  end
+
+  test "handle can use tool with PermissionResultDeny defaults" do
+    options = ClaudeAgent::Options.new(
+      can_use_tool: ->(name, input, context) {
+        ClaudeAgent::PermissionResultDeny.new
+      }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+
+    request = { "tool_name" => "Write", "input" => {} }
+    result = protocol.send(:handle_can_use_tool, request)
+
+    assert_equal "deny", result[:behavior]
+    assert_equal "", result[:message]
+    assert_equal false, result[:interrupt]
+  end
+
+  # --- normalize_hook_response with Data.define-like types ---
+
+  test "normalize hook response with object responding to to_h" do
+    response_obj = Data.define(:continue_, :decision).new(continue_: true, decision: "allow")
+    normalized = @protocol.send(:normalize_hook_response, response_obj)
+
+    assert_equal true, normalized["continue"]
+    assert_equal "allow", normalized["decision"]
+  end
+
+  # --- send_initialize condition ---
+
+  test "start always sends initialize in streaming mode" do
+    # Streaming mode always initializes (Python/TypeScript SDK parity)
+    # No conditional on hooks, MCP, or can_use_tool
+    options = ClaudeAgent::Options.new
+    streaming = true
+    refute options.has_hooks?
+    refute options.has_sdk_mcp_servers?
+    assert_nil options.can_use_tool
+    # Even without any features, streaming mode always initializes
+    assert streaming, "streaming should always trigger initialize"
   end
 
   test "mcp_reconnect sends correct request format" do

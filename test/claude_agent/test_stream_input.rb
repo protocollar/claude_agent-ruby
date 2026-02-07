@@ -48,10 +48,21 @@ class TestClaudeAgentStreamInput < ActiveSupport::TestCase
     @options = ClaudeAgent::Options.new
   end
 
+  private
+
+  # Helper to start protocol without the initialization handshake
+  # (these tests focus on stream_input behavior, not initialization)
+  def start_protocol(protocol)
+    protocol.stubs(:send_initialize).returns(nil)
+    protocol.start(streaming: true)
+  end
+
+  public
+
   test "stream_input_with_string_messages" do
     transport = MockStreamTransport.new
     protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: @options)
-    protocol.start(streaming: true)
+    start_protocol(protocol)
 
     messages = [ "Hello", "World" ]
     protocol.stream_input(messages)
@@ -66,7 +77,7 @@ class TestClaudeAgentStreamInput < ActiveSupport::TestCase
   test "stream_input_with_hash_messages" do
     transport = MockStreamTransport.new
     protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: @options)
-    protocol.start(streaming: true)
+    start_protocol(protocol)
 
     messages = [
       { content: "Hello", uuid: "msg-1" },
@@ -85,7 +96,7 @@ class TestClaudeAgentStreamInput < ActiveSupport::TestCase
   test "stream_input_with_user_message_objects" do
     transport = MockStreamTransport.new
     protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: @options)
-    protocol.start(streaming: true)
+    start_protocol(protocol)
 
     messages = [
       ClaudeAgent::UserMessage.new(content: "Hello", uuid: "msg-1", session_id: "sess-1"),
@@ -103,7 +114,7 @@ class TestClaudeAgentStreamInput < ActiveSupport::TestCase
   test "stream_input_with_user_message_replay" do
     transport = MockStreamTransport.new
     protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: @options)
-    protocol.start(streaming: true)
+    start_protocol(protocol)
 
     messages = [
       ClaudeAgent::UserMessageReplay.new(content: "Replayed message", uuid: "replay-1")
@@ -119,7 +130,7 @@ class TestClaudeAgentStreamInput < ActiveSupport::TestCase
   test "stream_input_uses_default_session_id" do
     transport = MockStreamTransport.new
     protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: @options)
-    protocol.start(streaming: true)
+    start_protocol(protocol)
 
     protocol.stream_input([ "Hello" ], session_id: "my-session")
 
@@ -130,7 +141,7 @@ class TestClaudeAgentStreamInput < ActiveSupport::TestCase
   test "stream_input_raises_on_unknown_type" do
     transport = MockStreamTransport.new
     protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: @options)
-    protocol.start(streaming: true)
+    start_protocol(protocol)
 
     assert_raises(ArgumentError) do
       protocol.stream_input([ 12345 ])
@@ -142,7 +153,7 @@ class TestClaudeAgentStreamInput < ActiveSupport::TestCase
     options = ClaudeAgent::Options.new(abort_controller: controller)
     transport = MockStreamTransport.new
     protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: options)
-    protocol.start(streaming: true)
+    start_protocol(protocol)
 
     # Create an enumerator that aborts after first message
     messages = Enumerator.new do |y|
@@ -163,7 +174,7 @@ class TestClaudeAgentStreamInput < ActiveSupport::TestCase
   test "stream_input_with_string_keys_in_hash" do
     transport = MockStreamTransport.new
     protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: @options)
-    protocol.start(streaming: true)
+    start_protocol(protocol)
 
     messages = [
       { "content" => "Hello", "uuid" => "msg-1", "session_id" => "sess-1" }

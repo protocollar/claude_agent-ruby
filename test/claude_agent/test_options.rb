@@ -83,6 +83,38 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     assert_equal callback, options.can_use_tool
   end
 
+  # --- can_use_tool auto-sets permission_prompt_tool_name ---
+
+  test "can_use_tool auto sets permission_prompt_tool_name to stdio" do
+    options = ClaudeAgent::Options.new(
+      can_use_tool: ->(name, input, context) { { behavior: "allow" } }
+    )
+    assert_equal "stdio", options.permission_prompt_tool_name
+  end
+
+  test "can_use_tool does not override explicit permission_prompt_tool_name" do
+    options = ClaudeAgent::Options.new(
+      can_use_tool: ->(name, input, context) { { behavior: "allow" } },
+      permission_prompt_tool_name: "custom-tool"
+    )
+    assert_equal "custom-tool", options.permission_prompt_tool_name
+  end
+
+  test "permission_prompt_tool_name nil without can_use_tool" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.permission_prompt_tool_name
+  end
+
+  test "to_cli_args_includes_permission_prompt_tool_with_can_use_tool" do
+    options = ClaudeAgent::Options.new(
+      can_use_tool: ->(name, input, context) { { behavior: "allow" } }
+    )
+    args = options.to_cli_args
+    assert_includes args, "--permission-prompt-tool"
+    idx = args.index("--permission-prompt-tool")
+    assert_equal "stdio", args[idx + 1]
+  end
+
   test "invalid_max_turns" do
     assert_raises(ClaudeAgent::ConfigurationError) do
       ClaudeAgent::Options.new(max_turns: 0)

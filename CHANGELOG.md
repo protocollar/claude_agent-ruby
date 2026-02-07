@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `can_use_tool` callback now works without hooks or MCP servers configured
+  - `PermissionResultAllow` and `PermissionResultDeny` (`Data.define` types) are now correctly recognized in `handle_can_use_tool` instead of silently falling through to allow
+  - `normalize_hook_response` now handles `Data.define` return types from hook callbacks
+- Allow responses without explicit `updated_input` now fall back to the original input (Python SDK parity)
+
+### Changed
+- Always use streaming mode with control protocol initialization (Python/TypeScript SDK parity)
+  - Removes fragile conditional gate on hooks/MCP/can_use_tool
+  - `send_initialize` handshake is now always sent in streaming mode
+
+### Added
+- Auto-set `permission_prompt_tool_name` to `"stdio"` when `can_use_tool` is configured (Python/TypeScript SDK parity)
+
 ## [0.7.3] - 2026-02-06
 
 ### Added

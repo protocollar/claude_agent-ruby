@@ -207,8 +207,7 @@ module ClaudeAgent
       [].tap do |args|
         args.push("--settings", settings) if settings
         if sandbox
-          sandbox_json = sandbox.respond_to?(:to_h) ? sandbox.to_h : sandbox
-          args.push("--sandbox", JSON.generate(sandbox_json))
+          args.push("--sandbox", JSON.generate(sandbox.to_h))
         end
       end
     end
@@ -234,7 +233,7 @@ module ClaudeAgent
         args.push("--json-schema", JSON.generate(output_format)) if output_format
         args.push("--include-partial-messages") if include_partial_messages
         if agents
-          agents_hash = agents.transform_values { |a| a.respond_to?(:to_h) ? a.to_h : a }
+          agents_hash = agents.transform_values(&:to_h)
           args.push("--agents", JSON.generate(agents_hash))
         end
       end
@@ -278,6 +277,13 @@ module ClaudeAgent
 
       if can_use_tool && !can_use_tool.respond_to?(:call)
         raise ConfigurationError, "can_use_tool must be callable (Proc, Lambda, or object responding to #call)"
+      end
+
+      # Auto-set permission_prompt_tool_name to "stdio" when can_use_tool is configured
+      # (Python/TypeScript SDK parity) so the CLI routes permission prompts through the
+      # control protocol instead of interactive terminal prompts
+      if can_use_tool && !permission_prompt_tool_name
+        @permission_prompt_tool_name = "stdio"
       end
 
       if max_turns && (!max_turns.is_a?(Integer) || max_turns < 1)

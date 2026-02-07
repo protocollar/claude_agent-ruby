@@ -63,8 +63,8 @@ module ClaudeAgent
       # Start background reader thread
       @reader_thread = Thread.new { reader_loop }
 
-      # Initialize if we have hooks or SDK MCP servers
-      if streaming && (options.has_hooks? || options.has_sdk_mcp_servers?)
+      # Always send initialize in streaming mode (Python/TypeScript SDK parity)
+      if streaming
         @server_info = send_initialize
       end
 
@@ -457,16 +457,9 @@ module ClaudeAgent
     #
     def set_mcp_servers(servers)
       # Convert servers hash to format expected by CLI
-      servers_config = servers.transform_values do |config|
-        if config.is_a?(Hash)
-          # Skip SDK servers (they're handled locally) - only send process-based servers
-          next nil if config[:type] == "sdk" || config["type"] == "sdk"
-
-          config
-        else
-          config
-        end
-      end.compact
+      servers_config = servers.reject do |_, config|
+        config.is_a?(Hash) && (config[:type] == "sdk" || config["type"] == "sdk")
+      end
 
       response = send_control_request(subtype: "mcp_set_servers", servers: servers_config)
 
@@ -587,27 +580,13 @@ module ClaudeAgent
 
       result = options.can_use_tool.call(tool_name, input, context)
 
-      # Normalize result
-      if result.is_a?(Hash)
-        if result[:behavior] == "allow"
-          response = { behavior: "allow" }
-          response[:updatedInput] = result[:updated_input] if result[:updated_input]
-          if result[:updated_permissions]
-            response[:updatedPermissions] = result[:updated_permissions].map do |p|
-              p.respond_to?(:to_h) ? p.to_h : p
-            end
-          end
-          response
-        else
-          {
-            behavior: "deny",
-            message: result[:message] || "",
-            interrupt: result[:interrupt] || false
-          }
-        end
-      else
-        { behavior: "allow" }
+      normalized = result.to_h
+
+      if normalized[:behavior] == "allow" && !normalized.key?(:updatedInput)
+        normalized[:updatedInput] = input
       end
+
+      normalized
     end
 
     # Handle hook callback request
@@ -667,6 +646,8 @@ module ClaudeAgent
     # @param result [Hash] Raw result from callback
     # @return [Hash] Normalized response
     def normalize_hook_response(result)
+      result = result.to_h
+
       response = HOOK_RESPONSE_KEYS.each_with_object({}) do |(ruby_key, json_key), acc|
         acc[json_key] = result[ruby_key] if result.key?(ruby_key)
       end
