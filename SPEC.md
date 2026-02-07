@@ -7,7 +7,7 @@ This document provides a comprehensive specification of the Claude Agent SDK, co
 - Python SDK: v0.1.31 from GitHub (commit 4b19642)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-06
+**Last Updated:** 2026-02-07
 
 ---
 
@@ -37,7 +37,7 @@ Configuration options for SDK queries and clients.
 | `model`                           |     ✅      |   ✅    |  ✅   | Claude model identifier                                      |
 | `fallbackModel`                   |     ✅      |   ✅    |  ✅   | Fallback if primary fails                                    |
 | `systemPrompt`                    |     ✅      |   ✅    |  ✅   | String or preset object                                      |
-| `appendSystemPrompt`              |     ✅      |   ❌    |  ✅   | Append to system prompt (TS SDK has via preset)              |
+| `appendSystemPrompt`              |     ✅      |   ✅    |  ✅   | Append to system prompt (via preset)                         |
 | `tools`                           |     ✅      |   ✅    |  ✅   | Array or preset                                              |
 | `allowedTools`                    |     ✅      |   ✅    |  ✅   | Auto-allowed tools                                           |
 | `disallowedTools`                 |     ✅      |   ✅    |  ✅   | Blocked tools                                                |
@@ -249,23 +249,23 @@ Event hooks for intercepting and modifying SDK behavior.
 
 ### Hook Events
 
-| Event                | TypeScript | Python | Ruby | Notes                     |
-|----------------------|:----------:|:------:|:----:|---------------------------|
-| `PreToolUse`         |     ✅      |   ✅    |  ✅   | Before tool execution     |
-| `PostToolUse`        |     ✅      |   ✅    |  ✅   | After tool execution      |
-| `PostToolUseFailure` |     ✅      |   ✅    |  ✅   | After tool failure        |
-| `Notification`       |     ✅      |   ✅    |  ✅   | System notifications      |
-| `UserPromptSubmit`   |     ✅      |   ✅    |  ✅   | User message submitted    |
-| `SessionStart`       |     ✅      |   ❌    |  ✅   | Session starts            |
-| `SessionEnd`         |     ✅      |   ❌    |  ✅   | Session ends              |
-| `Stop`               |     ✅      |   ✅    |  ✅   | Agent stops               |
-| `SubagentStart`      |     ✅      |   ✅    |  ✅   | Subagent starts           |
-| `SubagentStop`       |     ✅      |   ✅    |  ✅   | Subagent stops            |
-| `PreCompact`         |     ✅      |   ✅    |  ✅   | Before compaction         |
-| `PermissionRequest`  |     ✅      |   ✅    |  ✅   | Permission requested      |
-| `Setup`              |     ✅      |   ❌    |  ✅   | Initial setup/maintenance |
-| `TeammateIdle`       |     ✅      |   ❌    |  ✅   | Teammate idle (v0.2.33)   |
-| `TaskCompleted`      |     ✅      |   ❌    |  ✅   | Task completed (v0.2.33)  |
+| Event                | TypeScript | Python | Ruby | Notes                             |
+|----------------------|:----------:|:------:|:----:|-----------------------------------|
+| `PreToolUse`         |     ✅      |   ✅    |  ✅   | Before tool execution             |
+| `PostToolUse`        |     ✅      |   ✅    |  ✅   | After tool execution              |
+| `PostToolUseFailure` |     ✅      |   ✅    |  ✅   | After tool failure (Py v0.1.26)   |
+| `Notification`       |     ✅      |   ✅    |  ✅   | System notifications (Py v0.1.29) |
+| `UserPromptSubmit`   |     ✅      |   ✅    |  ✅   | User message submitted            |
+| `SessionStart`       |     ✅      |   ❌    |  ✅   | Session starts                    |
+| `SessionEnd`         |     ✅      |   ❌    |  ✅   | Session ends                      |
+| `Stop`               |     ✅      |   ✅    |  ✅   | Agent stops                       |
+| `SubagentStart`      |     ✅      |   ✅    |  ✅   | Subagent starts (Py v0.1.29)      |
+| `SubagentStop`       |     ✅      |   ✅    |  ✅   | Subagent stops                    |
+| `PreCompact`         |     ✅      |   ✅    |  ✅   | Before compaction                 |
+| `PermissionRequest`  |     ✅      |   ✅    |  ✅   | Permission requested (Py v0.1.29) |
+| `Setup`              |     ✅      |   ❌    |  ✅   | Initial setup/maintenance         |
+| `TeammateIdle`       |     ✅      |   ❌    |  ✅   | Teammate idle (v0.2.33)           |
+| `TaskCompleted`      |     ✅      |   ❌    |  ✅   | Task completed (v0.2.33)          |
 
 ### Hook Input Types
 
@@ -631,16 +631,16 @@ Public API surface for SDK clients.
 
 ### Client Class
 
-| Feature              | TypeScript |       Python        |          Ruby           | Notes                                                                            |
-|----------------------|:----------:|:-------------------:|:-----------------------:|----------------------------------------------------------------------------------|
-| Multi-turn client    |     ❌      | ✅ `ClaudeSDKClient` | ✅ `ClaudeAgent::Client` | Interactive sessions                                                             |
-| `connect()`          |    N/A     |          ✅          |            ✅            | Start session                                                                    |
-| `disconnect()`       |    N/A     |          ✅          |            ✅            | End session                                                                      |
-| `send_message()`     |    N/A     |          ✅          |            ✅            | Send user message                                                                |
-| `receive_response()` |    N/A     |          ✅          |            ✅            | Receive until result                                                             |
-| `stream_input()`     |    N/A     |          ❌          |            ✅            | Stream input messages                                                            |
-| `abort!()`           |    N/A     |          ❌          |            ✅            | Abort operations                                                                 |
-| Control methods      |    N/A     |       Partial       |            ✅            | interrupt, setPermissionMode, setModel, rewindFiles (Python); all methods (Ruby) |
+| Feature              | TypeScript |       Python        |          Ruby           | Notes                                                                               |
+|----------------------|:----------:|:-------------------:|:-----------------------:|-------------------------------------------------------------------------------------|
+| Multi-turn client    |     ❌      | ✅ `ClaudeSDKClient` | ✅ `ClaudeAgent::Client` | Interactive sessions                                                                |
+| `connect()`          |    N/A     |          ✅          |            ✅            | Start session                                                                       |
+| `disconnect()`       |    N/A     |          ✅          |            ✅            | End session                                                                         |
+| `send_message()`     |    N/A     |          ✅          |            ✅            | Send user message                                                                   |
+| `receive_response()` |    N/A     |          ✅          |            ✅            | Receive until result                                                                |
+| `stream_input()`     |    N/A     |          ❌          |            ✅            | Stream input messages                                                               |
+| `abort!()`           |    N/A     |          ❌          |            ✅            | Abort operations                                                                    |
+| Control methods      |    N/A     |       Partial       |            ✅            | interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus (Python); all (Ruby) |
 
 ### Transport
 
@@ -670,16 +670,13 @@ Public API surface for SDK clients.
 - `executable`/`executableArgs` are JS-specific (`node`/`bun`/`deno`)
 
 ### Python SDK
-- Full source available
-- Has `Transport` abstract class and several query control methods
-- Query supports: `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`, `stream_input()`, `close()`, `get_mcp_status()`
-- Client supports: `interrupt()`, `set_permission_mode()`, `set_model()`, `rewind_files()`, `get_mcp_status()`, `get_server_info()`
+- Full source available with `Transport` abstract class
+- Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus
 - Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted
 - Missing permission modes: `delegate`, `dontAsk`
 - Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`
-- `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`
-- Has `additionalContext` in `PreToolUseHookSpecificOutput` (added in v0.1.30)
-- Has `create_sdk_mcp_server`, `tool()` helper, and MCP tool annotations (added in v0.1.30/v0.1.31)
+- `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
+- Has SDK MCP server support with `tool()` helper and annotations
 
 ### Ruby SDK (This Repository)
 - Full TypeScript SDK v0.2.34 feature parity (v0.2.34 contains no new SDK features beyond a Claude Code version bump)
