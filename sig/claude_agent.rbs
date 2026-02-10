@@ -262,6 +262,7 @@ module ClaudeAgent
     # Constants
     DEFAULTS: Hash[Symbol, untyped]
     ATTRIBUTES: Array[Symbol]
+    EFFORT_LEVELS: Array[String]
 
     # Tool configuration
     attr_accessor tools: (Array[String] | String)?
@@ -293,6 +294,8 @@ module ClaudeAgent
     # Limits & budget
     attr_accessor max_turns: Integer?
     attr_accessor max_budget_usd: Float?
+    attr_accessor thinking: Hash[Symbol | String, untyped]?
+    attr_accessor effort: String?
     attr_accessor max_thinking_tokens: Integer?
 
     # Strict validation

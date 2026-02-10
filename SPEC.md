@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.34 (npm package)
-- Python SDK: v0.1.31 from GitHub (commit 4b19642)
+- TypeScript SDK: v0.2.38 (npm package)
+- Python SDK: v0.1.34 from GitHub (commit a969042)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-07
+**Last Updated:** 2026-02-09
 
 ---
 
@@ -47,7 +47,9 @@ Configuration options for SDK queries and clients.
 | `permissionPromptToolName`        |     ✅      |   ✅    |  ✅   | MCP tool for permission prompts                              |
 | `maxTurns`                        |     ✅      |   ✅    |  ✅   | Max conversation turns                                       |
 | `maxBudgetUsd`                    |     ✅      |   ✅    |  ✅   | Max USD budget                                               |
-| `maxThinkingTokens`               |     ✅      |   ✅    |  ✅   | Max thinking tokens                                          |
+| `thinking`                        |     ✅      |   ❌    |  ✅   | Thinking mode config (adaptive/enabled/disabled) (v0.2.35+)  |
+| `effort`                          |     ✅      |   ❌    |  ✅   | Response effort level (low/medium/high/max) (v0.2.35+)       |
+| `maxThinkingTokens`               |     ✅      |   ✅    |  ✅   | Max thinking tokens (deprecated in TS, use `thinking`)       |
 | `continue`                        |     ✅      |   ✅    |  ✅   | Continue most recent conversation                            |
 | `resume`                          |     ✅      |   ✅    |  ✅   | Resume session by ID                                         |
 | `sessionId`                       |     ✅      |   ❌    |  ✅   | Custom UUID for conversations (v0.2.33)                      |
@@ -595,6 +597,7 @@ Error types and hierarchy.
 | `invalid_request`       |     ✅      |   ✅    |  ✅   |
 | `server_error`          |     ✅      |   ✅    |  ✅   |
 | `unknown`               |     ✅      |   ✅    |  ✅   |
+| `max_output_tokens`     |     ✅      |   ❌    |  ✅   |
 
 ---
 
@@ -674,12 +677,12 @@ Public API surface for SDK clients.
 - Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus
 - Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted
 - Missing permission modes: `delegate`, `dontAsk`
-- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`
+- Missing options: `thinking`, `effort`, `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
 - Has SDK MCP server support with `tool()` helper and annotations
 
 ### Ruby SDK (This Repository)
-- Full TypeScript SDK v0.2.34 feature parity (v0.2.34 contains no new SDK features beyond a Claude Code version bump)
+- Feature parity with TypeScript SDK v0.2.38
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations

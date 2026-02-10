@@ -505,6 +505,129 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     assert_equal "abc", options.session_id
   end
 
+  # --- Thinking Option ---
+
+  test "thinking_option_default_nil" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.thinking
+  end
+
+  test "thinking_option_adaptive" do
+    options = ClaudeAgent::Options.new(thinking: { type: "adaptive" })
+    assert_equal({ type: "adaptive" }, options.thinking)
+  end
+
+  test "thinking_option_enabled_with_budget" do
+    options = ClaudeAgent::Options.new(thinking: { type: "enabled", budgetTokens: 10_000 })
+    assert_equal({ type: "enabled", budgetTokens: 10_000 }, options.thinking)
+  end
+
+  test "thinking_option_disabled" do
+    options = ClaudeAgent::Options.new(thinking: { type: "disabled" })
+    assert_equal({ type: "disabled" }, options.thinking)
+  end
+
+  test "thinking_option_with_string_keys" do
+    options = ClaudeAgent::Options.new(thinking: { "type" => "adaptive" })
+    assert_equal({ "type" => "adaptive" }, options.thinking)
+  end
+
+  test "thinking_option_invalid_type_raises" do
+    assert_raises(ClaudeAgent::ConfigurationError) do
+      ClaudeAgent::Options.new(thinking: { type: "invalid" })
+    end
+  end
+
+  test "thinking_option_non_hash_raises" do
+    assert_raises(ClaudeAgent::ConfigurationError) do
+      ClaudeAgent::Options.new(thinking: "adaptive")
+    end
+  end
+
+  test "to_cli_args_thinking_adaptive_omits_flag" do
+    options = ClaudeAgent::Options.new(thinking: { type: "adaptive" })
+    args = options.to_cli_args
+    refute_includes args, "--max-thinking-tokens"
+  end
+
+  test "to_cli_args_thinking_enabled_sets_budget" do
+    options = ClaudeAgent::Options.new(thinking: { type: "enabled", budgetTokens: 8000 })
+    args = options.to_cli_args
+    assert_includes args, "--max-thinking-tokens"
+    idx = args.index("--max-thinking-tokens")
+    assert_equal "8000", args[idx + 1]
+  end
+
+  test "to_cli_args_thinking_enabled_with_snake_case_key" do
+    options = ClaudeAgent::Options.new(thinking: { type: "enabled", budget_tokens: 5000 })
+    args = options.to_cli_args
+    assert_includes args, "--max-thinking-tokens"
+    idx = args.index("--max-thinking-tokens")
+    assert_equal "5000", args[idx + 1]
+  end
+
+  test "to_cli_args_thinking_disabled_sets_zero" do
+    options = ClaudeAgent::Options.new(thinking: { type: "disabled" })
+    args = options.to_cli_args
+    assert_includes args, "--max-thinking-tokens"
+    idx = args.index("--max-thinking-tokens")
+    assert_equal "0", args[idx + 1]
+  end
+
+  test "thinking_takes_precedence_over_max_thinking_tokens" do
+    options = ClaudeAgent::Options.new(
+      thinking: { type: "disabled" },
+      max_thinking_tokens: 10_000
+    )
+    args = options.to_cli_args
+    # thinking should produce --max-thinking-tokens 0, and the standalone max_thinking_tokens should be suppressed
+    token_indices = args.each_index.select { |i| args[i] == "--max-thinking-tokens" }
+    assert_equal 1, token_indices.size
+    assert_equal "0", args[token_indices.first + 1]
+  end
+
+  test "max_thinking_tokens_used_when_thinking_not_set" do
+    options = ClaudeAgent::Options.new(max_thinking_tokens: 5000)
+    args = options.to_cli_args
+    assert_includes args, "--max-thinking-tokens"
+    idx = args.index("--max-thinking-tokens")
+    assert_equal "5000", args[idx + 1]
+  end
+
+  # --- Effort Option ---
+
+  test "effort_option_default_nil" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.effort
+  end
+
+  test "effort_option_valid_values" do
+    %w[low medium high max].each do |level|
+      options = ClaudeAgent::Options.new(effort: level)
+      assert_equal level, options.effort
+    end
+  end
+
+  test "effort_option_invalid_raises" do
+    assert_raises(ClaudeAgent::ConfigurationError) do
+      ClaudeAgent::Options.new(effort: "extreme")
+    end
+  end
+
+  test "to_cli_args_with_effort" do
+    options = ClaudeAgent::Options.new(effort: "high")
+    args = options.to_cli_args
+    assert_includes args, "--effort"
+    idx = args.index("--effort")
+    assert_equal "high", args[idx + 1]
+  end
+
+  test "to_cli_args_without_effort" do
+    options = ClaudeAgent::Options.new
+    args = options.to_cli_args
+    refute_includes args, "--effort"
+  end
+
   # --- Debug Options ---
 
   test "debug_option_default_false" do
