@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-02-10
+
 ### Added
 - `thinking` option for controlling extended thinking mode (`{ type: "adaptive" }`, `{ type: "enabled", budgetTokens: N }`, `{ type: "disabled" }`)
 - `effort` option for response effort level (`"low"`, `"medium"`, `"high"`, `"max"`)
