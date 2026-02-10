@@ -10,6 +10,7 @@ module ClaudeAgent
     invalid_request
     server_error
     unknown
+    max_output_tokens
   ].freeze
 
   # API key source types (TypeScript SDK parity)

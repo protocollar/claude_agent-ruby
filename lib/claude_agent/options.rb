@@ -47,13 +47,16 @@ module ClaudeAgent
     }.freeze
 
     # All configurable attributes
+    # Valid effort levels for the effort option
+    EFFORT_LEVELS = %w[low medium high max].freeze
+
     ATTRIBUTES = %i[
       tools allowed_tools disallowed_tools
       system_prompt append_system_prompt
       model fallback_model
       permission_mode permission_prompt_tool_name can_use_tool allow_dangerously_skip_permissions
       continue_conversation resume fork_session resume_session_at session_id
-      max_turns max_budget_usd max_thinking_tokens
+      max_turns max_budget_usd thinking effort max_thinking_tokens
       strict_mcp_config mcp_servers hooks
       settings sandbox cwd add_dirs env user agent
       cli_path extra_args agents setting_sources plugins
@@ -194,8 +197,26 @@ module ClaudeAgent
       [].tap do |args|
         args.push("--max-turns", max_turns.to_s) if max_turns
         args.push("--max-budget-usd", max_budget_usd.to_s) if max_budget_usd
-        args.push("--max-thinking-tokens", max_thinking_tokens.to_s) if max_thinking_tokens
+        args.concat(thinking_args)
+        args.push("--max-thinking-tokens", max_thinking_tokens.to_s) if !thinking && max_thinking_tokens
+        args.push("--effort", effort) if effort
         args.push("--strict-mcp-config") if strict_mcp_config
+      end
+    end
+
+    def thinking_args
+      return [] unless thinking.is_a?(Hash)
+
+      type = thinking[:type] || thinking["type"]
+      case type
+      when "disabled"
+        [ "--max-thinking-tokens", "0" ]
+      when "enabled"
+        budget = thinking[:budgetTokens] || thinking[:budget_tokens] ||
+                 thinking["budgetTokens"] || thinking["budget_tokens"]
+        budget ? [ "--max-thinking-tokens", budget.to_s ] : []
+      else # "adaptive" or unrecognized — omit flag, let CLI use default
+        []
       end
     end
 
@@ -299,6 +320,20 @@ module ClaudeAgent
 
       if max_budget_usd && (!max_budget_usd.is_a?(Numeric) || max_budget_usd <= 0)
         raise ConfigurationError, "max_budget_usd must be a positive number"
+      end
+
+      if thinking
+        unless thinking.is_a?(Hash)
+          raise ConfigurationError, "thinking must be a Hash with :type key (e.g., { type: 'adaptive' })"
+        end
+        type = thinking[:type] || thinking["type"]
+        unless %w[adaptive enabled disabled].include?(type)
+          raise ConfigurationError, "thinking[:type] must be one of: adaptive, enabled, disabled"
+        end
+      end
+
+      if effort && !EFFORT_LEVELS.include?(effort)
+        raise ConfigurationError, "Invalid effort: #{effort}. Must be one of: #{EFFORT_LEVELS.join(", ")}"
       end
 
       if session_id && (continue_conversation || resume) && !fork_session
