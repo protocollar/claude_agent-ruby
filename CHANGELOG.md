@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.6] - 2026-02-13
+
 ### Added
 - `stop_task` control request and `Client#stop_task` method for stopping running background tasks (TypeScript SDK parity)
 
