@@ -91,6 +91,14 @@ class TestClaudeAgentClient < ActiveSupport::TestCase
     end
   end
 
+  test "client stop task when not connected" do
+    client = ClaudeAgent::Client.new
+
+    assert_raises(ClaudeAgent::CLIConnectionError) do
+      client.stop_task("task-123")
+    end
+  end
+
   test "client rewind files when not connected" do
     client = ClaudeAgent::Client.new
 

@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.38 (npm package)
-- Python SDK: v0.1.34 from GitHub (commit a969042)
+- TypeScript SDK: v0.2.42 (npm package)
+- Python SDK: v0.1.36 from GitHub (commit 4d74748)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-09
+**Last Updated:** 2026-02-13
 
 ---
 
@@ -47,8 +47,8 @@ Configuration options for SDK queries and clients.
 | `permissionPromptToolName`        |     ✅      |   ✅    |  ✅   | MCP tool for permission prompts                              |
 | `maxTurns`                        |     ✅      |   ✅    |  ✅   | Max conversation turns                                       |
 | `maxBudgetUsd`                    |     ✅      |   ✅    |  ✅   | Max USD budget                                               |
-| `thinking`                        |     ✅      |   ❌    |  ✅   | Thinking mode config (adaptive/enabled/disabled) (v0.2.35+)  |
-| `effort`                          |     ✅      |   ❌    |  ✅   | Response effort level (low/medium/high/max) (v0.2.35+)       |
+| `thinking`                        |     ✅      |   ✅    |  ✅   | Thinking mode config (adaptive/enabled/disabled) (v0.2.35+)  |
+| `effort`                          |     ✅      |   ✅    |  ✅   | Response effort level (low/medium/high/max) (v0.2.35+)       |
 | `maxThinkingTokens`               |     ✅      |   ✅    |  ✅   | Max thinking tokens (deprecated in TS, use `thinking`)       |
 | `continue`                        |     ✅      |   ✅    |  ✅   | Continue most recent conversation                            |
 | `resume`                          |     ✅      |   ✅    |  ✅   | Resume session by ID                                         |
@@ -227,6 +227,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `mcp_status`              |     ✅      |   ✅    |  ✅   | Get MCP server status             |
 | `mcp_reconnect`           |     ✅      |   ❌    |  ✅   | Reconnect to MCP server           |
 | `mcp_toggle`              |     ✅      |   ❌    |  ✅   | Enable/disable MCP server         |
+| `stop_task`               |     ✅      |   ❌    |  ✅   | Stop a running background task    |
 | `supported_commands`      |     ✅      |   ❌    |  ✅   | Get available slash commands      |
 | `supported_models`        |     ✅      |   ❌    |  ✅   | Get available models              |
 | `account_info`            |     ✅      |   ❌    |  ✅   | Get account information           |
@@ -628,6 +629,7 @@ Public API surface for SDK clients.
 | `setMcpServers()`        |     ✅      |   ❌    |  ✅   | Dynamic MCP servers    |
 | `reconnectMcpServer()`   |     ✅      |   ❌    |  ✅   | Reconnect MCP server   |
 | `toggleMcpServer()`      |     ✅      |   ❌    |  ✅   | Enable/disable MCP     |
+| `stopTask()`             |     ✅      |   ❌    |  ✅   | Stop running task      |
 | `streamInput()`          |     ✅      |   ✅    |  ✅   | Stream user input      |
 | `initializationResult()` |     ✅      |   ❌    |  ✅   | Full init response     |
 | `close()`                |     ✅      |   ✅    |  ✅   | Close query/session    |
@@ -677,12 +679,13 @@ Public API surface for SDK clients.
 - Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus
 - Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted
 - Missing permission modes: `delegate`, `dontAsk`
-- Missing options: `thinking`, `effort`, `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`
+- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
 - Has SDK MCP server support with `tool()` helper and annotations
+- Added `thinking` config and `effort` option in v0.1.36
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.38
+- Full feature parity with TypeScript SDK v0.2.42
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
