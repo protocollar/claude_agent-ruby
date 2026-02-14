@@ -281,6 +281,23 @@ module ClaudeAgent
       @protocol.initialization_result
     end
 
+    # Stop a running background task (TypeScript SDK parity)
+    #
+    # Sends a stop signal to a running task. A task_notification message
+    # with status 'stopped' will be emitted when the task stops.
+    #
+    # @param task_id [String] The task ID from task_notification events
+    # @return [void]
+    #
+    # @example
+    #   client.stop_task("task-123")
+    #
+    def stop_task(task_id)
+      require_connection!
+
+      @protocol.stop_task(task_id)
+    end
+
     # Dynamically set MCP servers for this session (TypeScript SDK parity)
     #
     # This replaces the current set of dynamically-added MCP servers.

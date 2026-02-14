@@ -910,6 +910,7 @@ module ClaudeAgent
     def set_mcp_servers: (Hash[String, untyped] servers) -> McpSetServersResult
     def mcp_reconnect: (String server_name) -> Hash[String, untyped]
     def mcp_toggle: (String server_name, enabled: bool) -> Hash[String, untyped]
+    def stop_task: (String task_id) -> Hash[String, untyped]
     def supported_commands: () -> Array[SlashCommand]
     def supported_models: () -> Array[ModelInfo]
     def mcp_server_status: () -> Array[McpServerStatus]
@@ -946,6 +947,7 @@ module ClaudeAgent
     def set_mcp_servers: (Hash[String, untyped] servers) -> McpSetServersResult
     def mcp_reconnect: (String server_name) -> Hash[String, untyped]
     def mcp_toggle: (String server_name, enabled: bool) -> Hash[String, untyped]
+    def stop_task: (String task_id) -> Hash[String, untyped]
     def supported_commands: () -> Array[SlashCommand]
     def supported_models: () -> Array[ModelInfo]
     def mcp_server_status: () -> Array[McpServerStatus]

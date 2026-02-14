@@ -319,6 +319,22 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     assert_equal "supported_commands", msg["request"]["subtype"]
   end
 
+  test "stop_task sends correct request format" do
+    @transport.connect
+
+    # Write the request message directly (bypassing the full protocol machinery)
+    @protocol.send(:write_message, {
+      type: "control_request",
+      request_id: "test-req",
+      request: { subtype: "stop_task", task_id: "task-123" }
+    })
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" }
+    assert_not_nil msg
+    assert_equal "stop_task", msg["request"]["subtype"]
+    assert_equal "task-123", msg["request"]["task_id"]
+  end
+
   test "mcp_toggle sends correct request format" do
     @transport.connect
 
