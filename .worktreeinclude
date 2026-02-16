@@ -1,0 +1,13 @@
+# Files to copy to new worktrees (must also be in .gitignore)
+
+# Claude Configs
+.claude/settings.local.json
+.claude/**/local-*
+.claude/**/local/
+
+# MCP server configuration
+.mcp.json
+
+# Local dependencies and temp files
+/tmp/**
+/vendor/**
