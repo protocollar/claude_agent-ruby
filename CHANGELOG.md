@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.7] - 2026-02-20
+
+### Added
+- `TaskStartedMessage` for background task start notifications (TypeScript SDK v0.2.43 parity)
+- `RateLimitEvent` message type for rate limit visibility (TypeScript SDK v0.2.44 parity)
+- `PromptSuggestionMessage` type and `prompt_suggestions` option for suggested follow-up prompts (TypeScript SDK v0.2.46 parity)
+- `ConfigChange` hook event with `ConfigChangeInput` class (TypeScript SDK v0.2.47 parity)
+- `SandboxFilesystemConfig` with `allow_write`, `deny_write`, `deny_read` fields (TypeScript SDK v0.2.49 parity)
+- RBS signatures for all new types
+
 ## [0.7.6] - 2026-02-13
 
 ### Added
