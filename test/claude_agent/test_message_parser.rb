@@ -875,4 +875,159 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal [], msg.failed
     assert_nil msg.processed_at
   end
+
+  # --- TaskStartedMessage parsing ---
+
+  test "parse_task_started_message" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_started",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "task_id" => "task-456",
+      "tool_use_id" => "tool-789",
+      "description" => "Running tests",
+      "task_type" => "bash"
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::TaskStartedMessage, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal "task-456", msg.task_id
+    assert_equal "tool-789", msg.tool_use_id
+    assert_equal "Running tests", msg.description
+    assert_equal "bash", msg.task_type
+    assert_equal :task_started, msg.type
+  end
+
+  test "parse_task_started_message_camel_case" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_started",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "taskId" => "task-789",
+      "toolUseId" => "tool-abc",
+      "description" => "Exploring codebase",
+      "taskType" => "explore"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "task-789", msg.task_id
+    assert_equal "tool-abc", msg.tool_use_id
+    assert_equal "explore", msg.task_type
+  end
+
+  test "parse_task_started_message_defaults" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_started",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "task_id" => "task-456"
+    }
+    msg = @parser.parse(raw)
+
+    assert_nil msg.tool_use_id
+    assert_nil msg.description
+    assert_nil msg.task_type
+  end
+
+  # --- RateLimitEvent parsing ---
+
+  test "parse_rate_limit_event" do
+    raw = {
+      "type" => "rate_limit_event",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "rate_limit_info" => {
+        "status" => "allowed_warning",
+        "resetsAt" => 1700000000,
+        "rateLimitType" => "five_hour",
+        "utilization" => 0.85,
+        "isUsingOverage" => false,
+        "overageStatus" => "available"
+      }
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::RateLimitEvent, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal "allowed_warning", msg.status
+    assert_equal 0.85, msg.rate_limit_info["utilization"]
+    assert_equal :rate_limit_event, msg.type
+  end
+
+  test "parse_rate_limit_event_camel_case" do
+    raw = {
+      "type" => "rate_limit_event",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "rateLimitInfo" => {
+        "status" => "blocked",
+        "rateLimitType" => "daily"
+      }
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "blocked", msg.status
+  end
+
+  test "parse_rate_limit_event_defaults" do
+    raw = {
+      "type" => "rate_limit_event",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal({}, msg.rate_limit_info)
+    assert_nil msg.status
+  end
+
+  # --- PromptSuggestionMessage parsing ---
+
+  test "parse_prompt_suggestion_message" do
+    raw = {
+      "type" => "prompt_suggestion",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "suggestion" => "Tell me about this project"
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::PromptSuggestionMessage, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal "Tell me about this project", msg.suggestion
+    assert_equal :prompt_suggestion, msg.type
+  end
+
+  test "parse_prompt_suggestion_message_camel_case" do
+    raw = {
+      "type" => "prompt_suggestion",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "suggestion" => "How do I run the tests?"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "How do I run the tests?", msg.suggestion
+  end
+
+  test "parse_prompt_suggestion_message_defaults" do
+    raw = {
+      "type" => "prompt_suggestion",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "", msg.suggestion
+  end
 end

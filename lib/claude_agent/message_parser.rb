@@ -16,7 +16,7 @@ module ClaudeAgent
     # Parse a raw message hash into a typed message object
     #
     # @param raw [Hash] Raw message from CLI
-    # @return [UserMessage, UserMessageReplay, AssistantMessage, SystemMessage, ResultMessage, StreamEvent, CompactBoundaryMessage, StatusMessage, ToolProgressMessage, HookResponseMessage, AuthStatusMessage, TaskNotificationMessage, HookStartedMessage, HookProgressMessage, ToolUseSummaryMessage, FilesPersistedEvent]
+    # @return [UserMessage, UserMessageReplay, AssistantMessage, SystemMessage, ResultMessage, StreamEvent, CompactBoundaryMessage, StatusMessage, ToolProgressMessage, HookResponseMessage, AuthStatusMessage, TaskNotificationMessage, HookStartedMessage, HookProgressMessage, ToolUseSummaryMessage, FilesPersistedEvent, TaskStartedMessage, RateLimitEvent, PromptSuggestionMessage]
     # @raise [MessageParseError] If message cannot be parsed
     def parse(raw)
       type = raw["type"]
@@ -44,6 +44,8 @@ module ClaudeAgent
           parse_hook_progress_message(raw)
         when "files_persisted"
           parse_files_persisted_event(raw)
+        when "task_started"
+          parse_task_started_message(raw)
         else
           parse_system_message(raw)
         end
@@ -57,6 +59,10 @@ module ClaudeAgent
         parse_auth_status_message(raw)
       when "tool_use_summary"
         parse_tool_use_summary_message(raw)
+      when "rate_limit_event"
+        parse_rate_limit_event(raw)
+      when "prompt_suggestion"
+        parse_prompt_suggestion_message(raw)
       else
         logger.error("parser") { "Unknown message type: #{type}" }
         raise MessageParseError.new("Unknown message type: #{type}", raw_message: raw)
@@ -334,6 +340,33 @@ module ClaudeAgent
         files: raw["files"] || [],
         failed: raw["failed"] || [],
         processed_at: fetch_dual(raw, :processed_at)
+      )
+    end
+
+    def parse_task_started_message(raw)
+      TaskStartedMessage.new(
+        uuid: raw["uuid"] || "",
+        session_id: fetch_dual(raw, :session_id, ""),
+        task_id: fetch_dual(raw, :task_id, ""),
+        tool_use_id: fetch_dual(raw, :tool_use_id),
+        description: raw["description"],
+        task_type: fetch_dual(raw, :task_type)
+      )
+    end
+
+    def parse_rate_limit_event(raw)
+      RateLimitEvent.new(
+        rate_limit_info: fetch_dual(raw, :rate_limit_info, {}),
+        uuid: raw["uuid"] || "",
+        session_id: fetch_dual(raw, :session_id, "")
+      )
+    end
+
+    def parse_prompt_suggestion_message(raw)
+      PromptSuggestionMessage.new(
+        uuid: raw["uuid"] || "",
+        session_id: fetch_dual(raw, :session_id, ""),
+        suggestion: raw["suggestion"] || ""
       )
     end
   end

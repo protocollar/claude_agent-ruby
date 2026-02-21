@@ -18,6 +18,7 @@ module ClaudeAgent
     Setup
     TeammateIdle
     TaskCompleted
+    ConfigChange
   ].freeze
 
   # Matcher configuration for hooks
@@ -275,6 +276,31 @@ module ClaudeAgent
       super(hook_event_name: "TeammateIdle", **kwargs)
       @teammate_name = teammate_name
       @team_name = team_name
+    end
+  end
+
+  # Input for ConfigChange hook (TypeScript SDK v0.2.49 parity)
+  #
+  # Fired when a configuration file changes.
+  #
+  # @example
+  #   input = ConfigChangeInput.new(
+  #     source: "user_settings",
+  #     file_path: "~/.claude/settings.json",
+  #     session_id: "sess-123"
+  #   )
+  #
+  class ConfigChangeInput < BaseHookInput
+    attr_reader :source, :file_path
+
+    SOURCES = %w[user_settings project_settings local_settings policy_settings skills].freeze
+
+    # @param source [String] One of SOURCES
+    # @param file_path [String, nil] Path to the changed file
+    def initialize(source:, file_path: nil, **kwargs)
+      super(hook_event_name: "ConfigChange", **kwargs)
+      @source = source
+      @file_path = file_path
     end
   end
 

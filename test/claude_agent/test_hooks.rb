@@ -415,4 +415,50 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert_equal "/home/user", input.cwd
     assert_equal "acceptEdits", input.permission_mode
   end
+
+  # --- ConfigChangeInput ---
+
+  test "config_change_event_in_hook_events" do
+    assert_includes ClaudeAgent::HOOK_EVENTS, "ConfigChange"
+  end
+
+  test "config_change_input" do
+    input = ClaudeAgent::ConfigChangeInput.new(
+      source: "user_settings",
+      file_path: "~/.claude/settings.json",
+      session_id: "sess-123"
+    )
+    assert_equal "ConfigChange", input.hook_event_name
+    assert_equal "user_settings", input.source
+    assert_equal "~/.claude/settings.json", input.file_path
+    assert_equal "sess-123", input.session_id
+  end
+
+  test "config_change_input_without_file_path" do
+    input = ClaudeAgent::ConfigChangeInput.new(source: "skills")
+    assert_equal "ConfigChange", input.hook_event_name
+    assert_equal "skills", input.source
+    assert_nil input.file_path
+  end
+
+  test "config_change_input_sources_constant" do
+    assert_includes ClaudeAgent::ConfigChangeInput::SOURCES, "user_settings"
+    assert_includes ClaudeAgent::ConfigChangeInput::SOURCES, "project_settings"
+    assert_includes ClaudeAgent::ConfigChangeInput::SOURCES, "local_settings"
+    assert_includes ClaudeAgent::ConfigChangeInput::SOURCES, "policy_settings"
+    assert_includes ClaudeAgent::ConfigChangeInput::SOURCES, "skills"
+  end
+
+  test "config_change_input_inherits_base_fields" do
+    input = ClaudeAgent::ConfigChangeInput.new(
+      source: "project_settings",
+      file_path: ".claude/settings.json",
+      transcript_path: "/path/to/transcript",
+      cwd: "/home/user",
+      permission_mode: "default"
+    )
+    assert_equal "/path/to/transcript", input.transcript_path
+    assert_equal "/home/user", input.cwd
+    assert_equal "default", input.permission_mode
+  end
 end

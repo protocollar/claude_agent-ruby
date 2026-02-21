@@ -34,15 +34,10 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
   end
 
   test "valid_permission_modes" do
-    %w[default acceptEdits plan delegate dontAsk].each do |mode|
+    %w[default acceptEdits plan dontAsk].each do |mode|
       options = ClaudeAgent::Options.new(permission_mode: mode)
       assert_equal mode, options.permission_mode
     end
-  end
-
-  test "delegate_permission_mode" do
-    options = ClaudeAgent::Options.new(permission_mode: "delegate")
-    assert_equal "delegate", options.permission_mode
   end
 
   test "dont_ask_permission_mode" do
@@ -677,5 +672,29 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     args = options.to_cli_args
     refute_includes args, "--debug"
     refute_includes args, "--debug-file"
+  end
+
+  # --- Prompt Suggestions ---
+
+  test "prompt_suggestions_default_false" do
+    options = ClaudeAgent::Options.new
+    assert_equal false, options.prompt_suggestions
+  end
+
+  test "prompt_suggestions_explicit_true" do
+    options = ClaudeAgent::Options.new(prompt_suggestions: true)
+    assert_equal true, options.prompt_suggestions
+  end
+
+  test "to_cli_args_with_prompt_suggestions" do
+    options = ClaudeAgent::Options.new(prompt_suggestions: true)
+    args = options.to_cli_args
+    assert_includes args, "--prompt-suggestions"
+  end
+
+  test "to_cli_args_without_prompt_suggestions" do
+    options = ClaudeAgent::Options.new
+    args = options.to_cli_args
+    refute_includes args, "--prompt-suggestions"
   end
 end

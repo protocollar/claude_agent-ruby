@@ -231,6 +231,15 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
+  class SandboxFilesystemConfig
+    attr_reader allow_write: Array[String]
+    attr_reader deny_write: Array[String]
+    attr_reader deny_read: Array[String]
+
+    def initialize: (?allow_write: Array[String], ?deny_write: Array[String], ?deny_read: Array[String]) -> void
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
   class SandboxSettings
     attr_reader enabled: bool
     attr_reader auto_allow_bash_if_sandboxed: bool
@@ -240,8 +249,9 @@ module ClaudeAgent
     attr_reader ignore_violations: SandboxIgnoreViolations?
     attr_reader enable_weaker_nested_sandbox: bool
     attr_reader ripgrep: SandboxRipgrepConfig?
+    attr_reader filesystem: SandboxFilesystemConfig?
 
-    def initialize: (?enabled: bool, ?auto_allow_bash_if_sandboxed: bool, ?excluded_commands: Array[String], ?allow_unsandboxed_commands: bool, ?network: SandboxNetworkConfig?, ?ignore_violations: SandboxIgnoreViolations?, ?enable_weaker_nested_sandbox: bool, ?ripgrep: SandboxRipgrepConfig?) -> void
+    def initialize: (?enabled: bool, ?auto_allow_bash_if_sandboxed: bool, ?excluded_commands: Array[String], ?allow_unsandboxed_commands: bool, ?network: SandboxNetworkConfig?, ?ignore_violations: SandboxIgnoreViolations?, ?enable_weaker_nested_sandbox: bool, ?ripgrep: SandboxRipgrepConfig?, ?filesystem: SandboxFilesystemConfig?) -> void
     def to_h: () -> Hash[Symbol, untyped]
   end
 
@@ -331,6 +341,9 @@ module ClaudeAgent
     attr_accessor include_partial_messages: bool
     attr_accessor output_format: Hash[String, untyped]?
     attr_accessor enable_file_checkpointing: bool
+
+    # Prompt suggestions
+    attr_accessor prompt_suggestions: bool
 
     # Beta features
     attr_accessor betas: Array[String]
@@ -436,7 +449,7 @@ module ClaudeAgent
   CONTENT_BLOCK_TYPES: Array[Class]
 
   # Message types
-  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent
+  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent | TaskStartedMessage | RateLimitEvent | PromptSuggestionMessage
 
   MESSAGE_TYPES: Array[Class]
 
@@ -673,6 +686,40 @@ module ClaudeAgent
     def type: () -> :files_persisted
   end
 
+  # Task started message (TypeScript SDK v0.2.45 parity)
+  class TaskStartedMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader task_id: String
+    attr_reader tool_use_id: String?
+    attr_reader description: String?
+    attr_reader task_type: String?
+
+    def initialize: (uuid: String, session_id: String, task_id: String, ?tool_use_id: String?, ?description: String?, ?task_type: String?) -> void
+    def type: () -> :task_started
+  end
+
+  # Rate limit event (TypeScript SDK v0.2.45 parity)
+  class RateLimitEvent
+    attr_reader rate_limit_info: Hash[String, untyped]
+    attr_reader uuid: String?
+    attr_reader session_id: String?
+
+    def initialize: (rate_limit_info: Hash[String, untyped], ?uuid: String?, ?session_id: String?) -> void
+    def type: () -> :rate_limit_event
+    def status: () -> String?
+  end
+
+  # Prompt suggestion message (TypeScript SDK v0.2.47 parity)
+  class PromptSuggestionMessage
+    attr_reader uuid: String?
+    attr_reader session_id: String?
+    attr_reader suggestion: String
+
+    def initialize: (?uuid: String?, ?session_id: String?, suggestion: String) -> void
+    def type: () -> :prompt_suggestion
+  end
+
   # Message parser
   class MessageParser
     def initialize: (?logger: Logger?) -> void
@@ -821,6 +868,15 @@ module ClaudeAgent
     attr_reader team_name: String?
 
     def initialize: (task_id: String, task_subject: String, ?task_description: String?, ?teammate_name: String?, ?team_name: String?, **untyped) -> void
+  end
+
+  class ConfigChangeInput < BaseHookInput
+    attr_reader source: String
+    attr_reader file_path: String?
+
+    SOURCES: Array[String]
+
+    def initialize: (source: String, ?file_path: String?, **untyped) -> void
   end
 
   # Permission types

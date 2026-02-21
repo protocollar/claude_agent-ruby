@@ -85,6 +85,29 @@ module ClaudeAgent
     end
   end
 
+  # Filesystem-specific configuration for sandbox mode (TypeScript SDK v0.2.49 parity)
+  #
+  # @example
+  #   filesystem = SandboxFilesystemConfig.new(
+  #     allow_write: ["/tmp/*"],
+  #     deny_write: ["/etc/*"],
+  #     deny_read: ["/secrets/*"]
+  #   )
+  #
+  SandboxFilesystemConfig = Data.define(:allow_write, :deny_write, :deny_read) do
+    def initialize(allow_write: [], deny_write: [], deny_read: [])
+      super
+    end
+
+    def to_h
+      result = {}
+      result[:allowWrite] = allow_write unless allow_write.empty?
+      result[:denyWrite] = deny_write unless deny_write.empty?
+      result[:denyRead] = deny_read unless deny_read.empty?
+      result
+    end
+  end
+
   # Sandbox configuration for command execution (TypeScript SDK parity)
   #
   # @example Basic sandbox
@@ -112,7 +135,8 @@ module ClaudeAgent
     :network,
     :ignore_violations,
     :enable_weaker_nested_sandbox,
-    :ripgrep
+    :ripgrep,
+    :filesystem
   ) do
     def initialize(
       enabled: false,
@@ -122,7 +146,8 @@ module ClaudeAgent
       network: nil,
       ignore_violations: nil,
       enable_weaker_nested_sandbox: false,
-      ripgrep: nil
+      ripgrep: nil,
+      filesystem: nil
     )
       super
     end
@@ -136,6 +161,7 @@ module ClaudeAgent
       result[:ignoreViolations] = ignore_violations.to_h if ignore_violations && !ignore_violations.to_h.empty?
       result[:enableWeakerNestedSandbox] = enable_weaker_nested_sandbox if enable_weaker_nested_sandbox
       result[:ripgrep] = ripgrep.to_h if ripgrep
+      result[:filesystem] = filesystem.to_h if filesystem && !filesystem.to_h.empty?
       result
     end
   end

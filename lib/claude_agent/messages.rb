@@ -616,6 +616,100 @@ module ClaudeAgent
     end
   end
 
+  # Task started message (TypeScript SDK v0.2.45 parity)
+  #
+  # Sent when a new task (subagent) is started.
+  #
+  # @example
+  #   msg = TaskStartedMessage.new(
+  #     uuid: "msg-123",
+  #     session_id: "session-abc",
+  #     task_id: "task-456",
+  #     tool_use_id: "tool-789",
+  #     description: "Running tests",
+  #     task_type: "bash"
+  #   )
+  #
+  TaskStartedMessage = Data.define(
+    :uuid,
+    :session_id,
+    :task_id,
+    :tool_use_id,
+    :description,
+    :task_type
+  ) do
+    def initialize(
+      uuid:,
+      session_id:,
+      task_id:,
+      tool_use_id: nil,
+      description: nil,
+      task_type: nil
+    )
+      super
+    end
+
+    def type
+      :task_started
+    end
+  end
+
+  # Rate limit event (TypeScript SDK v0.2.45 parity)
+  #
+  # Reports rate limit status and utilization information.
+  #
+  # @example
+  #   msg = RateLimitEvent.new(
+  #     uuid: "msg-123",
+  #     session_id: "session-abc",
+  #     rate_limit_info: {
+  #       "status" => "allowed_warning",
+  #       "resetsAt" => 1700000000,
+  #       "rateLimitType" => "five_hour",
+  #       "utilization" => 0.85,
+  #       "isUsingOverage" => false,
+  #       "overageStatus" => "available"
+  #     }
+  #   )
+  #   msg.status  # => "allowed_warning"
+  #
+  RateLimitEvent = Data.define(:rate_limit_info, :uuid, :session_id) do
+    def initialize(rate_limit_info:, uuid: nil, session_id: nil)
+      super
+    end
+
+    def type
+      :rate_limit_event
+    end
+
+    # Get the rate limit status
+    # @return [String, nil]
+    def status
+      rate_limit_info["status"] || rate_limit_info[:status]
+    end
+  end
+
+  # Prompt suggestion message (TypeScript SDK v0.2.47 parity)
+  #
+  # Contains a suggested prompt for the user.
+  #
+  # @example
+  #   msg = PromptSuggestionMessage.new(
+  #     uuid: "msg-123",
+  #     session_id: "session-abc",
+  #     suggestion: "Tell me about this project"
+  #   )
+  #
+  PromptSuggestionMessage = Data.define(:uuid, :session_id, :suggestion) do
+    def initialize(uuid: nil, session_id: nil, suggestion:)
+      super
+    end
+
+    def type
+      :prompt_suggestion
+    end
+  end
+
   # Files persisted event (TypeScript SDK v0.2.25 parity)
   #
   # Sent when files are persisted to storage during a session.
@@ -670,6 +764,9 @@ module ClaudeAgent
     HookStartedMessage,
     HookProgressMessage,
     ToolUseSummaryMessage,
-    FilesPersistedEvent
+    FilesPersistedEvent,
+    TaskStartedMessage,
+    RateLimitEvent,
+    PromptSuggestionMessage
   ].freeze
 end
