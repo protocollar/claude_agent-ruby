@@ -4,7 +4,7 @@ require "json"
 
 module ClaudeAgent
   # Permission modes for tool execution (TypeScript SDK parity)
-  PERMISSION_MODES = %w[default acceptEdits plan bypassPermissions delegate dontAsk].freeze
+  PERMISSION_MODES = %w[default acceptEdits plan bypassPermissions dontAsk].freeze
 
   # Configuration options for ClaudeAgent queries and clients
   #
@@ -42,6 +42,7 @@ module ClaudeAgent
       init: false,
       init_only: false,
       maintenance: false,
+      prompt_suggestions: false,
       debug: false,
       debug_file: nil
     }.freeze
@@ -61,7 +62,7 @@ module ClaudeAgent
       settings sandbox cwd add_dirs env user agent
       cli_path extra_args agents setting_sources plugins
       include_partial_messages output_format enable_file_checkpointing
-      persist_session betas max_buffer_size stderr_callback
+      persist_session prompt_suggestions betas max_buffer_size stderr_callback
       abort_controller spawn_claude_code_process
       init init_only maintenance
       debug debug_file
@@ -260,6 +261,7 @@ module ClaudeAgent
         args.push("--no-persist-session") if persist_session == false
         args.push("--json-schema", JSON.generate(output_format)) if output_format
         args.push("--include-partial-messages") if include_partial_messages
+        args.push("--prompt-suggestions") if prompt_suggestions
         if agents
           agents_hash = agents.transform_values(&:to_h)
           args.push("--agents", JSON.generate(agents_hash))

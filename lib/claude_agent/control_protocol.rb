@@ -532,6 +532,7 @@ module ClaudeAgent
 
       request = { subtype: "initialize" }
       request[:hooks] = hooks_config if hooks_config
+      request[:promptSuggestions] = true if options.prompt_suggestions
 
       send_control_request(**request)
     end

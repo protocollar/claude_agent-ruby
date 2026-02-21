@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.42 (npm package)
-- Python SDK: v0.1.36 from GitHub (commit 4d74748)
+- TypeScript SDK: v0.2.49 (npm package)
+- Python SDK: v0.1.39 from GitHub (commit 146e3d6)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-13
+**Last Updated:** 2026-02-20
 
 ---
 
@@ -41,7 +41,7 @@ Configuration options for SDK queries and clients.
 | `tools`                           |     ✅      |   ✅    |  ✅   | Array or preset                                              |
 | `allowedTools`                    |     ✅      |   ✅    |  ✅   | Auto-allowed tools                                           |
 | `disallowedTools`                 |     ✅      |   ✅    |  ✅   | Blocked tools                                                |
-| `permissionMode`                  |     ✅      |   ✅    |  ✅   | default/acceptEdits/plan/bypassPermissions/delegate/dontAsk  |
+| `permissionMode`                  |     ✅      |   ✅    |  ✅   | default/acceptEdits/plan/bypassPermissions/dontAsk           |
 | `allowDangerouslySkipPermissions` |     ✅      |   ❌    |  ✅   | Required for bypassPermissions                               |
 | `canUseTool`                      |     ✅      |   ✅    |  ✅   | Permission callback                                          |
 | `permissionPromptToolName`        |     ✅      |   ✅    |  ✅   | MCP tool for permission prompts                              |
@@ -83,6 +83,7 @@ Configuration options for SDK queries and clients.
 | `init`                            |     ✅      |   ❌    |  ✅   | Run Setup hooks (init trigger), then continue (hidden CLI)   |
 | `initOnly`                        |     ✅      |   ❌    |  ✅   | Run Setup hooks (init trigger), then exit (hidden CLI)       |
 | `maintenance`                     |     ✅      |   ❌    |  ✅   | Run Setup hooks (maintenance trigger), continue (hidden CLI) |
+| `promptSuggestions`               |     ✅      |   ❌    |  ✅   | Enable prompt suggestion after each turn (v0.2.47)           |
 | `debug`                           |     ✅      |   ❌    |  ✅   | Enable verbose debug logging                                 |
 | `debugFile`                       |     ✅      |   ❌    |  ✅   | Write debug logs to specific file path                       |
 
@@ -109,6 +110,9 @@ Messages exchanged between SDK and CLI.
 | `AuthStatusMessage`       |     ✅      |   ❌    |  ✅   | Authentication status              |
 | `TaskNotificationMessage` |     ✅      |   ❌    |  ✅   | Background task completion         |
 | `ToolUseSummaryMessage`   |     ✅      |   ❌    |  ✅   | Summary of tool use (collapsed)    |
+| `TaskStartedMessage`      |     ✅      |   ❌    |  ✅   | Subagent task registered (v0.2.45) |
+| `RateLimitEvent`          |     ✅      |   ❌    |  ✅   | Rate limit status changes          |
+| `PromptSuggestionMessage` |     ✅      |   ❌    |  ✅   | Suggested next prompt (v0.2.47)    |
 | `FilesPersistedEvent`     |     ✅      |   ❌    |  ✅   | File persistence confirmation      |
 
 ### Message Fields
@@ -269,6 +273,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `Setup`              |     ✅      |   ❌    |  ✅   | Initial setup/maintenance         |
 | `TeammateIdle`       |     ✅      |   ❌    |  ✅   | Teammate idle (v0.2.33)           |
 | `TaskCompleted`      |     ✅      |   ❌    |  ✅   | Task completed (v0.2.33)          |
+| `ConfigChange`       |     ✅      |   ❌    |  ✅   | Config file changed (v0.2.49)     |
 
 ### Hook Input Types
 
@@ -289,6 +294,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `SetupHookInput`              |     ✅      |   ❌    |  ✅   |
 | `TeammateIdleHookInput`       |     ✅      |   ❌    |  ✅   |
 | `TaskCompletedHookInput`      |     ✅      |   ❌    |  ✅   |
+| `ConfigChangeHookInput`       |     ✅      |   ❌    |  ✅   |
 
 ### Hook Output Types
 
@@ -388,7 +394,6 @@ Permission handling and updates.
 | `acceptEdits`       |     ✅      |   ✅    |  ✅   | Auto-accept edits  |
 | `plan`              |     ✅      |   ✅    |  ✅   | Planning mode      |
 | `bypassPermissions` |     ✅      |   ✅    |  ✅   | Skip all checks    |
-| `delegate`          |     ✅      |   ❌    |  ✅   | Delegate mode      |
 | `dontAsk`           |     ✅      |   ❌    |  ✅   | Never prompt       |
 
 ### Permission Result Types
@@ -556,6 +561,15 @@ Sandbox configuration for command execution isolation.
 | `ignoreViolations`          |     ✅      |   ✅    |  ✅   |
 | `enableWeakerNestedSandbox` |     ✅      |   ✅    |  ✅   |
 | `ripgrep`                   |     ✅      |   ❌    |  ✅   |
+| `filesystem`                |     ✅      |   ❌    |  ✅   |
+
+### SandboxFilesystemConfig
+
+| Field        | TypeScript | Python | Ruby |
+|--------------|:----------:|:------:|:----:|
+| `allowWrite` |     ✅      |   ❌    |  ✅   |
+| `denyWrite`  |     ✅      |   ❌    |  ✅   |
+| `denyRead`   |     ✅      |   ❌    |  ✅   |
 
 ### SandboxNetworkConfig
 
@@ -673,20 +687,25 @@ Public API surface for SDK clients.
 - Source is bundled/minified, but `sdk.d.ts` provides complete type definitions
 - Includes unstable V2 session API
 - `executable`/`executableArgs` are JS-specific (`node`/`bun`/`deno`)
+- v0.2.45: Added `TaskStartedMessage`, `RateLimitEvent` message types
+- v0.2.47: Added `promptSuggestions` option and `PromptSuggestionMessage`
+- v0.2.49: Added `ConfigChange` hook event, `SandboxFilesystemConfig`
 
 ### Python SDK
 - Full source available with `Transport` abstract class
 - Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus
-- Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted
-- Missing permission modes: `delegate`, `dontAsk`
-- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`
+- Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted, ConfigChange
+- Missing permission modes: `dontAsk`
+- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
 - Has SDK MCP server support with `tool()` helper and annotations
 - Added `thinking` config and `effort` option in v0.1.36
+- Handles `rate_limit_event` and unknown message types gracefully (v0.1.39)
 
 ### Ruby SDK (This Repository)
-- Full feature parity with TypeScript SDK v0.2.42
+- Feature parity with TypeScript SDK v0.2.42
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)
+- Gaps from TS v0.2.43-v0.2.49: `promptSuggestions`, `TaskStartedMessage`, `RateLimitEvent`, `PromptSuggestionMessage`, `ConfigChange` hook, `SandboxFilesystemConfig`

@@ -10,9 +10,8 @@ class TestClaudeAgentPermissions < ActiveSupport::TestCase
     assert_includes ClaudeAgent::PERMISSION_MODES, "acceptEdits"
     assert_includes ClaudeAgent::PERMISSION_MODES, "plan"
     assert_includes ClaudeAgent::PERMISSION_MODES, "bypassPermissions"
-    assert_includes ClaudeAgent::PERMISSION_MODES, "delegate"
     assert_includes ClaudeAgent::PERMISSION_MODES, "dontAsk"
-    assert_equal 6, ClaudeAgent::PERMISSION_MODES.size
+    assert_equal 5, ClaudeAgent::PERMISSION_MODES.size
   end
 
   # --- Permission Update Types ---

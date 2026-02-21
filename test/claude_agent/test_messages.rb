@@ -581,4 +581,104 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
   test "files_persisted_event_in_types_constant" do
     assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::FilesPersistedEvent
   end
+
+  # --- TaskStartedMessage ---
+
+  test "task_started_message" do
+    msg = ClaudeAgent::TaskStartedMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      task_id: "task-456",
+      tool_use_id: "tool-789",
+      description: "Running tests",
+      task_type: "bash"
+    )
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal "task-456", msg.task_id
+    assert_equal "tool-789", msg.tool_use_id
+    assert_equal "Running tests", msg.description
+    assert_equal "bash", msg.task_type
+    assert_equal :task_started, msg.type
+  end
+
+  test "task_started_message_defaults" do
+    msg = ClaudeAgent::TaskStartedMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      task_id: "task-456"
+    )
+    assert_nil msg.tool_use_id
+    assert_nil msg.description
+    assert_nil msg.task_type
+  end
+
+  test "task_started_message_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::TaskStartedMessage
+  end
+
+  # --- RateLimitEvent ---
+
+  test "rate_limit_event" do
+    info = {
+      "status" => "allowed_warning",
+      "resetsAt" => 1700000000,
+      "rateLimitType" => "five_hour",
+      "utilization" => 0.85,
+      "isUsingOverage" => false,
+      "overageStatus" => "available"
+    }
+    msg = ClaudeAgent::RateLimitEvent.new(
+      rate_limit_info: info,
+      uuid: "msg-123",
+      session_id: "session-abc"
+    )
+    assert_equal info, msg.rate_limit_info
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal "allowed_warning", msg.status
+    assert_equal :rate_limit_event, msg.type
+  end
+
+  test "rate_limit_event_with_symbol_keys" do
+    msg = ClaudeAgent::RateLimitEvent.new(
+      rate_limit_info: { status: "blocked" }
+    )
+    assert_equal "blocked", msg.status
+  end
+
+  test "rate_limit_event_defaults" do
+    msg = ClaudeAgent::RateLimitEvent.new(rate_limit_info: {})
+    assert_nil msg.uuid
+    assert_nil msg.session_id
+    assert_nil msg.status
+  end
+
+  test "rate_limit_event_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::RateLimitEvent
+  end
+
+  # --- PromptSuggestionMessage ---
+
+  test "prompt_suggestion_message" do
+    msg = ClaudeAgent::PromptSuggestionMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      suggestion: "Tell me about this project"
+    )
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal "Tell me about this project", msg.suggestion
+    assert_equal :prompt_suggestion, msg.type
+  end
+
+  test "prompt_suggestion_message_defaults" do
+    msg = ClaudeAgent::PromptSuggestionMessage.new(suggestion: "Hello")
+    assert_nil msg.uuid
+    assert_nil msg.session_id
+  end
+
+  test "prompt_suggestion_message_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::PromptSuggestionMessage
+  end
 end

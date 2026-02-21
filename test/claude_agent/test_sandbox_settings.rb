@@ -255,4 +255,93 @@ class TestClaudeAgentSandboxSettings < ActiveSupport::TestCase
     refute h.key?(:network)
     refute h.key?(:ignoreViolations)
   end
+
+  # --- SandboxFilesystemConfig ---
+
+  test "sandbox_filesystem_config" do
+    config = ClaudeAgent::SandboxFilesystemConfig.new(
+      allow_write: [ "/tmp/*", "/var/log/*" ],
+      deny_write: [ "/etc/*" ],
+      deny_read: [ "/secrets/*" ]
+    )
+    assert_equal [ "/tmp/*", "/var/log/*" ], config.allow_write
+    assert_equal [ "/etc/*" ], config.deny_write
+    assert_equal [ "/secrets/*" ], config.deny_read
+  end
+
+  test "sandbox_filesystem_config_defaults" do
+    config = ClaudeAgent::SandboxFilesystemConfig.new
+    assert_equal [], config.allow_write
+    assert_equal [], config.deny_write
+    assert_equal [], config.deny_read
+  end
+
+  test "sandbox_filesystem_config_to_h" do
+    config = ClaudeAgent::SandboxFilesystemConfig.new(
+      allow_write: [ "/tmp/*" ],
+      deny_write: [ "/etc/*" ],
+      deny_read: [ "/secrets/*" ]
+    )
+    h = config.to_h
+    assert_equal [ "/tmp/*" ], h[:allowWrite]
+    assert_equal [ "/etc/*" ], h[:denyWrite]
+    assert_equal [ "/secrets/*" ], h[:denyRead]
+  end
+
+  test "sandbox_filesystem_config_to_h_empty" do
+    config = ClaudeAgent::SandboxFilesystemConfig.new
+    assert_equal({}, config.to_h)
+  end
+
+  test "sandbox_filesystem_config_to_h_partial" do
+    config = ClaudeAgent::SandboxFilesystemConfig.new(
+      allow_write: [ "/tmp/*" ]
+    )
+    h = config.to_h
+    assert_equal [ "/tmp/*" ], h[:allowWrite]
+    refute h.key?(:denyWrite)
+    refute h.key?(:denyRead)
+  end
+
+  # --- SandboxSettings with filesystem ---
+
+  test "sandbox_settings_filesystem_default_nil" do
+    sandbox = ClaudeAgent::SandboxSettings.new
+    assert_nil sandbox.filesystem
+  end
+
+  test "sandbox_settings_with_filesystem" do
+    filesystem = ClaudeAgent::SandboxFilesystemConfig.new(
+      allow_write: [ "/tmp/*" ],
+      deny_read: [ "/secrets/*" ]
+    )
+    sandbox = ClaudeAgent::SandboxSettings.new(
+      enabled: true,
+      filesystem: filesystem
+    )
+    assert_equal filesystem, sandbox.filesystem
+    assert_equal [ "/tmp/*" ], sandbox.filesystem.allow_write
+  end
+
+  test "sandbox_settings_to_h_with_filesystem" do
+    filesystem = ClaudeAgent::SandboxFilesystemConfig.new(
+      allow_write: [ "/tmp/*" ]
+    )
+    sandbox = ClaudeAgent::SandboxSettings.new(
+      enabled: true,
+      filesystem: filesystem
+    )
+    h = sandbox.to_h
+    assert_equal({ allowWrite: [ "/tmp/*" ] }, h[:filesystem])
+  end
+
+  test "sandbox_settings_to_h_skips_empty_filesystem" do
+    filesystem = ClaudeAgent::SandboxFilesystemConfig.new
+    sandbox = ClaudeAgent::SandboxSettings.new(
+      enabled: true,
+      filesystem: filesystem
+    )
+    h = sandbox.to_h
+    refute h.key?(:filesystem)
+  end
 end
