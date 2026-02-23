@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.8] - 2026-02-22
+
 ### Added
 - `WorktreeCreate` hook event with `WorktreeCreateInput` class (TypeScript SDK v0.2.50 parity)
 - `WorktreeRemove` hook event with `WorktreeRemoveInput` class (TypeScript SDK v0.2.50 parity)
