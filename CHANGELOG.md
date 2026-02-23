@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- All parsed message hashes now use snake_case symbol keys throughout (e.g. `msg.usage[:input_tokens]`, `event.files.first[:filename]`, `event.event[:type]`)
+- `MessageParser#parse` applies a single `deep_transform_keys` pass that normalizes camelCase→snake_case and string→symbol for the entire hash tree
+- `can_use_tool` callbacks receive symbol-keyed `input` hashes
+- Hook callbacks receive symbol-keyed `input` hashes
+- MCP tool handlers receive symbol-keyed `arguments` hashes
+
+### Removed
+- `MessageParser#fetch_dual` — no longer needed now that keys are normalized at the entry point
+
 ## [0.7.8] - 2026-02-22
 
 ### Added

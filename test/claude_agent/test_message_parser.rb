@@ -98,7 +98,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     tool_use = msg.tool_uses.first
     assert_equal "tool_abc", tool_use.id
     assert_equal "Read", tool_use.name
-    assert_equal({ "file_path" => "/tmp/test.txt" }, tool_use.input)
+    assert_equal({ file_path: "/tmp/test.txt" }, tool_use.input)
   end
 
   test "parse_assistant_message_with_error" do
@@ -125,7 +125,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
 
     assert_instance_of ClaudeAgent::SystemMessage, msg
     assert_equal "init", msg.subtype
-    assert_equal({ "version" => "2.1.0" }, msg.data)
+    assert_equal({ version: "2.1.0" }, msg.data)
   end
 
   test "parse_result_message" do
@@ -150,7 +150,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal 3, msg.num_turns
     assert_equal "sess-123", msg.session_id
     assert_equal 0.05, msg.total_cost_usd
-    assert_equal({ "input_tokens" => 100, "output_tokens" => 50 }, msg.usage)
+    assert_equal({ input_tokens: 100, output_tokens: 50 }, msg.usage)
   end
 
   test "parse_result_message_camel_case" do
@@ -838,10 +838,10 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal "msg-123", msg.uuid
     assert_equal "sess-abc", msg.session_id
     assert_equal 1, msg.files.size
-    assert_equal "test.rb", msg.files.first["filename"]
-    assert_equal "file-456", msg.files.first["file_id"]
+    assert_equal "test.rb", msg.files.first[:filename]
+    assert_equal "file-456", msg.files.first[:file_id]
     assert_equal 1, msg.failed.size
-    assert_equal "bad.rb", msg.failed.first["filename"]
+    assert_equal "bad.rb", msg.failed.first[:filename]
     assert_equal "2026-01-30T12:00:00Z", msg.processed_at
     assert_equal :files_persisted, msg.type
   end
@@ -957,7 +957,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal "msg-123", msg.uuid
     assert_equal "sess-abc", msg.session_id
     assert_equal "allowed_warning", msg.status
-    assert_equal 0.85, msg.rate_limit_info["utilization"]
+    assert_equal 0.85, msg.rate_limit_info[:utilization]
     assert_equal :rate_limit_event, msg.type
   end
 

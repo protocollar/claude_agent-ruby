@@ -241,7 +241,7 @@ module ClaudeAgent
     # Get the event type from the raw event
     # @return [String, nil]
     def event_type
-      event["type"]
+      event[:type]
     end
   end
 
@@ -267,13 +267,13 @@ module ClaudeAgent
     # Get the compaction trigger type
     # @return [String] "manual" or "auto"
     def trigger
-      compact_metadata[:trigger] || compact_metadata["trigger"]
+      compact_metadata[:trigger]
     end
 
     # Get the token count before compaction
     # @return [Integer, nil]
     def pre_tokens
-      compact_metadata[:pre_tokens] || compact_metadata["pre_tokens"]
+      compact_metadata[:pre_tokens]
     end
   end
 
@@ -663,12 +663,12 @@ module ClaudeAgent
   #     uuid: "msg-123",
   #     session_id: "session-abc",
   #     rate_limit_info: {
-  #       "status" => "allowed_warning",
-  #       "resetsAt" => 1700000000,
-  #       "rateLimitType" => "five_hour",
-  #       "utilization" => 0.85,
-  #       "isUsingOverage" => false,
-  #       "overageStatus" => "available"
+  #       status: "allowed_warning",
+  #       resetsAt: 1700000000,
+  #       rateLimitType: "five_hour",
+  #       utilization: 0.85,
+  #       isUsingOverage: false,
+  #       overageStatus: "available"
   #     }
   #   )
   #   msg.status  # => "allowed_warning"
@@ -685,7 +685,7 @@ module ClaudeAgent
     # Get the rate limit status
     # @return [String, nil]
     def status
-      rate_limit_info["status"] || rate_limit_info[:status]
+      rate_limit_info[:status]
     end
   end
 
@@ -719,11 +719,11 @@ module ClaudeAgent
   #   msg = FilesPersistedEvent.new(
   #     uuid: "msg-123",
   #     session_id: "session-abc",
-  #     files: [{ "filename" => "test.rb", "file_id" => "file-456" }],
+  #     files: [{ filename: "test.rb", file_id: "file-456" }],
   #     failed: [],
   #     processed_at: "2026-01-30T12:00:00Z"
   #   )
-  #   msg.files.first["filename"]  # => "test.rb"
+  #   msg.files.first[:filename]  # => "test.rb"
   #
   FilesPersistedEvent = Data.define(
     :uuid,

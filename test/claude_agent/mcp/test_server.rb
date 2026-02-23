@@ -8,13 +8,13 @@ class TestClaudeAgentMCPServer < ActiveSupport::TestCase
       name: "greet",
       description: "Greet a person",
       schema: { name: String }
-    ) { |args| "Hello, #{args["name"]}!" }
+    ) { |args| "Hello, #{args[:name]}!" }
 
     @add_tool = ClaudeAgent::MCP::Tool.new(
       name: "add",
       description: "Add two numbers",
       schema: { a: Float, b: Float }
-    ) { |args| (args["a"] + args["b"]).to_s }
+    ) { |args| (args[:a] + args[:b]).to_s }
 
     @server = ClaudeAgent::MCP::Server.new(
       name: "test_server",
@@ -152,7 +152,7 @@ class TestClaudeAgentMCPServer < ActiveSupport::TestCase
   end
 
   test "convenience_methods" do
-    tool = ClaudeAgent::MCP.tool("test", "Test tool", { x: Integer }) { |args| args["x"] * 2 }
+    tool = ClaudeAgent::MCP.tool("test", "Test tool", { x: Integer }) { |args| args[:x] * 2 }
     assert_instance_of ClaudeAgent::MCP::Tool, tool
 
     server = ClaudeAgent::MCP.create_server(name: "convenience", tools: [ tool ])

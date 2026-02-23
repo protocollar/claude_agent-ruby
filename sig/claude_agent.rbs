@@ -723,7 +723,7 @@ module ClaudeAgent
   # Message parser
   class MessageParser
     def initialize: (?logger: Logger?) -> void
-    def parse: (Hash[String, untyped] raw) -> message
+    def parse: (Hash[untyped, untyped] raw) -> message
   end
 
   # Hook types
