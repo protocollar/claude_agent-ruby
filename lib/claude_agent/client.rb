@@ -298,6 +298,22 @@ module ClaudeAgent
       @protocol.stop_task(task_id)
     end
 
+    # Apply flag settings (TypeScript SDK v0.2.50 parity)
+    #
+    # Merges the provided settings into the flag settings layer.
+    #
+    # @param settings [Hash] Settings to merge into the flag layer
+    # @return [Hash] Response from the CLI
+    #
+    # @example
+    #   client.apply_flag_settings({ "model" => "claude-sonnet-4-5-20250514" })
+    #
+    def apply_flag_settings(settings)
+      require_connection!
+
+      @protocol.apply_flag_settings(settings)
+    end
+
     # Dynamically set MCP servers for this session (TypeScript SDK parity)
     #
     # This replaces the current set of dynamically-added MCP servers.

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `WorktreeCreate` hook event with `WorktreeCreateInput` class (TypeScript SDK v0.2.50 parity)
+- `WorktreeRemove` hook event with `WorktreeRemoveInput` class (TypeScript SDK v0.2.50 parity)
+- `apply_flag_settings` control request on `ControlProtocol` and `Client` for merging settings into the flag layer (TypeScript SDK v0.2.50 parity)
+- RBS signatures for all new types
+
 ## [0.7.7] - 2026-02-20
 
 ### Added

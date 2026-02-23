@@ -449,6 +449,62 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert_includes ClaudeAgent::ConfigChangeInput::SOURCES, "skills"
   end
 
+  # --- WorktreeCreateInput ---
+
+  test "worktree_create_event_in_hook_events" do
+    assert_includes ClaudeAgent::HOOK_EVENTS, "WorktreeCreate"
+  end
+
+  test "worktree_create_input" do
+    input = ClaudeAgent::WorktreeCreateInput.new(
+      name: "feature-branch",
+      session_id: "sess-123"
+    )
+    assert_equal "WorktreeCreate", input.hook_event_name
+    assert_equal "feature-branch", input.name
+    assert_equal "sess-123", input.session_id
+  end
+
+  test "worktree_create_input_inherits_base_fields" do
+    input = ClaudeAgent::WorktreeCreateInput.new(
+      name: "my-worktree",
+      transcript_path: "/path/to/transcript",
+      cwd: "/home/user",
+      permission_mode: "default"
+    )
+    assert_equal "/path/to/transcript", input.transcript_path
+    assert_equal "/home/user", input.cwd
+    assert_equal "default", input.permission_mode
+  end
+
+  # --- WorktreeRemoveInput ---
+
+  test "worktree_remove_event_in_hook_events" do
+    assert_includes ClaudeAgent::HOOK_EVENTS, "WorktreeRemove"
+  end
+
+  test "worktree_remove_input" do
+    input = ClaudeAgent::WorktreeRemoveInput.new(
+      worktree_path: "/tmp/worktrees/feature-branch",
+      session_id: "sess-456"
+    )
+    assert_equal "WorktreeRemove", input.hook_event_name
+    assert_equal "/tmp/worktrees/feature-branch", input.worktree_path
+    assert_equal "sess-456", input.session_id
+  end
+
+  test "worktree_remove_input_inherits_base_fields" do
+    input = ClaudeAgent::WorktreeRemoveInput.new(
+      worktree_path: "/tmp/worktrees/cleanup",
+      transcript_path: "/path/to/transcript",
+      cwd: "/home/user",
+      permission_mode: "acceptEdits"
+    )
+    assert_equal "/path/to/transcript", input.transcript_path
+    assert_equal "/home/user", input.cwd
+    assert_equal "acceptEdits", input.permission_mode
+  end
+
   test "config_change_input_inherits_base_fields" do
     input = ClaudeAgent::ConfigChangeInput.new(
       source: "project_settings",
