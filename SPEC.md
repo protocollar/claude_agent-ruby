@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.49 (npm package)
+- TypeScript SDK: v0.2.50 (npm package)
 - Python SDK: v0.1.39 from GitHub (commit 146e3d6)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-20
+**Last Updated:** 2026-02-22
 
 ---
 
@@ -235,6 +235,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `supported_commands`      |     ✅      |   ❌    |  ✅   | Get available slash commands      |
 | `supported_models`        |     ✅      |   ❌    |  ✅   | Get available models              |
 | `account_info`            |     ✅      |   ❌    |  ✅   | Get account information           |
+| `apply_flag_settings`     |     ✅      |   ❌    |  ✅   | Merge settings into flag layer    |
 
 ### Return Types
 
@@ -274,6 +275,8 @@ Event hooks for intercepting and modifying SDK behavior.
 | `TeammateIdle`       |     ✅      |   ❌    |  ✅   | Teammate idle (v0.2.33)           |
 | `TaskCompleted`      |     ✅      |   ❌    |  ✅   | Task completed (v0.2.33)          |
 | `ConfigChange`       |     ✅      |   ❌    |  ✅   | Config file changed (v0.2.49)     |
+| `WorktreeCreate`     |     ✅      |   ❌    |  ✅   | Worktree creation (v0.2.50)       |
+| `WorktreeRemove`     |     ✅      |   ❌    |  ✅   | Worktree removal (v0.2.50)        |
 
 ### Hook Input Types
 
@@ -295,6 +298,8 @@ Event hooks for intercepting and modifying SDK behavior.
 | `TeammateIdleHookInput`       |     ✅      |   ❌    |  ✅   |
 | `TaskCompletedHookInput`      |     ✅      |   ❌    |  ✅   |
 | `ConfigChangeHookInput`       |     ✅      |   ❌    |  ✅   |
+| `WorktreeCreateHookInput`     |     ✅      |   ❌    |  ✅   |
+| `WorktreeRemoveHookInput`     |     ✅      |   ❌    |  ✅   |
 
 ### Hook Output Types
 
@@ -690,11 +695,12 @@ Public API surface for SDK clients.
 - v0.2.45: Added `TaskStartedMessage`, `RateLimitEvent` message types
 - v0.2.47: Added `promptSuggestions` option and `PromptSuggestionMessage`
 - v0.2.49: Added `ConfigChange` hook event, `SandboxFilesystemConfig`
+- v0.2.50: Added `WorktreeCreate`/`WorktreeRemove` hook events, `apply_flag_settings` control request
 
 ### Python SDK
 - Full source available with `Transport` abstract class
 - Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus
-- Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted, ConfigChange
+- Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted, ConfigChange, WorktreeCreate, WorktreeRemove
 - Missing permission modes: `dontAsk`
 - Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
@@ -703,9 +709,8 @@ Public API surface for SDK clients.
 - Handles `rate_limit_event` and unknown message types gracefully (v0.1.39)
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.42
+- Feature parity with TypeScript SDK v0.2.50
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)
-- Gaps from TS v0.2.43-v0.2.49: `promptSuggestions`, `TaskStartedMessage`, `RateLimitEvent`, `PromptSuggestionMessage`, `ConfigChange` hook, `SandboxFilesystemConfig`

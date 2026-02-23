@@ -335,6 +335,21 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     assert_equal "task-123", msg["request"]["task_id"]
   end
 
+  test "apply_flag_settings sends correct request format" do
+    @transport.connect
+
+    @protocol.send(:write_message, {
+      type: "control_request",
+      request_id: "test-req",
+      request: { subtype: "apply_flag_settings", settings: { "model" => "claude-sonnet-4-5-20250514" } }
+    })
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" }
+    assert_not_nil msg
+    assert_equal "apply_flag_settings", msg["request"]["subtype"]
+    assert_equal({ "model" => "claude-sonnet-4-5-20250514" }, msg["request"]["settings"])
+  end
+
   test "mcp_toggle sends correct request format" do
     @transport.connect
 

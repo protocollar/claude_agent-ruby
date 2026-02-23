@@ -879,6 +879,18 @@ module ClaudeAgent
     def initialize: (source: String, ?file_path: String?, **untyped) -> void
   end
 
+  class WorktreeCreateInput < BaseHookInput
+    attr_reader name: String
+
+    def initialize: (name: String, **untyped) -> void
+  end
+
+  class WorktreeRemoveInput < BaseHookInput
+    attr_reader worktree_path: String
+
+    def initialize: (worktree_path: String, **untyped) -> void
+  end
+
   # Permission types
   type permission_result = PermissionResultAllow | PermissionResultDeny
 
@@ -967,6 +979,7 @@ module ClaudeAgent
     def mcp_reconnect: (String server_name) -> Hash[String, untyped]
     def mcp_toggle: (String server_name, enabled: bool) -> Hash[String, untyped]
     def stop_task: (String task_id) -> Hash[String, untyped]
+    def apply_flag_settings: (Hash[String, untyped] settings) -> Hash[String, untyped]
     def supported_commands: () -> Array[SlashCommand]
     def supported_models: () -> Array[ModelInfo]
     def mcp_server_status: () -> Array[McpServerStatus]
@@ -1004,6 +1017,7 @@ module ClaudeAgent
     def mcp_reconnect: (String server_name) -> Hash[String, untyped]
     def mcp_toggle: (String server_name, enabled: bool) -> Hash[String, untyped]
     def stop_task: (String task_id) -> Hash[String, untyped]
+    def apply_flag_settings: (Hash[String, untyped] settings) -> Hash[String, untyped]
     def supported_commands: () -> Array[SlashCommand]
     def supported_models: () -> Array[ModelInfo]
     def mcp_server_status: () -> Array[McpServerStatus]

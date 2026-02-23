@@ -19,6 +19,8 @@ module ClaudeAgent
     TeammateIdle
     TaskCompleted
     ConfigChange
+    WorktreeCreate
+    WorktreeRemove
   ].freeze
 
   # Matcher configuration for hooks
@@ -301,6 +303,34 @@ module ClaudeAgent
       super(hook_event_name: "ConfigChange", **kwargs)
       @source = source
       @file_path = file_path
+    end
+  end
+
+  # Input for WorktreeCreate hook (TypeScript SDK v0.2.50 parity)
+  #
+  # Fired when a worktree is created.
+  #
+  class WorktreeCreateInput < BaseHookInput
+    attr_reader :name
+
+    # @param name [String] Worktree name
+    def initialize(name:, **kwargs)
+      super(hook_event_name: "WorktreeCreate", **kwargs)
+      @name = name
+    end
+  end
+
+  # Input for WorktreeRemove hook (TypeScript SDK v0.2.50 parity)
+  #
+  # Fired when a worktree is removed.
+  #
+  class WorktreeRemoveInput < BaseHookInput
+    attr_reader :worktree_path
+
+    # @param worktree_path [String] Path to the worktree
+    def initialize(worktree_path:, **kwargs)
+      super(hook_event_name: "WorktreeRemove", **kwargs)
+      @worktree_path = worktree_path
     end
   end
 
