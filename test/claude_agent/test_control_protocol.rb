@@ -81,7 +81,7 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
   test "handle can use tool with callback allow" do
     options = ClaudeAgent::Options.new(
       can_use_tool: ->(name, input, context) {
-        ClaudeAgent::PermissionResultAllow.new(updated_input: input.merge("modified" => true))
+        ClaudeAgent::PermissionResultAllow.new(updated_input: input.merge(modified: true))
       }
     )
     protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
@@ -90,7 +90,7 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     result = protocol.send(:handle_can_use_tool, request)
 
     assert_equal "allow", result[:behavior]
-    assert result[:updatedInput]["modified"]
+    assert result[:updatedInput][:modified]
   end
 
   test "handle can use tool with callback deny" do
@@ -141,7 +141,7 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     result = protocol.send(:handle_hook_callback, request)
 
     assert callback_called
-    assert_equal({ "tool_name" => "Read", "tool_input" => {} }, callback_input)
+    assert_equal({ tool_name: "Read", tool_input: {} }, callback_input)
     assert_equal true, result["continue"]
   end
 
@@ -193,7 +193,7 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
 
     assert_equal "allow", result[:behavior]
     # Falls back to original input when updatedInput not provided (Python SDK parity)
-    assert_equal({ "file_path" => "/tmp" }, result[:updatedInput])
+    assert_equal({ file_path: "/tmp" }, result[:updatedInput])
   end
 
   test "handle can use tool with PermissionResultAllow with updated_input" do

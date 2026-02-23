@@ -95,8 +95,8 @@ class TestClaudeAgentContentBlocks < ActiveSupport::TestCase
     assert_nil block.data
   end
 
-  test "image_content_block_with_string_keys" do
-    source = { "type" => "base64", "media_type" => "image/jpeg", "data" => "base64data" }
+  test "image_content_block_with_symbol_keys" do
+    source = { type: "base64", media_type: "image/jpeg", data: "base64data" }
     block = ClaudeAgent::ImageContentBlock.new(source: source)
 
     assert_equal "base64", block.source_type

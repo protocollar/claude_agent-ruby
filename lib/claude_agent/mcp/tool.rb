@@ -10,7 +10,7 @@ module ClaudeAgent
     #     description: "Greet a person",
     #     schema: {name: String}
     #   ) do |args|
-    #     "Hello, #{args['name']}!"
+    #     "Hello, #{args[:name]}!"
     #   end
     #
     # @example Tool with complex schema
@@ -27,9 +27,9 @@ module ClaudeAgent
     #       required: ["operation", "a", "b"]
     #     }
     #   ) do |args|
-    #     case args["operation"]
-    #     when "add" then args["a"] + args["b"]
-    #     when "subtract" then args["a"] - args["b"]
+    #     case args[:operation]
+    #     when "add" then args[:a] + args[:b]
+    #     when "subtract" then args[:a] - args[:b]
     #     end
     #   end
     #

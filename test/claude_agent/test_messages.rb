@@ -158,7 +158,7 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     event = ClaudeAgent::StreamEvent.new(
       uuid: "evt-123",
       session_id: "session-abc",
-      event: { "type" => "content_block_delta", "delta" => { "text" => "Hi" } }
+      event: { type: "content_block_delta", delta: { text: "Hi" } }
     )
     assert_equal "evt-123", event.uuid
     assert_equal "session-abc", event.session_id
@@ -180,11 +180,11 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     assert_equal 50000, msg.pre_tokens
   end
 
-  test "compact_boundary_message_with_string_keys" do
+  test "compact_boundary_message_with_symbol_keys" do
     msg = ClaudeAgent::CompactBoundaryMessage.new(
       uuid: "msg-456",
       session_id: "session-xyz",
-      compact_metadata: { "trigger" => "manual", "pre_tokens" => 25000 }
+      compact_metadata: { trigger: "manual", pre_tokens: 25000 }
     )
 
     assert_equal "manual", msg.trigger
@@ -621,12 +621,12 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
 
   test "rate_limit_event" do
     info = {
-      "status" => "allowed_warning",
-      "resetsAt" => 1700000000,
-      "rateLimitType" => "five_hour",
-      "utilization" => 0.85,
-      "isUsingOverage" => false,
-      "overageStatus" => "available"
+      status: "allowed_warning",
+      resetsAt: 1700000000,
+      rateLimitType: "five_hour",
+      utilization: 0.85,
+      isUsingOverage: false,
+      overageStatus: "available"
     }
     msg = ClaudeAgent::RateLimitEvent.new(
       rate_limit_info: info,

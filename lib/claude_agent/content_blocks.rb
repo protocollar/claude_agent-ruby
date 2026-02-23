@@ -37,6 +37,7 @@ module ClaudeAgent
   #
   # @example
   #   block = ToolUseBlock.new(id: "tool_123", name: "Read", input: {file_path: "/tmp/file"})
+  #   block.input[:file_path] # => "/tmp/file"
   #   block.name # => "Read"
   #
   ToolUseBlock = Data.define(:id, :name, :input) do
@@ -110,11 +111,14 @@ module ClaudeAgent
   #   block = ImageContentBlock.new(
   #     source: { type: "base64", media_type: "image/png", data: "..." }
   #   )
+  #   block.source_type  # => "base64"
+  #   block.media_type   # => "image/png"
   #
   # @example URL image
   #   block = ImageContentBlock.new(
   #     source: { type: "url", url: "https://example.com/image.png" }
   #   )
+  #   block.url  # => "https://example.com/image.png"
   #
   ImageContentBlock = Data.define(:source) do
     def type
@@ -124,25 +128,25 @@ module ClaudeAgent
     # Get the media type if available
     # @return [String, nil]
     def media_type
-      source.is_a?(Hash) ? (source[:media_type] || source["media_type"]) : nil
+      source.is_a?(Hash) ? source[:media_type] : nil
     end
 
     # Get the base64 data if available
     # @return [String, nil]
     def data
-      source.is_a?(Hash) ? (source[:data] || source["data"]) : nil
+      source.is_a?(Hash) ? source[:data] : nil
     end
 
     # Get the URL if this is a URL-sourced image
     # @return [String, nil]
     def url
-      source.is_a?(Hash) ? (source[:url] || source["url"]) : nil
+      source.is_a?(Hash) ? source[:url] : nil
     end
 
     # Get the source type (base64 or url)
     # @return [String, nil]
     def source_type
-      source.is_a?(Hash) ? (source[:type] || source["type"]) : nil
+      source.is_a?(Hash) ? source[:type] : nil
     end
 
     def to_h

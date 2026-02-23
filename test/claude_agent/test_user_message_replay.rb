@@ -176,7 +176,7 @@ class TestClaudeAgentMessageParserReplay < ActiveSupport::TestCase
     msg = @parser.parse(raw)
 
     assert_kind_of ClaudeAgent::UserMessageReplay, msg
-    assert_equal({ "tool_use_id" => "tool-123", "content" => "result" }, msg.tool_use_result)
+    assert_equal({ tool_use_id: "tool-123", content: "result" }, msg.tool_use_result)
   end
 
   test "parses_user_message_replay_with_snake_case_tool_use_result" do
@@ -189,7 +189,7 @@ class TestClaudeAgentMessageParserReplay < ActiveSupport::TestCase
 
     msg = @parser.parse(raw)
 
-    assert_equal({ "tool_use_id" => "tool-456", "content" => "output" }, msg.tool_use_result)
+    assert_equal({ tool_use_id: "tool-456", content: "output" }, msg.tool_use_result)
   end
 
   test "parses_user_message_replay_with_session_id" do

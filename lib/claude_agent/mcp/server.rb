@@ -15,7 +15,7 @@ module ClaudeAgent
     #     name: "add",
     #     description: "Add two numbers",
     #     schema: {a: Float, b: Float}
-    #   ) { |args| args["a"] + args["b"] }
+    #   ) { |args| args[:a] + args[:b] }
     #
     #   server = ClaudeAgent::MCP::Server.new(
     #     name: "calculator",
@@ -113,7 +113,7 @@ module ClaudeAgent
 
       def handle_tools_call(params)
         tool_name = params["name"]
-        arguments = params["arguments"] || {}
+        arguments = (params["arguments"] || {}).deep_symbolize_keys
 
         tool = @tools[tool_name]
         unless tool
@@ -156,7 +156,7 @@ module ClaudeAgent
     #
     # @example
     #   tool = ClaudeAgent::MCP.tool("greet", "Greet someone", {name: String}) do |args|
-    #     "Hello, #{args['name']}!"
+    #     "Hello, #{args[:name]}!"
     #   end
     #
     def self.tool(name, description, schema = {}, annotations: nil, &handler)

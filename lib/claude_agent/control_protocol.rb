@@ -611,7 +611,7 @@ module ClaudeAgent
       end
 
       tool_name = request["tool_name"]
-      input = request["input"] || {}
+      input = (request["input"] || {}).deep_symbolize_keys
       context = {
         permission_suggestions: request["permission_suggestions"],
         blocked_path: request["blocked_path"],
@@ -638,7 +638,7 @@ module ClaudeAgent
     # @return [Hash] Response
     def handle_hook_callback(request)
       callback_id = request["callback_id"]
-      input = request["input"] || {}
+      input = (request["input"] || {}).deep_symbolize_keys
       tool_use_id = request["tool_use_id"]
 
       callback = @hook_callbacks[callback_id]
