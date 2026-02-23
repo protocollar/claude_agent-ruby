@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `ToolUseBlock#file_path` — returns the file path for file-based tools (`Read`, `Write`, `Edit`, `NotebookEdit`), nil otherwise
+- `ToolUseBlock#display_label` — one-line human-readable label (e.g. `"Read lib/foo.rb"`, `"Bash: git status"`, `"WebFetch: example.com"`)
+- `ToolUseBlock#summary(max:)` — detailed summary with truncation (e.g. `"Write: /path.rb (3 lines)"`, `"Grep: pattern in /path (*.rb)"`)
+- `ServerToolUseBlock#file_path`, `#display_label`, `#summary(max:)` — same interface with server context (e.g. `"server_name/tool_name"`)
+
 ### Changed
 - All parsed message hashes now use snake_case symbol keys throughout (e.g. `msg.usage[:input_tokens]`, `event.files.first[:filename]`, `event.event[:type]`)
 - `MessageParser#parse` applies a single `deep_transform_keys` pass that normalizes camelCase→snake_case and string→symbol for the entire hash tree

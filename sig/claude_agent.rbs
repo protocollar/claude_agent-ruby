@@ -398,6 +398,9 @@ module ClaudeAgent
     def initialize: (id: String, name: String, input: Hash[String, untyped]) -> void
     def type: () -> :tool_use
     def to_h: () -> Hash[Symbol, untyped]
+    def file_path: () -> String?
+    def display_label: () -> String
+    def summary: (?max: Integer) -> String
   end
 
   class ToolResultBlock
@@ -419,6 +422,9 @@ module ClaudeAgent
     def initialize: (id: String, name: String, input: Hash[String, untyped], server_name: String) -> void
     def type: () -> :server_tool_use
     def to_h: () -> Hash[Symbol, untyped]
+    def file_path: () -> String?
+    def display_label: () -> String
+    def summary: (?max: Integer) -> String
   end
 
   class ServerToolResultBlock
