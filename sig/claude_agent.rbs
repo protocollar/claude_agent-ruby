@@ -30,6 +30,18 @@ module ClaudeAgent
     ?transport: Transport::Base?
   ) -> Enumerator[message, void]
 
+  # One-shot query returning a TurnResult
+  def self.query_turn: (
+    prompt: String,
+    ?options: Options?,
+    ?transport: Transport::Base?
+  ) -> TurnResult
+                     | (
+    prompt: String,
+    ?options: Options?,
+    ?transport: Transport::Base?
+  ) { (message) -> void } -> TurnResult
+
   # Error classes
   class Error < StandardError
   end
@@ -989,11 +1001,75 @@ module ClaudeAgent
     def initialize: (?permission_suggestions: untyped, ?blocked_path: String?, ?decision_reason: String?, ?tool_use_id: String?, ?agent_id: String?, ?signal: AbortSignal?, ?description: String?) -> void
   end
 
+  # Cumulative usage tracking across conversation turns
+  class CumulativeUsage
+    attr_reader input_tokens: Integer
+    attr_reader output_tokens: Integer
+    attr_reader cache_read_input_tokens: Integer
+    attr_reader cache_creation_input_tokens: Integer
+    attr_reader total_cost_usd: Float
+    attr_reader num_turns: Integer
+    attr_reader duration_ms: Integer
+    attr_reader duration_api_ms: Integer
+
+    def initialize: () -> void
+    def track: (untyped message) -> void
+    def reset!: () -> void
+    def to_h: () -> Hash[Symbol, Integer | Float]
+  end
+
+  # Represents a complete agent turn
+  class TurnResult
+    attr_reader messages: Array[message]
+
+    def initialize: () -> void
+    def <<: (message) -> self
+    def result: () -> ResultMessage?
+    def complete?: () -> bool
+
+    # Text & thinking
+    def text: () -> String
+    def thinking: () -> String
+
+    # Tool use
+    def tool_uses: () -> Array[ToolUseBlock | ServerToolUseBlock]
+    def tool_results: () -> Array[ToolResultBlock | ServerToolResultBlock]
+    def tool_executions: () -> Array[Hash[Symbol, ToolUseBlock | ServerToolUseBlock | ToolResultBlock | ServerToolResultBlock | nil]]
+
+    # Result accessors
+    def usage: () -> Hash[Symbol, Integer]?
+    def cost: () -> Float?
+    def duration_ms: () -> Integer?
+    def duration_api_ms: () -> Integer?
+    def session_id: () -> String?
+    def num_turns: () -> Integer?
+    def stop_reason: () -> String?
+    def model: () -> String?
+    def model_usage: () -> Hash[String, untyped]?
+    def structured_output: () -> untyped
+    def permission_denials: () -> Array[SDKPermissionDenial]
+    def errors: () -> Array[String]
+
+    # Status
+    def success?: () -> bool
+    def error?: () -> bool
+    def subtype: () -> String?
+
+    # Filtered message access
+    def assistant_messages: () -> Array[AssistantMessage]
+    def user_messages: () -> Array[UserMessage | UserMessageReplay]
+    def stream_events: () -> Array[StreamEvent]
+    def content_blocks: () -> Array[content_block]
+
+    def inspect: () -> String
+  end
+
   # Client
   class Client
     attr_reader options: Options
     attr_reader transport: Transport::Base
     attr_reader server_info: Hash[String, untyped]?
+    attr_reader cumulative_usage: CumulativeUsage
 
     def self.open: (?options: Options?, ?transport: Transport::Base?, ?prompt: String?) { (Client) -> void } -> void
 
@@ -1007,6 +1083,10 @@ module ClaudeAgent
                         | () -> Enumerator[message, void]
     def receive_response: () { (message) -> void } -> void
                         | () -> Enumerator[message, void]
+    def receive_turn: () -> TurnResult
+                    | () { (message) -> void } -> TurnResult
+    def send_and_receive: (String | Array[content_block] content, ?session_id: String, ?uuid: String?) -> TurnResult
+                        | (String | Array[content_block] content, ?session_id: String, ?uuid: String?) { (message) -> void } -> TurnResult
     def stream_input: (Enumerable[String | Hash[String, untyped] | UserMessage] stream, ?session_id: String) -> void
                     | (Enumerable[String | Hash[String, untyped] | UserMessage] stream, ?session_id: String) { (message) -> void } -> void
     def interrupt: () -> void

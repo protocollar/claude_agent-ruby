@@ -129,6 +129,164 @@ class TestClaudeAgentClient < ActiveSupport::TestCase
     end
   end
 
+  # --- Turn Result ---
+
+  test "receive_turn returns TurnResult" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    transport.add_response({
+      "type" => "assistant",
+      "message" => { "role" => "assistant", "content" => [ { "type" => "text", "text" => "Hello!" } ], "model" => "claude" }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 1000,
+      "duration_api_ms" => 800,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc",
+      "total_cost_usd" => 0.01,
+      "usage" => { "input_tokens" => 100, "output_tokens" => 50 }
+    })
+
+    turn = client.receive_turn
+
+    assert_instance_of ClaudeAgent::TurnResult, turn
+    assert turn.complete?
+    assert turn.success?
+    assert_equal "Hello!", turn.text
+    assert_equal 0.01, turn.cost
+    assert_equal 100, turn.usage[:input_tokens]
+  end
+
+  test "receive_turn yields messages" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    transport.add_response({
+      "type" => "assistant",
+      "message" => { "role" => "assistant", "content" => [ { "type" => "text", "text" => "Hi" } ], "model" => "claude" }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 500,
+      "duration_api_ms" => 400,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc"
+    })
+
+    yielded = []
+    turn = client.receive_turn { |msg| yielded << msg }
+
+    assert_equal 2, yielded.size
+    assert_instance_of ClaudeAgent::AssistantMessage, yielded[0]
+    assert_instance_of ClaudeAgent::ResultMessage, yielded[1]
+    assert_equal "Hi", turn.text
+  end
+
+  test "receive_turn tracks cumulative_usage" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 500,
+      "duration_api_ms" => 400,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc",
+      "total_cost_usd" => 0.02,
+      "usage" => { "input_tokens" => 200, "output_tokens" => 100 }
+    })
+
+    client.receive_turn
+
+    assert_equal 200, client.cumulative_usage.input_tokens
+    assert_equal 100, client.cumulative_usage.output_tokens
+  end
+
+  test "send_and_receive returns TurnResult" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    transport.add_response({
+      "type" => "assistant",
+      "message" => { "role" => "assistant", "content" => [ { "type" => "text", "text" => "Done!" } ], "model" => "claude" }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 1000,
+      "duration_api_ms" => 800,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc",
+      "total_cost_usd" => 0.03
+    })
+
+    turn = client.send_and_receive("Fix the bug")
+
+    assert_instance_of ClaudeAgent::TurnResult, turn
+    assert_equal "Done!", turn.text
+    assert_equal 0.03, turn.cost
+
+    # Verify message was sent
+    user_messages = transport.written_messages.select { |m| m["type"] == "user" }
+    assert_equal 1, user_messages.size
+    assert_equal "Fix the bug", user_messages.first["message"]["content"]
+  end
+
+  test "send_and_receive yields messages" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    transport.add_response({
+      "type" => "assistant",
+      "message" => { "role" => "assistant", "content" => [ { "type" => "text", "text" => "Hi" } ], "model" => "claude" }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 500,
+      "duration_api_ms" => 400,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc"
+    })
+
+    yielded = []
+    turn = client.send_and_receive("Hello") { |msg| yielded << msg }
+
+    assert_equal 2, yielded.size
+    assert_equal "Hi", turn.text
+  end
+
+  test "send_and_receive when not connected raises" do
+    client = ClaudeAgent::Client.new
+
+    assert_raises(ClaudeAgent::CLIConnectionError) do
+      client.send_and_receive("Hello")
+    end
+  end
+
+  test "receive_turn when not connected raises" do
+    client = ClaudeAgent::Client.new
+
+    assert_raises(ClaudeAgent::CLIConnectionError) do
+      client.receive_turn
+    end
+  end
+
   # --- Cumulative Usage ---
 
   test "client has cumulative_usage" do
