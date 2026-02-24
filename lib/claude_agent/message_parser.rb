@@ -65,8 +65,8 @@ module ClaudeAgent
       when "prompt_suggestion"
         parse_prompt_suggestion_message(raw)
       else
-        logger.error("parser") { "Unknown message type: #{type}" }
-        raise MessageParseError.new("Unknown message type: #{type}", raw_message: raw)
+        logger.warn("parser") { "Unknown message type: #{type}, wrapping in GenericMessage" }
+        GenericMessage.new(message_type: type.to_s, raw: raw)
       end
     end
 
@@ -231,8 +231,7 @@ module ClaudeAgent
           source: block[:source] || {}
         )
       else
-        # Return raw hash for unknown block types
-        block
+        GenericBlock.new(block_type: type.to_s, raw: block)
       end
     end
 

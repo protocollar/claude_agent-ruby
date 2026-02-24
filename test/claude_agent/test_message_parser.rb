@@ -240,13 +240,39 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal "content_block_delta", msg.event_type
   end
 
-  test "parse_unknown_type_raises_error" do
-    raw = { "type" => "unknown_type" }
+  test "parse_unknown_type_returns_generic_message" do
+    raw = { "type" => "fancy_new", "data" => "hello", "extra" => 42 }
+    msg = @parser.parse(raw)
 
-    error = assert_raises(ClaudeAgent::MessageParseError) do
-      @parser.parse(raw)
-    end
-    assert_match(/Unknown message type/, error.message)
+    assert_instance_of ClaudeAgent::GenericMessage, msg
+    assert_equal :fancy_new, msg.type
+    assert_equal "fancy_new", msg.message_type
+    assert_equal "hello", msg[:data]
+    assert_equal "hello", msg.data
+    assert_equal 42, msg[:extra]
+    assert_equal msg.raw, msg.to_h
+  end
+
+  test "parse_unknown_content_block_returns_generic_block" do
+    raw = {
+      "type" => "assistant",
+      "message" => {
+        "model" => "claude",
+        "content" => [
+          { "type" => "citation", "text" => "ref", "url" => "https://example.com" }
+        ]
+      }
+    }
+    msg = @parser.parse(raw)
+
+    block = msg.content.first
+    assert_instance_of ClaudeAgent::GenericBlock, block
+    assert_equal :citation, block.type
+    assert_equal "citation", block.block_type
+    assert_equal "ref", block[:text]
+    assert_equal "ref", block.text
+    assert_equal "https://example.com", block[:url]
+    assert_equal block.raw, block.to_h
   end
 
   test "parse_server_tool_use_block" do
