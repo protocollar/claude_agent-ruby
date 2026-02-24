@@ -128,4 +128,65 @@ class TestClaudeAgentClient < ActiveSupport::TestCase
       assert_equal "Hello!", user_messages.first["message"]["content"]
     end
   end
+
+  # --- Cumulative Usage ---
+
+  test "client has cumulative_usage" do
+    client = ClaudeAgent::Client.new
+    assert_instance_of ClaudeAgent::CumulativeUsage, client.cumulative_usage
+    assert_equal 0, client.cumulative_usage.input_tokens
+  end
+
+  test "cumulative_usage tracks across receive_response with block" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    transport.add_response({
+      "type" => "assistant",
+      "message" => { "role" => "assistant", "content" => [ { "type" => "text", "text" => "Hi" } ], "model" => "claude" }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 1000,
+      "duration_api_ms" => 800,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc",
+      "total_cost_usd" => 0.01,
+      "usage" => { "input_tokens" => 100, "output_tokens" => 50 }
+    })
+
+    client.receive_response { |_| }
+
+    assert_equal 100, client.cumulative_usage.input_tokens
+    assert_equal 50, client.cumulative_usage.output_tokens
+    assert_equal 0.01, client.cumulative_usage.total_cost_usd
+    assert_equal 1, client.cumulative_usage.num_turns
+  end
+
+  test "cumulative_usage tracks via enumerator" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 500,
+      "duration_api_ms" => 400,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc",
+      "total_cost_usd" => 0.02,
+      "usage" => { "input_tokens" => 200, "output_tokens" => 100 }
+    })
+
+    client.receive_response.each { |_| }
+
+    assert_equal 200, client.cumulative_usage.input_tokens
+    assert_equal 100, client.cumulative_usage.output_tokens
+    assert_equal 0.02, client.cumulative_usage.total_cost_usd
+  end
 end

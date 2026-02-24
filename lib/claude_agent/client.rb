@@ -32,7 +32,7 @@ module ClaudeAgent
   #   end
   #
   class Client
-    attr_reader :options, :transport, :server_info
+    attr_reader :options, :transport, :server_info, :cumulative_usage
 
     # Open a client with automatic cleanup
     #
@@ -61,6 +61,7 @@ module ClaudeAgent
       @protocol = nil
       @server_info = nil
       @connected = false
+      @cumulative_usage = CumulativeUsage.new
     end
 
     # Connect to the CLI
@@ -119,20 +120,34 @@ module ClaudeAgent
     #
     # @yield [Message] Received messages
     # @return [Enumerator<Message>] If no block given
-    def receive_messages(&block)
+    def receive_messages
       require_connection!
 
-      @protocol.each_message(&block)
+      if block_given?
+        @protocol.each_message do |message|
+          @cumulative_usage.track(message)
+          yield message
+        end
+      else
+        enum_for(:receive_messages)
+      end
     end
 
     # Receive messages until a ResultMessage is received
     #
     # @yield [Message] Received messages
     # @return [Enumerator<Message>] If no block given
-    def receive_response(&block)
+    def receive_response
       require_connection!
 
-      @protocol.receive_response(&block)
+      if block_given?
+        @protocol.receive_response do |message|
+          @cumulative_usage.track(message)
+          yield message
+        end
+      else
+        enum_for(:receive_response)
+      end
     end
 
     # Stream user input from an enumerable (TypeScript SDK parity)
@@ -161,11 +176,14 @@ module ClaudeAgent
     #     end
     #   end
     #
-    def stream_input(stream, session_id: "default", &block)
+    def stream_input(stream, session_id: "default")
       require_connection!
 
       if block_given?
-        @protocol.stream_conversation(stream, session_id: session_id, &block)
+        @protocol.stream_conversation(stream, session_id: session_id) do |message|
+          @cumulative_usage.track(message)
+          yield message
+        end
       else
         @protocol.stream_input(stream, session_id: session_id)
       end
