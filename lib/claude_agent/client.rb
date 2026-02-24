@@ -150,6 +150,49 @@ module ClaudeAgent
       end
     end
 
+    # Receive messages until a ResultMessage, accumulating into a TurnResult
+    #
+    # @yield [Message] Each message as it arrives (optional)
+    # @return [TurnResult] The completed turn
+    def receive_turn
+      require_connection!
+
+      turn = TurnResult.new
+      receive_response do |message|
+        turn << message
+        yield message if block_given?
+      end
+      turn
+    end
+
+    # Send a message and receive the complete turn result
+    #
+    # Combines {#send_message} and {#receive_turn} into a single call.
+    #
+    # @param content [String, Array] Message content
+    # @param session_id [String] Session ID
+    # @param uuid [String, nil] Message UUID for file checkpointing
+    # @yield [Message] Each message as it arrives (optional)
+    # @return [TurnResult] The completed turn
+    #
+    # @example Simple
+    #   turn = client.send_and_receive("Fix the bug")
+    #   puts turn.text
+    #   puts "Cost: $#{turn.cost}"
+    #
+    # @example With streaming
+    #   turn = client.send_and_receive("Fix the bug") do |msg|
+    #     case msg
+    #     when ClaudeAgent::AssistantMessage
+    #       print msg.text
+    #     end
+    #   end
+    #
+    def send_and_receive(content, session_id: "default", uuid: nil, &block)
+      send_message(content, session_id: session_id, uuid: uuid)
+      receive_turn(&block)
+    end
+
     # Stream user input from an enumerable (TypeScript SDK parity)
     #
     # Sends each message from the input stream to Claude. When a block is given,

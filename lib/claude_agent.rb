@@ -22,6 +22,7 @@ require_relative "claude_agent/transport/subprocess"
 require_relative "claude_agent/mcp/tool"
 require_relative "claude_agent/mcp/server"
 require_relative "claude_agent/cumulative_usage"
+require_relative "claude_agent/turn_result"
 require_relative "claude_agent/query"
 require_relative "claude_agent/client"
 require_relative "claude_agent/session"            # V2 Session API (unstable)

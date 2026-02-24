@@ -118,6 +118,36 @@ module ClaudeAgent
       end
     end
 
+    # One-shot query that returns a TurnResult
+    #
+    # Like {query}, but accumulates all messages into a {TurnResult}
+    # for convenient access to text, tool use, usage, and more.
+    #
+    # @param prompt [String] The prompt to send to Claude
+    # @param options [Options, nil] Configuration options
+    # @param transport [Transport::Base, nil] Custom transport
+    # @yield [Message] Each message as it arrives (optional)
+    # @return [TurnResult] The completed turn
+    #
+    # @example Simple
+    #   turn = ClaudeAgent.query_turn(prompt: "What is 2+2?")
+    #   puts turn.text
+    #   puts "Cost: $#{turn.cost}"
+    #
+    # @example With streaming
+    #   turn = ClaudeAgent.query_turn(prompt: "Explain Ruby") do |msg|
+    #     print msg.text if msg.is_a?(ClaudeAgent::AssistantMessage)
+    #   end
+    #
+    def query_turn(prompt:, options: nil, transport: nil)
+      turn = TurnResult.new
+      query(prompt: prompt, options: options, transport: transport).each do |message|
+        turn << message
+        yield message if block_given?
+      end
+      turn
+    end
+
     private
 
     # Convert an Options object to a hash for merging

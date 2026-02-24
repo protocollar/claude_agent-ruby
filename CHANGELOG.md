@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `TurnResult` — represents a complete agent turn, accumulating all messages between sending a prompt and receiving the `ResultMessage`
+- `TurnResult#text`, `#thinking` — concatenated text/thinking across all assistant messages
+- `TurnResult#tool_uses`, `#tool_results`, `#tool_executions` — tool use blocks, result blocks, and matched use/result pairs
+- `TurnResult#usage`, `#cost`, `#duration_ms`, `#session_id`, `#model`, `#success?`, `#error?` — convenient accessors from the result
+- `Client#send_and_receive(content)` — send a message and receive the complete `TurnResult` in one call
+- `Client#receive_turn` — like `receive_response` but returns a `TurnResult` instead of yielding raw messages
+- `ClaudeAgent.query_turn(prompt:)` — one-shot query returning a `TurnResult`
 - `TaskProgressMessage` for real-time background task (subagent) progress reporting (TypeScript SDK v0.2.51 parity)
 - `mcp_authenticate` control request on `ControlProtocol` and `Client` for MCP server OAuth authentication (TypeScript SDK v0.2.52 parity)
 - `mcp_clear_auth` control request on `ControlProtocol` and `Client` for clearing MCP server credentials (TypeScript SDK v0.2.52 parity)
