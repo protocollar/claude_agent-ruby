@@ -450,12 +450,32 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  type content_block = TextBlock | ThinkingBlock | ToolUseBlock | ToolResultBlock | ServerToolUseBlock | ServerToolResultBlock | ImageContentBlock
+  class GenericBlock
+    attr_reader block_type: String?
+    attr_reader raw: Hash[Symbol, untyped]
+
+    def initialize: (block_type: String?, raw: Hash[Symbol, untyped]) -> void
+    def type: () -> Symbol
+    def to_h: () -> Hash[Symbol, untyped]
+    def []: (Symbol key) -> untyped
+  end
+
+  type content_block = TextBlock | ThinkingBlock | ToolUseBlock | ToolResultBlock | ServerToolUseBlock | ServerToolResultBlock | ImageContentBlock | GenericBlock
 
   CONTENT_BLOCK_TYPES: Array[Class]
 
+  class GenericMessage
+    attr_reader message_type: String?
+    attr_reader raw: Hash[Symbol, untyped]
+
+    def initialize: (message_type: String?, raw: Hash[Symbol, untyped]) -> void
+    def type: () -> Symbol
+    def to_h: () -> Hash[Symbol, untyped]
+    def []: (Symbol key) -> untyped
+  end
+
   # Message types
-  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent | TaskStartedMessage | RateLimitEvent | PromptSuggestionMessage
+  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent | TaskStartedMessage | RateLimitEvent | PromptSuggestionMessage | GenericMessage
 
   MESSAGE_TYPES: Array[Class]
 
