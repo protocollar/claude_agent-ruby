@@ -32,7 +32,7 @@ module ClaudeAgent
   #   end
   #
   class Client
-    attr_reader :options, :transport, :server_info, :cumulative_usage
+    attr_reader :options, :transport, :server_info, :cumulative_usage, :event_handler
 
     # Open a client with automatic cleanup
     #
@@ -62,6 +62,7 @@ module ClaudeAgent
       @server_info = nil
       @connected = false
       @cumulative_usage = CumulativeUsage.new
+      @event_handler = EventHandler.new
     end
 
     # Connect to the CLI
@@ -150,7 +151,61 @@ module ClaudeAgent
       end
     end
 
+    # Register an event handler
+    #
+    # Handlers persist across turns and fire automatically during
+    # {#receive_turn} and {#send_and_receive}.
+    #
+    # @param event [Symbol] Event name (:message, :text, :thinking, :tool_use, :tool_result, :result)
+    # @yield Event-specific arguments
+    # @return [self]
+    #
+    # @example
+    #   client.on(:text) { |text| print text }
+    #   client.on(:tool_use) { |tool| show_spinner(tool) }
+    #
+    def on(event, &block)
+      @event_handler.on(event, &block)
+      self
+    end
+
+    # @!method on_text(&block)
+    #   Register a handler for assistant text content
+    #   @yield [String] Text from the AssistantMessage
+    #   @return [self]
+
+    # @!method on_thinking(&block)
+    #   Register a handler for assistant thinking content
+    #   @yield [String] Thinking from the AssistantMessage
+    #   @return [self]
+
+    # @!method on_tool_use(&block)
+    #   Register a handler for tool use requests
+    #   @yield [ToolUseBlock, ServerToolUseBlock] The tool use block
+    #   @return [self]
+
+    # @!method on_tool_result(&block)
+    #   Register a handler for tool results, paired with the original request
+    #   @yield [ToolResultBlock, ToolUseBlock|nil] Result block and matched tool use
+    #   @return [self]
+
+    # @!method on_result(&block)
+    #   Register a handler for the final ResultMessage
+    #   @yield [ResultMessage] The result
+    #   @return [self]
+
+    # @!method on_message(&block)
+    #   Register a handler for every message (catch-all)
+    #   @yield [message] Any message object
+    #   @return [self]
+
+    %i[message text thinking tool_use tool_result result].each do |event|
+      define_method(:"on_#{event}") { |&block| on(event, &block) }
+    end
+
     # Receive messages until a ResultMessage, accumulating into a TurnResult
+    #
+    # Dispatches events to registered handlers (see {#on}).
     #
     # @yield [Message] Each message as it arrives (optional)
     # @return [TurnResult] The completed turn
@@ -160,8 +215,10 @@ module ClaudeAgent
       turn = TurnResult.new
       receive_response do |message|
         turn << message
+        @event_handler.handle(message)
         yield message if block_given?
       end
+      @event_handler.reset!
       turn
     end
 

@@ -129,6 +129,212 @@ class TestClaudeAgentClient < ActiveSupport::TestCase
     end
   end
 
+  # --- Event Handler ---
+
+  test "client has event_handler" do
+    client = ClaudeAgent::Client.new
+    assert_instance_of ClaudeAgent::EventHandler, client.event_handler
+  end
+
+  test "on returns self for chaining" do
+    client = ClaudeAgent::Client.new
+    result = client.on(:text) { |_| }
+    assert_equal client, result
+  end
+
+  test "on_text convenience method" do
+    client = ClaudeAgent::Client.new
+    result = client.on_text { |_| }
+    assert_equal client, result
+  end
+
+  test "events fire during receive_turn" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    texts = []
+    tools = []
+    results = []
+    client.on_text { |text| texts << text }
+    client.on_tool_use { |tool| tools << tool }
+    client.on_result { |r| results << r }
+
+    transport.add_response({
+      "type" => "assistant",
+      "message" => {
+        "role" => "assistant",
+        "content" => [
+          { "type" => "text", "text" => "Let me read that." },
+          { "type" => "tool_use", "id" => "t1", "name" => "Read", "input" => { "file_path" => "/tmp/file" } }
+        ],
+        "model" => "claude"
+      }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 1000,
+      "duration_api_ms" => 800,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc",
+      "total_cost_usd" => 0.01
+    })
+
+    turn = client.receive_turn
+
+    assert_equal [ "Let me read that." ], texts
+    assert_equal 1, tools.size
+    assert_equal "Read", tools[0].name
+    assert_equal 1, results.size
+    assert_equal 0.01, results[0].total_cost_usd
+    assert_equal "Let me read that.", turn.text
+  end
+
+  test "events fire during send_and_receive" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    texts = []
+    client.on_text { |text| texts << text }
+
+    transport.add_response({
+      "type" => "assistant",
+      "message" => { "role" => "assistant", "content" => [ { "type" => "text", "text" => "Done!" } ], "model" => "claude" }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 500,
+      "duration_api_ms" => 400,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc"
+    })
+
+    client.send_and_receive("Fix the bug")
+
+    assert_equal [ "Done!" ], texts
+  end
+
+  test "events fire alongside block in receive_turn" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    event_texts = []
+    block_messages = []
+    client.on_text { |text| event_texts << text }
+
+    transport.add_response({
+      "type" => "assistant",
+      "message" => { "role" => "assistant", "content" => [ { "type" => "text", "text" => "Hi" } ], "model" => "claude" }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 500,
+      "duration_api_ms" => 400,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc"
+    })
+
+    client.receive_turn { |msg| block_messages << msg }
+
+    assert_equal [ "Hi" ], event_texts
+    assert_equal 2, block_messages.size
+  end
+
+  test "events persist across turns" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    texts = []
+    client.on_text { |text| texts << text }
+
+    # Turn 1
+    transport.add_response({
+      "type" => "assistant",
+      "message" => { "role" => "assistant", "content" => [ { "type" => "text", "text" => "Turn 1" } ], "model" => "claude" }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 500,
+      "duration_api_ms" => 400,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc"
+    })
+    client.receive_turn
+
+    # Turn 2
+    transport.add_response({
+      "type" => "assistant",
+      "message" => { "role" => "assistant", "content" => [ { "type" => "text", "text" => "Turn 2" } ], "model" => "claude" }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 500,
+      "duration_api_ms" => 400,
+      "is_error" => false,
+      "num_turns" => 2,
+      "session_id" => "session-abc"
+    })
+    client.receive_turn
+
+    assert_equal [ "Turn 1", "Turn 2" ], texts
+  end
+
+  test "tool_result event pairs across messages" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    tool_results = []
+    client.on_tool_result { |result, tool_use| tool_results << { result: result, tool_use: tool_use } }
+
+    transport.add_response({
+      "type" => "assistant",
+      "message" => {
+        "role" => "assistant",
+        "content" => [
+          { "type" => "tool_use", "id" => "t1", "name" => "Read", "input" => { "file_path" => "/tmp/file" } }
+        ],
+        "model" => "claude"
+      }
+    })
+    transport.add_response({
+      "type" => "user",
+      "message" => {
+        "role" => "user",
+        "content" => [
+          { "type" => "tool_result", "tool_use_id" => "t1", "content" => "file data" }
+        ]
+      }
+    })
+    transport.add_response({
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 500,
+      "duration_api_ms" => 400,
+      "is_error" => false,
+      "num_turns" => 1,
+      "session_id" => "session-abc"
+    })
+
+    client.receive_turn
+
+    assert_equal 1, tool_results.size
+    assert_equal "file data", tool_results[0][:result].content
+    assert_equal "Read", tool_results[0][:tool_use].name
+  end
+
   # --- Turn Result ---
 
   test "receive_turn returns TurnResult" do

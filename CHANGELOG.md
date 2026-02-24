@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Client#send_and_receive(content)` — send a message and receive the complete `TurnResult` in one call
 - `Client#receive_turn` — like `receive_response` but returns a `TurnResult` instead of yielding raw messages
 - `ClaudeAgent.query_turn(prompt:)` — one-shot query returning a `TurnResult`
+- `EventHandler` — register typed event callbacks (`:text`, `:thinking`, `:tool_use`, `:tool_result`, `:result`, `:message`) instead of writing `case` statements over raw messages
+- `Client#on(event, &block)` and `#on_text`, `#on_tool_use`, `#on_tool_result`, `#on_result`, etc. — register persistent event handlers that fire during `receive_turn` and `send_and_receive`
+- `ClaudeAgent.query_turn` now accepts `events:` parameter for standalone `EventHandler` use
 - `TaskProgressMessage` for real-time background task (subagent) progress reporting (TypeScript SDK v0.2.51 parity)
 - `mcp_authenticate` control request on `ControlProtocol` and `Client` for MCP server OAuth authentication (TypeScript SDK v0.2.52 parity)
 - `mcp_clear_auth` control request on `ControlProtocol` and `Client` for clearing MCP server credentials (TypeScript SDK v0.2.52 parity)

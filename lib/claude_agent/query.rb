@@ -126,6 +126,7 @@ module ClaudeAgent
     # @param prompt [String] The prompt to send to Claude
     # @param options [Options, nil] Configuration options
     # @param transport [Transport::Base, nil] Custom transport
+    # @param events [EventHandler, nil] Event handler for dispatching events
     # @yield [Message] Each message as it arrives (optional)
     # @return [TurnResult] The completed turn
     #
@@ -134,17 +135,20 @@ module ClaudeAgent
     #   puts turn.text
     #   puts "Cost: $#{turn.cost}"
     #
-    # @example With streaming
-    #   turn = ClaudeAgent.query_turn(prompt: "Explain Ruby") do |msg|
-    #     print msg.text if msg.is_a?(ClaudeAgent::AssistantMessage)
-    #   end
+    # @example With events
+    #   events = ClaudeAgent::EventHandler.new
+    #     .on_text { |text| print text }
+    #     .on_result { |r| puts "\nCost: $#{r.total_cost_usd}" }
+    #   turn = ClaudeAgent.query_turn(prompt: "Explain Ruby", events: events)
     #
-    def query_turn(prompt:, options: nil, transport: nil)
+    def query_turn(prompt:, options: nil, transport: nil, events: nil)
       turn = TurnResult.new
       query(prompt: prompt, options: options, transport: transport).each do |message|
         turn << message
+        events&.handle(message)
         yield message if block_given?
       end
+      events&.reset!
       turn
     end
 

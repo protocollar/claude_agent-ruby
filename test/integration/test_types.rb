@@ -167,7 +167,7 @@ class TestIntegrationTypes < IntegrationTestCase
     msg2 = ClaudeAgent::CompactBoundaryMessage.new(
       uuid: "msg-456",
       session_id: "sess-xyz",
-      compact_metadata: { "trigger" => "manual", "pre_tokens" => 25000 }
+      compact_metadata: { trigger: "manual", pre_tokens: 25000 }
     )
 
     assert_equal "manual", msg2.trigger
