@@ -475,7 +475,7 @@ module ClaudeAgent
   end
 
   # Message types
-  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent | TaskStartedMessage | RateLimitEvent | PromptSuggestionMessage | GenericMessage
+  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent | TaskStartedMessage | TaskProgressMessage | RateLimitEvent | PromptSuggestionMessage | GenericMessage
 
   MESSAGE_TYPES: Array[Class]
 
@@ -723,6 +723,20 @@ module ClaudeAgent
 
     def initialize: (uuid: String, session_id: String, task_id: String, ?tool_use_id: String?, ?description: String?, ?task_type: String?) -> void
     def type: () -> :task_started
+  end
+
+  # Task progress message (TypeScript SDK v0.2.51 parity)
+  class TaskProgressMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader task_id: String
+    attr_reader tool_use_id: String?
+    attr_reader description: String
+    attr_reader usage: Hash[String, untyped]?
+    attr_reader last_tool_name: String?
+
+    def initialize: (uuid: String, session_id: String, task_id: String, description: String, ?usage: Hash[String, untyped]?, ?tool_use_id: String?, ?last_tool_name: String?) -> void
+    def type: () -> :task_progress
   end
 
   # Rate limit event (TypeScript SDK v0.2.45 parity)
@@ -1004,6 +1018,8 @@ module ClaudeAgent
     def set_mcp_servers: (Hash[String, untyped] servers) -> McpSetServersResult
     def mcp_reconnect: (String server_name) -> Hash[String, untyped]
     def mcp_toggle: (String server_name, enabled: bool) -> Hash[String, untyped]
+    def mcp_authenticate: (String server_name) -> Hash[String, untyped]
+    def mcp_clear_auth: (String server_name) -> Hash[String, untyped]
     def stop_task: (String task_id) -> Hash[String, untyped]
     def apply_flag_settings: (Hash[String, untyped] settings) -> Hash[String, untyped]
     def supported_commands: () -> Array[SlashCommand]
@@ -1042,6 +1058,8 @@ module ClaudeAgent
     def set_mcp_servers: (Hash[String, untyped] servers) -> McpSetServersResult
     def mcp_reconnect: (String server_name) -> Hash[String, untyped]
     def mcp_toggle: (String server_name, enabled: bool) -> Hash[String, untyped]
+    def mcp_authenticate: (String server_name) -> Hash[String, untyped]
+    def mcp_clear_auth: (String server_name) -> Hash[String, untyped]
     def stop_task: (String task_id) -> Hash[String, untyped]
     def apply_flag_settings: (Hash[String, untyped] settings) -> Hash[String, untyped]
     def supported_commands: () -> Array[SlashCommand]

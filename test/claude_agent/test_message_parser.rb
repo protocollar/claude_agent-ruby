@@ -961,6 +961,71 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_nil msg.task_type
   end
 
+  # --- TaskProgressMessage parsing ---
+
+  test "parse_task_progress_message" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_progress",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "task_id" => "task-456",
+      "tool_use_id" => "tool-789",
+      "description" => "Searching codebase",
+      "usage" => { "total_tokens" => 5000, "tool_uses" => 3, "duration_ms" => 2500 },
+      "last_tool_name" => "Grep"
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::TaskProgressMessage, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal "task-456", msg.task_id
+    assert_equal "tool-789", msg.tool_use_id
+    assert_equal "Searching codebase", msg.description
+    assert_equal 5000, msg.usage[:total_tokens]
+    assert_equal 3, msg.usage[:tool_uses]
+    assert_equal "Grep", msg.last_tool_name
+    assert_equal :task_progress, msg.type
+  end
+
+  test "parse_task_progress_message_camel_case" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_progress",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "taskId" => "task-789",
+      "toolUseId" => "tool-abc",
+      "description" => "Running tests",
+      "usage" => { "totalTokens" => 10000, "toolUses" => 5, "durationMs" => 5000 },
+      "lastToolName" => "Bash"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "task-789", msg.task_id
+    assert_equal "tool-abc", msg.tool_use_id
+    assert_equal "Running tests", msg.description
+    assert_equal "Bash", msg.last_tool_name
+  end
+
+  test "parse_task_progress_message_defaults" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_progress",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "task_id" => "task-456",
+      "description" => "Working"
+    }
+    msg = @parser.parse(raw)
+
+    assert_nil msg.tool_use_id
+    assert_nil msg.usage
+    assert_nil msg.last_tool_name
+  end
+
   # --- RateLimitEvent parsing ---
 
   test "parse_rate_limit_event" do

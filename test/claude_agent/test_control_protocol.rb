@@ -350,6 +350,36 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     assert_equal({ "model" => "claude-sonnet-4-5-20250514" }, msg["request"]["settings"])
   end
 
+  test "mcp_authenticate sends correct request format" do
+    @transport.connect
+
+    @protocol.send(:write_message, {
+      type: "control_request",
+      request_id: "test-req",
+      request: { subtype: "mcp_authenticate", serverName: "my-remote-server" }
+    })
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" }
+    assert_not_nil msg
+    assert_equal "mcp_authenticate", msg["request"]["subtype"]
+    assert_equal "my-remote-server", msg["request"]["serverName"]
+  end
+
+  test "mcp_clear_auth sends correct request format" do
+    @transport.connect
+
+    @protocol.send(:write_message, {
+      type: "control_request",
+      request_id: "test-req",
+      request: { subtype: "mcp_clear_auth", serverName: "my-remote-server" }
+    })
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" }
+    assert_not_nil msg
+    assert_equal "mcp_clear_auth", msg["request"]["subtype"]
+    assert_equal "my-remote-server", msg["request"]["serverName"]
+  end
+
   test "mcp_toggle sends correct request format" do
     @transport.connect
 

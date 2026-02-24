@@ -47,6 +47,8 @@ module ClaudeAgent
           parse_files_persisted_event(raw)
         when "task_started"
           parse_task_started_message(raw)
+        when "task_progress"
+          parse_task_progress_message(raw)
         else
           parse_system_message(raw)
         end
@@ -340,6 +342,18 @@ module ClaudeAgent
         tool_use_id: raw[:tool_use_id],
         description: raw[:description],
         task_type: raw[:task_type]
+      )
+    end
+
+    def parse_task_progress_message(raw)
+      TaskProgressMessage.new(
+        uuid: raw[:uuid] || "",
+        session_id: raw[:session_id] || "",
+        task_id: raw[:task_id] || "",
+        tool_use_id: raw[:tool_use_id],
+        description: raw[:description] || "",
+        usage: raw[:usage],
+        last_tool_name: raw[:last_tool_name]
       )
     end
 
