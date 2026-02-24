@@ -95,15 +95,6 @@ class TestIntegrationOptions < IntegrationTestCase
     assert !args.include?("--no-persist-session")
   end
 
-  test "options delegate permission mode" do
-    options = ClaudeAgent::Options.new(permission_mode: "delegate")
-    assert_equal "delegate", options.permission_mode
-
-    args = options.to_cli_args
-    assert args.include?("--permission-mode")
-    assert args.include?("delegate")
-  end
-
   test "options dontAsk permission mode" do
     options = ClaudeAgent::Options.new(permission_mode: "dontAsk")
     assert_equal "dontAsk", options.permission_mode

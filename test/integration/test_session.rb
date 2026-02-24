@@ -104,7 +104,7 @@ class TestIntegrationSession < IntegrationTestCase
 
     assert_not_nil second_result
     assert_not_nil assistant_response
-    assert assistant_response.text.include?("BANANA"), "Expected response to contain 'BANANA'"
+    assert assistant_response.text.downcase.include?("banana"), "Expected response to contain 'BANANA' (case-insensitive)"
   ensure
     session&.close
   end

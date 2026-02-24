@@ -137,7 +137,7 @@ class TestIntegrationMessageParser < IntegrationTestCase
     assert_kind_of ClaudeAgent::UserMessageReplay, msg
     assert msg.replay?, "Expected replay? to be true"
     assert msg.synthetic?, "Expected synthetic? to be true"
-    assert_equal({ "tool_use_id" => "tool-456" }, msg.tool_use_result)
+    assert_equal({ tool_use_id: "tool-456" }, msg.tool_use_result)
     assert_equal "Hello replay", msg.content
 
     raw_snake = {
@@ -234,7 +234,7 @@ class TestIntegrationMessageParser < IntegrationTestCase
     assert_kind_of ClaudeAgent::FilesPersistedEvent, msg
     assert_equal :files_persisted, msg.type
     assert_equal 1, msg.files.length
-    assert_equal "test.rb", msg.files.first["filename"]
+    assert_equal "test.rb", msg.files.first[:filename]
     assert_equal "2026-01-30T12:00:00Z", msg.processed_at
   end
 end
