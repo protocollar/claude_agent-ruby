@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.50 (npm package)
-- Python SDK: v0.1.39 from GitHub (commit 146e3d6)
+- TypeScript SDK: v0.2.52 (npm package)
+- Python SDK: v0.1.41 from GitHub (commit 69f6217)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-22
+**Last Updated:** 2026-02-24
 
 ---
 
@@ -111,6 +111,7 @@ Messages exchanged between SDK and CLI.
 | `TaskNotificationMessage` |     ✅      |   ❌    |  ✅   | Background task completion         |
 | `ToolUseSummaryMessage`   |     ✅      |   ❌    |  ✅   | Summary of tool use (collapsed)    |
 | `TaskStartedMessage`      |     ✅      |   ❌    |  ✅   | Subagent task registered (v0.2.45) |
+| `TaskProgressMessage`     |     ✅      |   ❌    |  ✅   | Background task progress (v0.2.51) |
 | `RateLimitEvent`          |     ✅      |   ❌    |  ✅   | Rate limit status changes          |
 | `PromptSuggestionMessage` |     ✅      |   ❌    |  ✅   | Suggested next prompt (v0.2.47)    |
 | `FilesPersistedEvent`     |     ✅      |   ❌    |  ✅   | File persistence confirmation      |
@@ -232,6 +233,8 @@ Bidirectional control protocol for SDK-CLI communication.
 | `mcp_reconnect`           |     ✅      |   ❌    |  ✅   | Reconnect to MCP server           |
 | `mcp_toggle`              |     ✅      |   ❌    |  ✅   | Enable/disable MCP server         |
 | `stop_task`               |     ✅      |   ❌    |  ✅   | Stop a running background task    |
+| `mcp_authenticate`        |     ✅      |   ❌    |  ✅   | Authenticate MCP server (v0.2.52) |
+| `mcp_clear_auth`          |     ✅      |   ❌    |  ✅   | Clear MCP server auth (v0.2.52)   |
 | `supported_commands`      |     ✅      |   ❌    |  ✅   | Get available slash commands      |
 | `supported_models`        |     ✅      |   ❌    |  ✅   | Get available models              |
 | `account_info`            |     ✅      |   ❌    |  ✅   | Get account information           |
@@ -598,11 +601,11 @@ Error types and hierarchy.
 |----------------------|:----------:|:------:|:----:|--------------------------------|
 | Base Error           |     ✅      |   ✅    |  ✅   | `Error` / `ClaudeAgent::Error` |
 | `AbortError`         |     ✅      |   ❌    |  ✅   | Operation cancelled            |
-| `CLINotFoundError`   |     ❌      |   ❌    |  ✅   | CLI not found                  |
+| `CLINotFoundError`   |     ❌      |   ✅    |  ✅   | CLI not found                  |
 | `CLIVersionError`    |     ❌      |   ❌    |  ✅   | CLI version too old            |
-| `CLIConnectionError` |     ❌      |   ❌    |  ✅   | Connection failed              |
-| `ProcessError`       |     ❌      |   ❌    |  ✅   | CLI process failed             |
-| `JSONDecodeError`    |     ❌      |   ❌    |  ✅   | JSON parsing failed            |
+| `CLIConnectionError` |     ❌      |   ✅    |  ✅   | Connection failed              |
+| `ProcessError`       |     ❌      |   ✅    |  ✅   | CLI process failed             |
+| `JSONDecodeError`    |     ❌      |   ✅    |  ✅   | JSON parsing failed            |
 | `MessageParseError`  |     ❌      |   ❌    |  ✅   | Message parsing failed         |
 | `TimeoutError`       |     ❌      |   ❌    |  ✅   | Control request timeout        |
 | `ConfigurationError` |     ❌      |   ❌    |  ✅   | Invalid configuration          |
@@ -634,24 +637,24 @@ Public API surface for SDK clients.
 
 ### Query Control Methods
 
-| Method                   | TypeScript | Python | Ruby | Notes                  |
-|--------------------------|:----------:|:------:|:----:|------------------------|
-| `interrupt()`            |     ✅      |   ✅    |  ✅   | Interrupt execution    |
-| `setPermissionMode()`    |     ✅      |   ✅    |  ✅   | Change permission mode |
-| `setModel()`             |     ✅      |   ✅    |  ✅   | Change model           |
-| `setMaxThinkingTokens()` |     ✅      |   ❌    |  ✅   | Set thinking limit     |
-| `supportedCommands()`    |     ✅      |   ❌    |  ✅   | Get slash commands     |
-| `supportedModels()`      |     ✅      |   ❌    |  ✅   | Get available models   |
-| `mcpServerStatus()`      |     ✅      |   ✅    |  ✅   | Get MCP status         |
-| `accountInfo()`          |     ✅      |   ❌    |  ✅   | Get account info       |
-| `rewindFiles()`          |     ✅      |   ✅    |  ✅   | Rewind file changes    |
-| `setMcpServers()`        |     ✅      |   ❌    |  ✅   | Dynamic MCP servers    |
-| `reconnectMcpServer()`   |     ✅      |   ❌    |  ✅   | Reconnect MCP server   |
-| `toggleMcpServer()`      |     ✅      |   ❌    |  ✅   | Enable/disable MCP     |
-| `stopTask()`             |     ✅      |   ❌    |  ✅   | Stop running task      |
-| `streamInput()`          |     ✅      |   ✅    |  ✅   | Stream user input      |
-| `initializationResult()` |     ✅      |   ❌    |  ✅   | Full init response     |
-| `close()`                |     ✅      |   ✅    |  ✅   | Close query/session    |
+| Method                   | TypeScript | Python | Ruby | Notes                                        |
+|--------------------------|:----------:|:------:|:----:|----------------------------------------------|
+| `interrupt()`            |     ✅      |   ✅    |  ✅   | Interrupt execution                          |
+| `setPermissionMode()`    |     ✅      |   ✅    |  ✅   | Change permission mode                       |
+| `setModel()`             |     ✅      |   ✅    |  ✅   | Change model                                 |
+| `setMaxThinkingTokens()` |     ✅      |   ❌    |  ✅   | Set thinking limit                           |
+| `supportedCommands()`    |     ✅      |   ❌    |  ✅   | Get slash commands                           |
+| `supportedModels()`      |     ✅      |   ❌    |  ✅   | Get available models                         |
+| `mcpServerStatus()`      |     ✅      |   ✅    |  ✅   | Get MCP status                               |
+| `accountInfo()`          |     ✅      |   ❌    |  ✅   | Get account info                             |
+| `rewindFiles()`          |     ✅      |   ✅    |  ✅   | Rewind file changes                          |
+| `setMcpServers()`        |     ✅      |   ❌    |  ✅   | Dynamic MCP servers                          |
+| `reconnectMcpServer()`   |     ✅      |   ❌    |  ✅   | Reconnect MCP server                         |
+| `toggleMcpServer()`      |     ✅      |   ❌    |  ✅   | Enable/disable MCP                           |
+| `stopTask()`             |     ✅      |   ❌    |  ✅   | Stop running task                            |
+| `streamInput()`          |     ✅      |   ✅    |  ✅   | Stream user input                            |
+| `initializationResult()` |     ✅      |   ✅    |  ✅   | Full init response (Py: `get_server_info()`) |
+| `close()`                |     ✅      |   ✅    |  ✅   | Close query/session                          |
 
 ### Client Class
 
@@ -694,22 +697,26 @@ Public API surface for SDK clients.
 - `executable`/`executableArgs` are JS-specific (`node`/`bun`/`deno`)
 - v0.2.45: Added `TaskStartedMessage`, `RateLimitEvent` message types
 - v0.2.47: Added `promptSuggestions` option and `PromptSuggestionMessage`
-- v0.2.49: Added `ConfigChange` hook event, `SandboxFilesystemConfig`
+- v0.2.49: Added `ConfigChange` hook event, `SandboxFilesystemConfig`, ModelInfo capability fields
 - v0.2.50: Added `WorktreeCreate`/`WorktreeRemove` hook events, `apply_flag_settings` control request
+- v0.2.51: Added `TaskProgressMessage` for real-time background agent progress reporting
+- v0.2.52: Added `mcp_authenticate`/`mcp_clear_auth` control requests for MCP server authentication
 
 ### Python SDK
 - Full source available with `Transport` abstract class
 - Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus
+- Has `CLINotFoundError`, `CLIConnectionError`, `ProcessError`, `CLIJSONDecodeError` error types
 - Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted, ConfigChange, WorktreeCreate, WorktreeRemove
 - Missing permission modes: `dontAsk`
 - Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
 - Has SDK MCP server support with `tool()` helper and annotations
 - Added `thinking` config and `effort` option in v0.1.36
-- Handles `rate_limit_event` and unknown message types gracefully (v0.1.39)
+- Handles `rate_limit_event` and unknown message types gracefully (v0.1.40)
+- Client has `get_server_info()` for accessing the initialization result (v0.1.31+)
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.50
+- Feature parity with TypeScript SDK v0.2.52
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations

@@ -443,6 +443,30 @@ module ClaudeAgent
       send_control_request(subtype: "mcp_toggle", serverName: server_name, enabled: enabled)
     end
 
+    # Initiate OAuth authentication for an MCP server (TypeScript SDK v0.2.52 parity)
+    #
+    # @param server_name [String] Name of the MCP server to authenticate
+    # @return [Hash] Response from the CLI
+    #
+    # @example
+    #   protocol.mcp_authenticate("my-remote-server")
+    #
+    def mcp_authenticate(server_name)
+      send_control_request(subtype: "mcp_authenticate", serverName: server_name)
+    end
+
+    # Clear stored auth credentials for an MCP server (TypeScript SDK v0.2.52 parity)
+    #
+    # @param server_name [String] Name of the MCP server to clear auth for
+    # @return [Hash] Response from the CLI
+    #
+    # @example
+    #   protocol.mcp_clear_auth("my-remote-server")
+    #
+    def mcp_clear_auth(server_name)
+      send_control_request(subtype: "mcp_clear_auth", serverName: server_name)
+    end
+
     # Stop a running background task (TypeScript SDK parity)
     #
     # Sends a stop signal to a running task. A task_notification message

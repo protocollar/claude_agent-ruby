@@ -654,6 +654,41 @@ module ClaudeAgent
     end
   end
 
+  # Task progress message (TypeScript SDK v0.2.51 parity)
+  #
+  # Reports progress during background task (subagent) execution.
+  # Contains usage information and description of what the task is doing.
+  #
+  # @example
+  #   msg = TaskProgressMessage.new(
+  #     uuid: "msg-123",
+  #     session_id: "session-abc",
+  #     task_id: "task-456",
+  #     description: "Searching codebase for patterns",
+  #     usage: { total_tokens: 5000, tool_uses: 3, duration_ms: 2500 }
+  #   )
+  #
+  TaskProgressMessage = Data.define(
+    :uuid, :session_id, :task_id, :tool_use_id,
+    :description, :usage, :last_tool_name
+  ) do
+    def initialize(
+      uuid:,
+      session_id:,
+      task_id:,
+      description:,
+      usage: nil,
+      tool_use_id: nil,
+      last_tool_name: nil
+    )
+      super
+    end
+
+    def type
+      :task_progress
+    end
+  end
+
   # Rate limit event (TypeScript SDK v0.2.45 parity)
   #
   # Reports rate limit status and utilization information.
@@ -802,6 +837,7 @@ module ClaudeAgent
     ToolUseSummaryMessage,
     FilesPersistedEvent,
     TaskStartedMessage,
+    TaskProgressMessage,
     RateLimitEvent,
     PromptSuggestionMessage,
     GenericMessage

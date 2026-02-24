@@ -617,6 +617,45 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::TaskStartedMessage
   end
 
+  # --- TaskProgressMessage ---
+
+  test "task_progress_message" do
+    usage = { total_tokens: 5000, tool_uses: 3, duration_ms: 2500 }
+    msg = ClaudeAgent::TaskProgressMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      task_id: "task-456",
+      tool_use_id: "tool-789",
+      description: "Searching codebase",
+      usage: usage,
+      last_tool_name: "Grep"
+    )
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal "task-456", msg.task_id
+    assert_equal "tool-789", msg.tool_use_id
+    assert_equal "Searching codebase", msg.description
+    assert_equal usage, msg.usage
+    assert_equal "Grep", msg.last_tool_name
+    assert_equal :task_progress, msg.type
+  end
+
+  test "task_progress_message_defaults" do
+    msg = ClaudeAgent::TaskProgressMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      task_id: "task-456",
+      description: "Running tests"
+    )
+    assert_nil msg.tool_use_id
+    assert_nil msg.usage
+    assert_nil msg.last_tool_name
+  end
+
+  test "task_progress_message_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::TaskProgressMessage
+  end
+
   # --- RateLimitEvent ---
 
   test "rate_limit_event" do

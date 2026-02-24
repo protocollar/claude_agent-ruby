@@ -389,6 +389,34 @@ module ClaudeAgent
       @protocol.mcp_toggle(server_name, enabled: enabled)
     end
 
+    # Initiate OAuth authentication for an MCP server (TypeScript SDK v0.2.52 parity)
+    #
+    # @param server_name [String] Name of the MCP server to authenticate
+    # @return [Hash] Response from the CLI
+    #
+    # @example
+    #   client.mcp_authenticate("my-remote-server")
+    #
+    def mcp_authenticate(server_name)
+      require_connection!
+
+      @protocol.mcp_authenticate(server_name)
+    end
+
+    # Clear stored auth credentials for an MCP server (TypeScript SDK v0.2.52 parity)
+    #
+    # @param server_name [String] Name of the MCP server to clear auth for
+    # @return [Hash] Response from the CLI
+    #
+    # @example
+    #   client.mcp_clear_auth("my-remote-server")
+    #
+    def mcp_clear_auth(server_name)
+      require_connection!
+
+      @protocol.mcp_clear_auth(server_name)
+    end
+
     private
 
     def logger

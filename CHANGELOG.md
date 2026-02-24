@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `TaskProgressMessage` for real-time background task (subagent) progress reporting (TypeScript SDK v0.2.51 parity)
+- `mcp_authenticate` control request on `ControlProtocol` and `Client` for MCP server OAuth authentication (TypeScript SDK v0.2.52 parity)
+- `mcp_clear_auth` control request on `ControlProtocol` and `Client` for clearing MCP server credentials (TypeScript SDK v0.2.52 parity)
+- RBS signatures for all new types and methods
 - `CumulativeUsage` — built-in cumulative usage tracking across conversation turns; automatically updated by `Client` as `ResultMessage`s are received
 - `Client#cumulative_usage` — returns the usage accumulator with `input_tokens`, `output_tokens`, `cache_read_input_tokens`, `cache_creation_input_tokens`, `total_cost_usd`, `num_turns`, `duration_ms`, `duration_api_ms`
 - `GenericMessage` type — wraps unknown top-level message types instead of raising `MessageParseError`, with dynamic field access via `[]` and `method_missing`
