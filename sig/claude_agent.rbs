@@ -201,6 +201,20 @@ module ClaudeAgent
     def initialize: (can_rewind: bool, ?error: String?, ?files_changed: Array[String]?, ?insertions: Integer?, ?deletions: Integer?) -> void
   end
 
+  # Session metadata returned by list_sessions (TypeScript SDK parity: SDKSessionInfo)
+  class SessionInfo
+    attr_reader session_id: String
+    attr_reader summary: String
+    attr_reader last_modified: Integer
+    attr_reader file_size: Integer
+    attr_reader custom_title: String?
+    attr_reader first_prompt: String?
+    attr_reader git_branch: String?
+    attr_reader cwd: String?
+
+    def initialize: (session_id: String, summary: String, last_modified: Integer, file_size: Integer, ?custom_title: String?, ?first_prompt: String?, ?git_branch: String?, ?cwd: String?) -> void
+  end
+
   # Agent definition for custom subagents (TypeScript SDK parity)
   class AgentDefinition
     attr_reader description: String
@@ -1163,6 +1177,18 @@ module ClaudeAgent
     def open?: () -> bool
     def closed?: () -> bool
     def inspect: () -> String
+  end
+
+  # Session discovery
+  def self.list_sessions: (?dir: String?, ?limit: Integer?) -> Array[SessionInfo]
+
+  # ListSessions module
+  module ListSessions
+    MAX_SLUG_LENGTH: Integer
+    BUFFER_SIZE: Integer
+    UUID_PATTERN: Regexp
+
+    def self.call: (?dir: String?, ?limit: Integer?) -> Array[SessionInfo]
   end
 
   # Convenience methods
