@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `PermissionRequest` — deferred permission promise that can be resolved from any thread via `allow!` / `deny!`, with `defer!` for hybrid callback/queue mode
+- `PermissionQueue` — thread-safe queue of pending `PermissionRequest` objects with `poll`, `pop(timeout:)`, and `drain!`
+- `Client#permission_queue` — returns the queue; always available on connected clients
+- `Client#pending_permission` — non-blocking poll for the next pending permission request
+- `Client#pending_permissions?` — check if any permission requests are waiting
+- `Options#permission_queue` — set to `true` to enable queue-based permissions (auto-sets `permission_prompt_tool_name: "stdio"`)
+- `ToolPermissionContext#request` — access the `PermissionRequest` from within a `can_use_tool` callback for hybrid defer mode
+- `ControlProtocol` now supports three permission modes: synchronous callback, queue-based, and hybrid (callback with selective `defer!`)
 - `TurnResult` — represents a complete agent turn, accumulating all messages between sending a prompt and receiving the `ResultMessage`
 - `TurnResult#text`, `#thinking` — concatenated text/thinking across all assistant messages
 - `TurnResult#tool_uses`, `#tool_results`, `#tool_executions` — tool use blocks, result blocks, and matched use/result pairs

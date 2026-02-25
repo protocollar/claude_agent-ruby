@@ -283,4 +283,26 @@ class TestClaudeAgentPermissions < ActiveSupport::TestCase
     context = ClaudeAgent::ToolPermissionContext.new
     assert_nil context.description
   end
+
+  # --- ToolPermissionContext with request ---
+
+  test "tool_permission_context_with_request" do
+    request = ClaudeAgent::PermissionRequest.new(
+      tool_name: "Bash",
+      input: { command: "ls" },
+      context: nil,
+      request_id: "req-123"
+    )
+    context = ClaudeAgent::ToolPermissionContext.new(
+      tool_use_id: "tool-456",
+      request: request
+    )
+    assert_equal request, context.request
+    assert_equal "Bash", context.request.tool_name
+  end
+
+  test "tool_permission_context_request_default_nil" do
+    context = ClaudeAgent::ToolPermissionContext.new
+    assert_nil context.request
+  end
 end

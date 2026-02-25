@@ -493,6 +493,59 @@ class TestClaudeAgentClient < ActiveSupport::TestCase
     end
   end
 
+  # --- Permission Queue ---
+
+  test "client has permission_queue" do
+    client = ClaudeAgent::Client.new
+    assert_instance_of ClaudeAgent::PermissionQueue, client.permission_queue
+    assert client.permission_queue.empty?
+  end
+
+  test "pending_permission returns nil when empty" do
+    client = ClaudeAgent::Client.new
+    assert_nil client.pending_permission
+  end
+
+  test "pending_permissions? returns false when empty" do
+    client = ClaudeAgent::Client.new
+    refute client.pending_permissions?
+  end
+
+  test "pending_permission returns request after push" do
+    client = ClaudeAgent::Client.new
+    request = ClaudeAgent::PermissionRequest.new(
+      tool_name: "Read",
+      input: {},
+      context: nil,
+      request_id: "test-req"
+    )
+    client.permission_queue.push(request)
+
+    assert client.pending_permissions?
+    assert_equal request, client.pending_permission
+    refute client.pending_permissions?
+  end
+
+  test "disconnect drains permission queue" do
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    client.connect
+
+    request = ClaudeAgent::PermissionRequest.new(
+      tool_name: "Bash",
+      input: {},
+      context: nil,
+      request_id: "test-req"
+    )
+    client.permission_queue.push(request)
+
+    client.disconnect
+
+    assert request.resolved?
+    assert_equal "deny", request.result.behavior
+    assert_equal "Client disconnected", request.result.message
+  end
+
   # --- Cumulative Usage ---
 
   test "client has cumulative_usage" do

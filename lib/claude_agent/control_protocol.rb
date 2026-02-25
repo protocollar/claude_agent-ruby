@@ -24,6 +24,7 @@ module ClaudeAgent
     REQUEST_ID_PREFIX = "req"
 
     attr_reader :transport, :options, :server_info
+    attr_accessor :permission_queue
 
     # @param transport [Transport::Base] Transport for communication
     # @param options [Options] Configuration options
@@ -94,6 +95,9 @@ module ClaudeAgent
     # @return [void]
     def abort!
       @running = false
+
+      # Drain permission queue so reader thread unblocks
+      @permission_queue&.drain!(reason: "Operation aborted")
 
       # Fail all pending requests
       @mutex.synchronize do
@@ -626,27 +630,85 @@ module ClaudeAgent
     end
 
     # Handle can_use_tool permission request
+    #
+    # Supports three modes:
+    # 1. Synchronous callback — can_use_tool is set, returns result directly
+    # 2. Queue-based — permission_queue is set, enqueues and waits for resolution
+    # 3. Default allow — neither is set
+    #
+    # In hybrid mode (callback + queue), the callback can call
+    # context.request.defer! to enqueue the request instead of
+    # returning a synchronous answer.
+    #
     # @param request [Hash] Request data
     # @return [Hash] Response
     def handle_can_use_tool(request)
-      unless options.can_use_tool
-        logger.info("protocol") { "Permission decision for #{request["tool_name"]}: allow (no callback)" }
-        return { behavior: "allow" }
-      end
-
       tool_name = request["tool_name"]
       input = (request["input"] || {}).deep_symbolize_keys
-      context = {
+
+      # Build PermissionRequest for queue/hybrid modes
+      perm_request = PermissionRequest.new(
+        tool_name: tool_name,
+        input: input,
+        context: nil, # set below after ToolPermissionContext is built
+        request_id: request["tool_use_id"] || SecureRandom.hex(8)
+      )
+
+      context = ToolPermissionContext.new(
         permission_suggestions: request["permission_suggestions"],
         blocked_path: request["blocked_path"],
         decision_reason: request["decision_reason"],
         tool_use_id: request["tool_use_id"],
         agent_id: request["agent_id"],
-        description: request["description"]
-      }
+        description: request["description"],
+        signal: @abort_signal,
+        request: perm_request
+      )
 
-      result = options.can_use_tool.call(tool_name, input, context)
+      # Back-fill context on the request (circular, but both are needed)
+      perm_request.instance_variable_set(:@context, context)
 
+      # Mode 1: Synchronous callback
+      if options.can_use_tool
+        result = options.can_use_tool.call(tool_name, input, context)
+
+        # Check if the callback deferred to the queue
+        if perm_request.deferred?
+          return enqueue_and_wait(perm_request, tool_name, input)
+        end
+
+        return normalize_permission_result(result, tool_name, input)
+      end
+
+      # Mode 2: Queue-based
+      if @permission_queue
+        return enqueue_and_wait(perm_request, tool_name, input)
+      end
+
+      # Mode 3: Default allow
+      logger.info("protocol") { "Permission decision for #{tool_name}: allow (no callback)" }
+      { behavior: "allow" }
+    end
+
+    # Enqueue a permission request and block until resolved
+    # @param perm_request [PermissionRequest] The request to enqueue
+    # @param tool_name [String] Tool name (for logging)
+    # @param input [Hash] Original tool input
+    # @return [Hash] Normalized response
+    def enqueue_and_wait(perm_request, tool_name, input)
+      logger.info("protocol") { "Permission request queued for #{tool_name}" }
+      @permission_queue.push(perm_request)
+
+      result = perm_request.wait(timeout: DEFAULT_TIMEOUT)
+      normalize_permission_result(result, tool_name, input)
+    end
+
+    # Normalize a permission result for the CLI response
+    # @param result [PermissionResultAllow, PermissionResultDeny, Hash] The result
+    # @param tool_name [String] Tool name (for logging)
+    # @param input [Hash] Original tool input
+    # @return [Hash] Normalized response
+    def normalize_permission_result(result, tool_name, input)
       normalized = result.to_h
       logger.info("protocol") { "Permission decision for #{tool_name}: #{normalized[:behavior]}" }
 

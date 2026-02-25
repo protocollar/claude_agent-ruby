@@ -306,6 +306,7 @@ module ClaudeAgent
     attr_accessor permission_prompt_tool_name: String?
     attr_accessor can_use_tool: (^(String, Hash[String, untyped], untyped) -> permission_result)?
     attr_accessor allow_dangerously_skip_permissions: bool
+    attr_accessor permission_queue: bool?
 
     # Conversation flow
     attr_accessor continue_conversation: bool
@@ -999,8 +1000,40 @@ module ClaudeAgent
     attr_reader agent_id: String?
     attr_reader signal: AbortSignal?
     attr_reader description: String?
+    attr_reader request: PermissionRequest?
 
-    def initialize: (?permission_suggestions: untyped, ?blocked_path: String?, ?decision_reason: String?, ?tool_use_id: String?, ?agent_id: String?, ?signal: AbortSignal?, ?description: String?) -> void
+    def initialize: (?permission_suggestions: untyped, ?blocked_path: String?, ?decision_reason: String?, ?tool_use_id: String?, ?agent_id: String?, ?signal: AbortSignal?, ?description: String?, ?request: PermissionRequest?) -> void
+  end
+
+  # Deferred permission request resolved from any thread
+  class PermissionRequest
+    attr_reader tool_name: String
+    attr_reader input: Hash[Symbol, untyped]
+    attr_reader context: ToolPermissionContext?
+    attr_reader request_id: String
+    attr_reader created_at: Time
+
+    def initialize: (tool_name: String, input: Hash[Symbol, untyped], context: ToolPermissionContext?, request_id: String) -> void
+    def allow!: (?updated_input: Hash[Symbol, untyped]?, ?updated_permissions: Array[PermissionUpdate]?) -> void
+    def deny!: (?message: String, ?interrupt: bool) -> void
+    def defer!: () -> self
+    def deferred?: () -> bool
+    def resolved?: () -> bool
+    def pending?: () -> bool
+    def result: () -> permission_result?
+    def wait: (?timeout: Numeric?) -> permission_result
+    def inspect: () -> String
+  end
+
+  # Thread-safe queue of pending permission requests
+  class PermissionQueue
+    def initialize: () -> void
+    def poll: () -> PermissionRequest?
+    def pop: (?timeout: Numeric?) -> PermissionRequest?
+    def empty?: () -> bool
+    def size: () -> Integer
+    def push: (PermissionRequest request) -> void
+    def drain!: (?reason: String) -> Array[PermissionRequest]
   end
 
   # Cumulative usage tracking across conversation turns
@@ -1088,6 +1121,7 @@ module ClaudeAgent
     attr_reader server_info: Hash[String, untyped]?
     attr_reader cumulative_usage: CumulativeUsage
     attr_reader event_handler: EventHandler
+    attr_reader permission_queue: PermissionQueue
 
     def self.open: (?options: Options?, ?transport: Transport::Base?, ?prompt: String?) { (Client) -> void } -> void
 
@@ -1132,6 +1166,8 @@ module ClaudeAgent
     def mcp_server_status: () -> Array[McpServerStatus]
     def account_info: () -> AccountInfo
     def initialization_result: () -> InitializationResult
+    def pending_permission: () -> PermissionRequest?
+    def pending_permissions?: () -> bool
   end
 
   # Control protocol
@@ -1143,6 +1179,7 @@ module ClaudeAgent
     attr_reader transport: Transport::Base
     attr_reader options: Options
     attr_reader server_info: Hash[String, untyped]?
+    attr_accessor permission_queue: PermissionQueue?
 
     def initialize: (transport: Transport::Base, ?options: Options?) -> void
     def start: (?streaming: bool, ?prompt: String?) -> Hash[String, untyped]?
