@@ -66,6 +66,10 @@ module ClaudeAgent
 
   # Base class for hook input types (TypeScript SDK parity)
   #
+  # Subclasses are generated declaratively via {.define_input}, which creates
+  # a class with attr_readers, a keyword-argument initializer, and automatic
+  # hook_event_name/base field inheritance.
+  #
   class BaseHookInput
     attr_reader :hook_event_name, :session_id, :transcript_path, :cwd, :permission_mode
 
@@ -76,283 +80,130 @@ module ClaudeAgent
       @cwd = cwd
       @permission_mode = permission_mode
     end
-  end
 
-  # Input for PreToolUse hook
-  #
-  class PreToolUseInput < BaseHookInput
-    attr_reader :tool_name, :tool_input, :tool_use_id
+    # Define a hook input subclass declaratively
+    #
+    # Generates a complete input class with attr_readers, a keyword-argument
+    # initializer, and automatic hook_event_name forwarding. The generated class
+    # is registered as ClaudeAgent::{event_name}Input.
+    #
+    # @param event_name [String] Hook event name (e.g., "PreToolUse")
+    # @param required [Array<Symbol>] Required keyword arguments
+    # @param optional [Hash<Symbol, Object>] Optional keyword arguments with defaults
+    # @param constants [Hash<Symbol, Object>] Constants to define on the class
+    # @param block [Proc] Optional block for additional instance methods
+    # @return [Class] The generated subclass
+    #
+    # @example Simple declaration
+    #   BaseHookInput.define_input "PreToolUse",
+    #     required: [:tool_name, :tool_input],
+    #     optional: { tool_use_id: nil }
+    #
+    # @example With custom behavior
+    #   BaseHookInput.define_input "Setup",
+    #     required: [:trigger] do
+    #       def init? = trigger == "init"
+    #       def maintenance? = trigger == "maintenance"
+    #     end
+    #
+    def self.define_input(event_name, required: [], optional: {}, constants: {}, &block)
+      klass = Class.new(self)
+      all_fields = required + optional.keys
+      klass.attr_reader(*all_fields)
 
-    def initialize(tool_name:, tool_input:, tool_use_id: nil, **kwargs)
-      super(hook_event_name: "PreToolUse", **kwargs)
-      @tool_name = tool_name
-      @tool_input = tool_input
-      @tool_use_id = tool_use_id
+      # Build keyword argument signature
+      params = required.map { |f| "#{f}:" }
+      params += optional.map { |f, default| "#{f}: #{default.inspect}" }
+      params << "**kwargs"
+
+      # Build instance variable assignments
+      assignments = all_fields.map { |f| "@#{f} = #{f}" }.join("\n      ")
+
+      klass.class_eval(<<~RUBY, __FILE__, __LINE__ + 1)
+        def initialize(#{params.join(", ")})
+          super(hook_event_name: "#{event_name}", **kwargs)
+          #{assignments}
+        end
+      RUBY
+
+      constants.each { |name, value| klass.const_set(name, value) }
+      klass.class_eval(&block) if block
+
+      ClaudeAgent.const_set("#{event_name}Input", klass)
     end
   end
 
-  # Input for PostToolUse hook
+  # --- Hook Input Declarations ---
   #
-  class PostToolUseInput < BaseHookInput
-    attr_reader :tool_name, :tool_input, :tool_response, :tool_use_id
+  # Each declaration generates a complete input class with:
+  # - attr_readers for all fields
+  # - initialize with required/optional keyword arguments
+  # - Automatic hook_event_name and base field inheritance
 
-    def initialize(tool_name:, tool_input:, tool_response:, tool_use_id: nil, **kwargs)
-      super(hook_event_name: "PostToolUse", **kwargs)
-      @tool_name = tool_name
-      @tool_input = tool_input
-      @tool_response = tool_response
-      @tool_use_id = tool_use_id
-    end
-  end
+  BaseHookInput.define_input "PreToolUse",
+    required: [ :tool_name, :tool_input ],
+    optional: { tool_use_id: nil }
 
-  # Input for PostToolUseFailure hook (TypeScript SDK parity)
-  #
-  class PostToolUseFailureInput < BaseHookInput
-    attr_reader :tool_name, :tool_input, :tool_use_id, :error, :is_interrupt
+  BaseHookInput.define_input "PostToolUse",
+    required: [ :tool_name, :tool_input, :tool_response ],
+    optional: { tool_use_id: nil }
 
-    def initialize(tool_name:, tool_input:, error:, tool_use_id: nil, is_interrupt: nil, **kwargs)
-      super(hook_event_name: "PostToolUseFailure", **kwargs)
-      @tool_name = tool_name
-      @tool_input = tool_input
-      @tool_use_id = tool_use_id
-      @error = error
-      @is_interrupt = is_interrupt
-    end
-  end
+  BaseHookInput.define_input "PostToolUseFailure",
+    required: [ :tool_name, :tool_input, :error ],
+    optional: { tool_use_id: nil, is_interrupt: nil }
 
-  # Input for Notification hook (TypeScript SDK parity)
-  #
-  class NotificationInput < BaseHookInput
-    attr_reader :message, :title, :notification_type
+  BaseHookInput.define_input "Notification",
+    required: [ :message ],
+    optional: { title: nil, notification_type: nil }
 
-    def initialize(message:, title: nil, notification_type: nil, **kwargs)
-      super(hook_event_name: "Notification", **kwargs)
-      @message = message
-      @title = title
-      @notification_type = notification_type
-    end
-  end
+  BaseHookInput.define_input "UserPromptSubmit",
+    required: [ :prompt ]
 
-  # Input for UserPromptSubmit hook
-  #
-  class UserPromptSubmitInput < BaseHookInput
-    attr_reader :prompt
+  BaseHookInput.define_input "SessionStart",
+    required: [ :source ],
+    optional: { agent_type: nil, model: nil }
 
-    def initialize(prompt:, **kwargs)
-      super(hook_event_name: "UserPromptSubmit", **kwargs)
-      @prompt = prompt
-    end
-  end
+  BaseHookInput.define_input "SessionEnd",
+    required: [ :reason ]
 
-  # Input for SessionStart hook (TypeScript SDK parity)
-  #
-  class SessionStartInput < BaseHookInput
-    attr_reader :source, :agent_type, :model
+  BaseHookInput.define_input "Stop",
+    optional: { stop_hook_active: false }
 
-    # @param source [String] One of: "startup", "resume", "clear", "compact"
-    # @param agent_type [String, nil] Type of agent if running in subagent context
-    # @param model [String, nil] Model being used for this session
-    def initialize(source:, agent_type: nil, model: nil, **kwargs)
-      super(hook_event_name: "SessionStart", **kwargs)
-      @source = source
-      @agent_type = agent_type
-      @model = model
-    end
-  end
+  BaseHookInput.define_input "SubagentStart",
+    required: [ :agent_id, :agent_type ]
 
-  # Input for SessionEnd hook (TypeScript SDK parity)
-  #
-  class SessionEndInput < BaseHookInput
-    attr_reader :reason
+  BaseHookInput.define_input "SubagentStop",
+    optional: { stop_hook_active: false, agent_id: nil, agent_transcript_path: nil }
 
-    def initialize(reason:, **kwargs)
-      super(hook_event_name: "SessionEnd", **kwargs)
-      @reason = reason
-    end
-  end
+  BaseHookInput.define_input "PreCompact",
+    required: [ :trigger ],
+    optional: { custom_instructions: nil }
 
-  # Input for Stop hook
-  #
-  class StopInput < BaseHookInput
-    attr_reader :stop_hook_active
+  BaseHookInput.define_input "PermissionRequest",
+    required: [ :tool_name, :tool_input ],
+    optional: { permission_suggestions: nil }
 
-    def initialize(stop_hook_active: false, **kwargs)
-      super(hook_event_name: "Stop", **kwargs)
-      @stop_hook_active = stop_hook_active
-    end
-  end
-
-  # Input for SubagentStart hook (TypeScript SDK parity)
-  #
-  class SubagentStartInput < BaseHookInput
-    attr_reader :agent_id, :agent_type
-
-    def initialize(agent_id:, agent_type:, **kwargs)
-      super(hook_event_name: "SubagentStart", **kwargs)
-      @agent_id = agent_id
-      @agent_type = agent_type
-    end
-  end
-
-  # Input for SubagentStop hook
-  #
-  class SubagentStopInput < BaseHookInput
-    attr_reader :stop_hook_active, :agent_id, :agent_transcript_path
-
-    def initialize(stop_hook_active: false, agent_id: nil, agent_transcript_path: nil, **kwargs)
-      super(hook_event_name: "SubagentStop", **kwargs)
-      @stop_hook_active = stop_hook_active
-      @agent_id = agent_id
-      @agent_transcript_path = agent_transcript_path
-    end
-  end
-
-  # Input for PreCompact hook
-  #
-  class PreCompactInput < BaseHookInput
-    attr_reader :trigger, :custom_instructions
-
-    # @param trigger [String] One of: "manual", "auto"
-    # @param custom_instructions [String, nil] Custom instructions for compaction
-    def initialize(trigger:, custom_instructions: nil, **kwargs)
-      super(hook_event_name: "PreCompact", **kwargs)
-      @trigger = trigger
-      @custom_instructions = custom_instructions
-    end
-  end
-
-  # Input for PermissionRequest hook (TypeScript SDK parity)
-  #
-  class PermissionRequestInput < BaseHookInput
-    attr_reader :tool_name, :tool_input, :permission_suggestions
-
-    def initialize(tool_name:, tool_input:, permission_suggestions: nil, **kwargs)
-      super(hook_event_name: "PermissionRequest", **kwargs)
-      @tool_name = tool_name
-      @tool_input = tool_input
-      @permission_suggestions = permission_suggestions
-    end
-  end
-
-  # Input for Setup hook (TypeScript SDK parity)
-  #
-  # Triggered during initial setup or maintenance operations.
-  #
-  # @example
-  #   input = SetupInput.new(trigger: "init", session_id: "abc-123")
-  #   input.trigger  # => "init"
-  #   input.init?    # => true
-  #
-  class SetupInput < BaseHookInput
-    attr_reader :trigger
-
-    # @param trigger [String] One of: "init", "maintenance"
-    def initialize(trigger:, **kwargs)
-      super(hook_event_name: "Setup", **kwargs)
-      @trigger = trigger
+  BaseHookInput.define_input "Setup",
+    required: [ :trigger ] do
+      def init? = trigger == "init"
+      def maintenance? = trigger == "maintenance"
     end
 
-    # Check if this is an init trigger
-    # @return [Boolean]
-    def init?
-      trigger == "init"
-    end
+  BaseHookInput.define_input "TeammateIdle",
+    required: [ :teammate_name, :team_name ]
 
-    # Check if this is a maintenance trigger
-    # @return [Boolean]
-    def maintenance?
-      trigger == "maintenance"
-    end
-  end
+  BaseHookInput.define_input "TaskCompleted",
+    required: [ :task_id, :task_subject ],
+    optional: { task_description: nil, teammate_name: nil, team_name: nil }
 
-  # Input for TeammateIdle hook (TypeScript SDK v0.2.33 parity)
-  #
-  # Fired when a teammate becomes idle.
-  #
-  class TeammateIdleInput < BaseHookInput
-    attr_reader :teammate_name, :team_name
+  BaseHookInput.define_input "ConfigChange",
+    required: [ :source ],
+    optional: { file_path: nil },
+    constants: { SOURCES: %w[user_settings project_settings local_settings policy_settings skills].freeze }
 
-    # @param teammate_name [String] Name of the idle teammate
-    # @param team_name [String] Name of the team
-    def initialize(teammate_name:, team_name:, **kwargs)
-      super(hook_event_name: "TeammateIdle", **kwargs)
-      @teammate_name = teammate_name
-      @team_name = team_name
-    end
-  end
+  BaseHookInput.define_input "WorktreeCreate",
+    required: [ :name ]
 
-  # Input for ConfigChange hook (TypeScript SDK v0.2.49 parity)
-  #
-  # Fired when a configuration file changes.
-  #
-  # @example
-  #   input = ConfigChangeInput.new(
-  #     source: "user_settings",
-  #     file_path: "~/.claude/settings.json",
-  #     session_id: "sess-123"
-  #   )
-  #
-  class ConfigChangeInput < BaseHookInput
-    attr_reader :source, :file_path
-
-    SOURCES = %w[user_settings project_settings local_settings policy_settings skills].freeze
-
-    # @param source [String] One of SOURCES
-    # @param file_path [String, nil] Path to the changed file
-    def initialize(source:, file_path: nil, **kwargs)
-      super(hook_event_name: "ConfigChange", **kwargs)
-      @source = source
-      @file_path = file_path
-    end
-  end
-
-  # Input for WorktreeCreate hook (TypeScript SDK v0.2.50 parity)
-  #
-  # Fired when a worktree is created.
-  #
-  class WorktreeCreateInput < BaseHookInput
-    attr_reader :name
-
-    # @param name [String] Worktree name
-    def initialize(name:, **kwargs)
-      super(hook_event_name: "WorktreeCreate", **kwargs)
-      @name = name
-    end
-  end
-
-  # Input for WorktreeRemove hook (TypeScript SDK v0.2.50 parity)
-  #
-  # Fired when a worktree is removed.
-  #
-  class WorktreeRemoveInput < BaseHookInput
-    attr_reader :worktree_path
-
-    # @param worktree_path [String] Path to the worktree
-    def initialize(worktree_path:, **kwargs)
-      super(hook_event_name: "WorktreeRemove", **kwargs)
-      @worktree_path = worktree_path
-    end
-  end
-
-  # Input for TaskCompleted hook (TypeScript SDK v0.2.33 parity)
-  #
-  # Fired when a task completes.
-  #
-  class TaskCompletedInput < BaseHookInput
-    attr_reader :task_id, :task_subject, :task_description, :teammate_name, :team_name
-
-    # @param task_id [String] ID of the completed task
-    # @param task_subject [String] Subject of the completed task
-    # @param task_description [String, nil] Description of the completed task
-    # @param teammate_name [String, nil] Name of the teammate that completed the task
-    # @param team_name [String, nil] Name of the team
-    def initialize(task_id:, task_subject:, task_description: nil, teammate_name: nil, team_name: nil, **kwargs)
-      super(hook_event_name: "TaskCompleted", **kwargs)
-      @task_id = task_id
-      @task_subject = task_subject
-      @task_description = task_description
-      @teammate_name = teammate_name
-      @team_name = team_name
-    end
-  end
+  BaseHookInput.define_input "WorktreeRemove",
+    required: [ :worktree_path ]
 end

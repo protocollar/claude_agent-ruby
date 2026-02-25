@@ -517,4 +517,62 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert_equal "/home/user", input.cwd
     assert_equal "default", input.permission_mode
   end
+
+  # --- define_input DSL ---
+
+  test "define_input generates class inheriting from BaseHookInput" do
+    assert ClaudeAgent::PreToolUseInput < ClaudeAgent::BaseHookInput
+    assert ClaudeAgent::StopInput < ClaudeAgent::BaseHookInput
+    assert ClaudeAgent::SetupInput < ClaudeAgent::BaseHookInput
+  end
+
+  test "define_input generates all 18 input classes" do
+    ClaudeAgent::HOOK_EVENTS.each do |event|
+      klass = ClaudeAgent.const_get("#{event}Input")
+      assert klass < ClaudeAgent::BaseHookInput, "#{event}Input should inherit from BaseHookInput"
+    end
+  end
+
+  test "define_input raises ArgumentError for missing required fields" do
+    assert_raises(ArgumentError) do
+      ClaudeAgent::PreToolUseInput.new(tool_name: "Bash")
+      # Missing required :tool_input
+    end
+  end
+
+  test "define_input optional fields default correctly" do
+    input = ClaudeAgent::SubagentStopInput.new
+    assert_equal false, input.stop_hook_active
+    assert_nil input.agent_id
+    assert_nil input.agent_transcript_path
+  end
+
+  test "define_input with block adds custom methods" do
+    input = ClaudeAgent::SetupInput.new(trigger: "init")
+    assert_respond_to input, :init?
+    assert_respond_to input, :maintenance?
+    assert input.init?
+    refute input.maintenance?
+  end
+
+  test "define_input with constants defines class constants" do
+    assert_equal %w[user_settings project_settings local_settings policy_settings skills],
+      ClaudeAgent::ConfigChangeInput::SOURCES
+  end
+
+  test "define_input forwards unknown kwargs to base class" do
+    input = ClaudeAgent::WorktreeCreateInput.new(
+      name: "feature",
+      session_id: "sess-123",
+      transcript_path: "/path",
+      cwd: "/home",
+      permission_mode: "default"
+    )
+    assert_equal "WorktreeCreate", input.hook_event_name
+    assert_equal "feature", input.name
+    assert_equal "sess-123", input.session_id
+    assert_equal "/path", input.transcript_path
+    assert_equal "/home", input.cwd
+    assert_equal "default", input.permission_mode
+  end
 end

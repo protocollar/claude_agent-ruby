@@ -1121,4 +1121,40 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
 
     assert_equal "", msg.suggestion
   end
+
+  # --- Parser Registry ---
+
+  test "registry contains all top-level message types" do
+    registry = ClaudeAgent::MessageParser.registry
+
+    %w[user assistant result stream_event tool_progress auth_status
+       tool_use_summary rate_limit_event prompt_suggestion].each do |type|
+      assert registry.key?(type), "Registry should contain '#{type}'"
+    end
+  end
+
+  test "registry contains all system subtypes" do
+    registry = ClaudeAgent::MessageParser.registry
+
+    %w[compact_boundary status hook_response task_notification hook_started
+       hook_progress files_persisted task_started task_progress].each do |subtype|
+      assert registry.key?("system:#{subtype}"), "Registry should contain 'system:#{subtype}'"
+    end
+  end
+
+  test "registry contains system fallback" do
+    assert ClaudeAgent::MessageParser.registry.key?("system")
+  end
+
+  test "registry routes unknown system subtype to system fallback" do
+    raw = {
+      "type" => "system",
+      "subtype" => "future_subtype",
+      "data" => { "info" => "new feature" }
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::SystemMessage, msg
+    assert_equal "future_subtype", msg.subtype
+  end
 end

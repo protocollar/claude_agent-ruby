@@ -779,6 +779,9 @@ module ClaudeAgent
   class MessageParser
     def initialize: (?logger: Logger?) -> void
     def parse: (Hash[untyped, untyped] raw) -> message
+
+    def self.registry: () -> Hash[String, Symbol]
+    def self.register: (String key, Symbol method_name) -> void
   end
 
   # Hook types
@@ -807,6 +810,9 @@ module ClaudeAgent
     attr_reader permission_mode: String?
 
     def initialize: (hook_event_name: String, ?session_id: String?, ?transcript_path: String?, ?cwd: String?, ?permission_mode: String?, **untyped) -> void
+
+    def self.define_input: (String event_name, ?required: Array[Symbol], ?optional: Hash[Symbol, untyped], ?constants: Hash[Symbol, untyped]) -> Class
+                         | (String event_name, ?required: Array[Symbol], ?optional: Hash[Symbol, untyped], ?constants: Hash[Symbol, untyped]) { () -> void } -> Class
   end
 
   class PreToolUseInput < BaseHookInput
