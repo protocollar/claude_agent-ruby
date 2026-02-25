@@ -3,6 +3,10 @@
 module ClaudeAgent
   # Parses raw JSON messages from the CLI into typed message objects
   #
+  # Uses a registry to route messages by type (and subtype for system messages)
+  # to named parse methods. New message types can be added with a single
+  # {.register} call instead of modifying case statements.
+  #
   # @example
   #   parser = MessageParser.new
   #   message = parser.parse({"type" => "assistant", "message" => {...}})
@@ -11,6 +15,22 @@ module ClaudeAgent
     # @param logger [Logger, nil] Optional logger instance
     def initialize(logger: nil)
       @logger = logger
+    end
+
+    # Registry of parser methods keyed by routing string.
+    # Keys are "type" for top-level types, "type:subtype" for system subtypes.
+    @registry = {}
+
+    class << self
+      attr_reader :registry
+
+      # Register a parse method for a message type
+      #
+      # @param key [String] Routing key ("type" or "type:subtype")
+      # @param method_name [Symbol] Name of the private parse method
+      def register(key, method_name)
+        @registry[key] = method_name
+      end
     end
 
     # Parse a raw message hash into a typed message object
@@ -23,54 +43,47 @@ module ClaudeAgent
       type = raw[:type]
       logger.debug("parser") { "Parsing message: #{type}" }
 
-      case type
-      when "user"
-        parse_user_message(raw)
-      when "assistant"
-        parse_assistant_message(raw)
-      when "system"
-        # Check for special system subtypes
-        case raw[:subtype]
-        when "compact_boundary"
-          parse_compact_boundary_message(raw)
-        when "status"
-          parse_status_message(raw)
-        when "hook_response"
-          parse_hook_response_message(raw)
-        when "task_notification"
-          parse_task_notification_message(raw)
-        when "hook_started"
-          parse_hook_started_message(raw)
-        when "hook_progress"
-          parse_hook_progress_message(raw)
-        when "files_persisted"
-          parse_files_persisted_event(raw)
-        when "task_started"
-          parse_task_started_message(raw)
-        when "task_progress"
-          parse_task_progress_message(raw)
-        else
-          parse_system_message(raw)
-        end
-      when "result"
-        parse_result_message(raw)
-      when "stream_event"
-        parse_stream_event(raw)
-      when "tool_progress"
-        parse_tool_progress_message(raw)
-      when "auth_status"
-        parse_auth_status_message(raw)
-      when "tool_use_summary"
-        parse_tool_use_summary_message(raw)
-      when "rate_limit_event"
-        parse_rate_limit_event(raw)
-      when "prompt_suggestion"
-        parse_prompt_suggestion_message(raw)
+      # Look up parser: try specific system subtype first, then top-level type
+      method_name = if type == "system" && raw[:subtype]
+        self.class.registry["system:#{raw[:subtype]}"] || self.class.registry["system"]
+      else
+        self.class.registry[type]
+      end
+
+      if method_name
+        send(method_name, raw)
       else
         logger.warn("parser") { "Unknown message type: #{type}, wrapping in GenericMessage" }
         GenericMessage.new(message_type: type.to_s, raw: raw)
       end
     end
+
+    # --- Parser Registration ---
+    #
+    # Top-level message types
+
+    register "user",              :parse_user_message
+    register "assistant",         :parse_assistant_message
+    register "result",            :parse_result_message
+    register "stream_event",      :parse_stream_event
+    register "tool_progress",     :parse_tool_progress_message
+    register "auth_status",       :parse_auth_status_message
+    register "tool_use_summary",  :parse_tool_use_summary_message
+    register "rate_limit_event",  :parse_rate_limit_event
+    register "prompt_suggestion", :parse_prompt_suggestion_message
+
+    # System message subtypes
+
+    register "system",                   :parse_system_message             # fallback for unknown subtypes
+    register "system:compact_boundary",  :parse_compact_boundary_message
+    register "system:status",            :parse_status_message
+    register "system:hook_response",     :parse_hook_response_message
+    register "system:task_notification", :parse_task_notification_message
+    register "system:hook_started",      :parse_hook_started_message
+    register "system:hook_progress",     :parse_hook_progress_message
+    register "system:files_persisted",   :parse_files_persisted_event
+    register "system:task_started",      :parse_task_started_message
+    register "system:task_progress",     :parse_task_progress_message
 
     private
 

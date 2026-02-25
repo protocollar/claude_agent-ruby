@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ServerToolUseBlock#file_path`, `#display_label`, `#summary(max:)` — same interface with server context (e.g. `"server_name/tool_name"`)
 
 ### Changed
+- `BaseHookInput.define_input` — declarative macro for generating hook input subclasses from a single declaration; replaces 18 hand-written classes with one-line definitions
+- `MessageParser` now uses a registry pattern (`MessageParser.register`) instead of nested `case` statements for message routing; adding a new message type is one `register` call
 - `MessageParser#parse` no longer raises `MessageParseError` for unknown message types; returns `GenericMessage` instead
 - `MessageParser#parse_content_block` no longer returns raw Hashes for unknown content block types; returns `GenericBlock` instead
 - All parsed message hashes now use snake_case symbol keys throughout (e.g. `msg.usage[:input_tokens]`, `event.files.first[:filename]`, `event.event[:type]`)
