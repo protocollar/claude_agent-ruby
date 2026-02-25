@@ -30,6 +30,7 @@ require_relative "claude_agent/tool_activity"
 require_relative "claude_agent/query"
 require_relative "claude_agent/client"
 require_relative "claude_agent/conversation"
+require_relative "claude_agent/list_sessions"       # Session discovery (TypeScript SDK v0.2.53 parity)
 require_relative "claude_agent/session"            # V2 Session API (unstable)
 
 module ClaudeAgent
@@ -40,6 +41,19 @@ module ClaudeAgent
     # @return [Conversation]
     def conversation(**kwargs)
       Conversation.new(**kwargs)
+    end
+
+    # List past sessions with metadata
+    #
+    # Reads session metadata directly from disk without spawning a CLI subprocess.
+    # Returns SessionInfo objects sorted by last modified time (most recent first).
+    #
+    # @param dir [String, nil] Directory to scope sessions to (includes git worktrees).
+    #   When nil, returns sessions from all projects.
+    # @param limit [Integer, nil] Maximum number of sessions to return.
+    # @return [Array<SessionInfo>]
+    def list_sessions(dir: nil, limit: nil)
+      ListSessions.call(dir: dir, limit: limit)
     end
 
     # Resume a previous Conversation by session ID

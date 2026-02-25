@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.52 (npm package)
-- Python SDK: v0.1.41 from GitHub (commit 69f6217)
+- TypeScript SDK: v0.2.56 (npm package)
+- Python SDK: v0.1.43 from GitHub (commit 9d758dd)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-24
+**Last Updated:** 2026-02-25
 
 ---
 
@@ -522,6 +522,25 @@ Session management and resumption.
 | Persist session      |     ✅      |   ❌    |  ✅   | `persistSession` option |
 | Continue most recent |     ✅      |   ✅    |  ✅   | `continue` option       |
 
+### Session Discovery
+
+| Feature          | TypeScript | Python | Ruby | Notes                                      |
+|------------------|:----------:|:------:|:----:|--------------------------------------------|
+| `listSessions()` |     ✅      |   ❌    |  ✅   | List past sessions with metadata (v0.2.53) |
+
+#### SDKSessionInfo Fields
+
+| Field          | TypeScript | Python | Ruby | Notes                               |
+|----------------|:----------:|:------:|:----:|-------------------------------------|
+| `sessionId`    |     ✅      |   ❌    |  ✅   | Session UUID                        |
+| `summary`      |     ✅      |   ❌    |  ✅   | Display title/summary               |
+| `lastModified` |     ✅      |   ❌    |  ✅   | Last modified time (ms since epoch) |
+| `fileSize`     |     ✅      |   ❌    |  ✅   | Session file size in bytes          |
+| `customTitle`  |     ✅      |   ❌    |  ✅   | User-set title via /rename          |
+| `firstPrompt`  |     ✅      |   ❌    |  ✅   | First meaningful user prompt        |
+| `gitBranch`    |     ✅      |   ❌    |  ✅   | Git branch at end of session        |
+| `cwd`          |     ✅      |   ❌    |  ✅   | Working directory for session       |
+
 ### V2 Session API (Unstable)
 
 | Feature                     | TypeScript | Python | Ruby | Notes                     |
@@ -628,6 +647,12 @@ Error types and hierarchy.
 
 Public API surface for SDK clients.
 
+### Standalone Functions
+
+| Feature          |    TypeScript    | Python | Ruby | Notes                                      |
+|------------------|:----------------:|:------:|:----:|--------------------------------------------|
+| `listSessions()` | ✅ `listSessions` |   ❌    |  ✅   | List past sessions with metadata (v0.2.53) |
+
 ### Query Interface
 
 | Feature                 | TypeScript  |   Python    |          Ruby           | Notes              |
@@ -701,6 +726,8 @@ Public API surface for SDK clients.
 - v0.2.50: Added `WorktreeCreate`/`WorktreeRemove` hook events, `apply_flag_settings` control request
 - v0.2.51: Added `TaskProgressMessage` for real-time background agent progress reporting
 - v0.2.52: Added `mcp_authenticate`/`mcp_clear_auth` control requests for MCP server authentication
+- v0.2.53: Added `listSessions()` for discovering and listing past sessions with `SDKSessionInfo` metadata
+- v0.2.54 – v0.2.56: CLI parity updates (no new SDK-facing features)
 
 ### Python SDK
 - Full source available with `Transport` abstract class
@@ -714,9 +741,10 @@ Public API surface for SDK clients.
 - Added `thinking` config and `effort` option in v0.1.36
 - Handles `rate_limit_event` and unknown message types gracefully (v0.1.40)
 - Client has `get_server_info()` for accessing the initialization result (v0.1.31+)
+- v0.1.42 – v0.1.43: CLI parity updates (no new SDK-facing features)
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.52
+- Feature parity with TypeScript SDK v0.2.56
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations

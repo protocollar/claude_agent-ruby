@@ -184,6 +184,35 @@ module ClaudeAgent
   #     max_turns: 10
   #   )
   #
+  # Session metadata returned by list_sessions (TypeScript SDK parity: SDKSessionInfo)
+  #
+  # @example
+  #   session = SessionInfo.new(
+  #     session_id: "abc-123",
+  #     summary: "Fix login bug",
+  #     last_modified: 1706000000000,
+  #     file_size: 4096,
+  #     custom_title: "Login fix",
+  #     first_prompt: "Help me fix the login page",
+  #     git_branch: "fix/login",
+  #     cwd: "/Users/dev/myapp"
+  #   )
+  #
+  SessionInfo = Data.define(
+    :session_id,
+    :summary,
+    :last_modified,
+    :file_size,
+    :custom_title,
+    :first_prompt,
+    :git_branch,
+    :cwd
+  ) do
+    def initialize(session_id:, summary:, last_modified:, file_size:, custom_title: nil, first_prompt: nil, git_branch: nil, cwd: nil)
+      super
+    end
+  end
+
   AgentDefinition = Data.define(
     :description,
     :prompt,
