@@ -1114,6 +1114,55 @@ module ClaudeAgent
     def has_handlers?: () -> bool
   end
 
+  # A single tool execution in the conversation timeline
+  class ToolActivity
+    attr_reader tool_use: ToolUseBlock | ServerToolUseBlock
+    attr_reader tool_result: ToolResultBlock | ServerToolResultBlock | nil
+    attr_reader turn_index: Integer
+    attr_reader started_at: Time?
+    attr_reader completed_at: Time?
+
+    def initialize: (tool_use: ToolUseBlock | ServerToolUseBlock, ?tool_result: ToolResultBlock | ServerToolResultBlock | nil, turn_index: Integer, ?started_at: Time?, ?completed_at: Time?) -> void
+    def name: () -> String
+    def display_label: () -> String
+    def summary: (?max: Integer) -> String
+    def file_path: () -> String?
+    def id: () -> String
+    def error?: () -> bool
+    def complete?: () -> bool
+    def duration: () -> Float?
+  end
+
+  # High-level conversation interface managing the full lifecycle
+  class Conversation
+    CONVERSATION_KEYS: Array[Symbol]
+
+    attr_reader turns: Array[TurnResult]
+    attr_reader messages: Array[message]
+    attr_reader tool_activity: Array[ToolActivity]
+    attr_reader client: Client
+
+    def self.open: (**untyped) { (Conversation) -> void } -> void
+    def self.resume: (String session_id, **untyped) -> Conversation
+
+    def initialize: (**untyped) -> void
+    def say: (String | Array[content_block] prompt) -> TurnResult
+           | (String | Array[content_block] prompt) { (message) -> void } -> TurnResult
+    def total_cost: () -> Float
+    def session_id: () -> String?
+    def usage: () -> CumulativeUsage
+    def pending_permission: () -> PermissionRequest?
+    def pending_permissions?: () -> bool
+    def close: () -> void
+    def open?: () -> bool
+    def closed?: () -> bool
+    def inspect: () -> String
+  end
+
+  # Convenience methods
+  def self.conversation: (**untyped) -> Conversation
+  def self.resume_conversation: (String session_id, **untyped) -> Conversation
+
   # Client
   class Client
     attr_reader options: Options
