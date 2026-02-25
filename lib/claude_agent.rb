@@ -26,10 +26,29 @@ require_relative "claude_agent/mcp/server"
 require_relative "claude_agent/cumulative_usage"
 require_relative "claude_agent/event_handler"
 require_relative "claude_agent/turn_result"
+require_relative "claude_agent/tool_activity"
 require_relative "claude_agent/query"
 require_relative "claude_agent/client"
+require_relative "claude_agent/conversation"
 require_relative "claude_agent/session"            # V2 Session API (unstable)
 
 module ClaudeAgent
-  # Re-export key classes at module level for convenience
+  class << self
+    # Create a new Conversation
+    #
+    # @see Conversation#initialize
+    # @return [Conversation]
+    def conversation(**kwargs)
+      Conversation.new(**kwargs)
+    end
+
+    # Resume a previous Conversation by session ID
+    #
+    # @param session_id [String] Session ID to resume
+    # @see Conversation.resume
+    # @return [Conversation]
+    def resume_conversation(session_id, **kwargs)
+      Conversation.resume(session_id, **kwargs)
+    end
+  end
 end

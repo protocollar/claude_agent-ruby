@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `Conversation` — high-level wrapper managing the full conversation lifecycle with auto-connect, multi-turn history, callbacks, and tool activity timeline
+- `Conversation#say(prompt)` — send a message and receive a `TurnResult`, auto-connecting on first call
+- `Conversation.open { |c| ... }` — block form with automatic cleanup
+- `Conversation.resume(session_id)` — resume a previous conversation
+- `Conversation` callbacks: `on_text`, `on_stream`, `on_tool_use`, `on_tool_result`, `on_thinking`, `on_result`, `on_message`, `on_permission`
+- `Conversation#total_cost`, `#session_id`, `#usage`, `#pending_permission`, `#pending_permissions?` — convenience accessors
+- `ClaudeAgent.conversation(**kwargs)` and `ClaudeAgent.resume_conversation(session_id)` — module-level convenience methods
+- `ToolActivity` — immutable `Data.define` pairing a `ToolUseBlock` with its `ToolResultBlock`, turn index, and timing; delegates `name`, `display_label`, `summary`, `file_path`, `id` to the tool use block
+- `Conversation#tool_activity` — unified timeline of all tool executions across turns with duration tracking
 - `PermissionRequest` — deferred permission promise that can be resolved from any thread via `allow!` / `deny!`, with `defer!` for hybrid callback/queue mode
 - `PermissionQueue` — thread-safe queue of pending `PermissionRequest` objects with `poll`, `pop(timeout:)`, and `drain!`
 - `Client#permission_queue` — returns the queue; always available on connected clients
