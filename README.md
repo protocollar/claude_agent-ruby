@@ -1178,6 +1178,49 @@ puts client.account_info.email
 client.disconnect
 ```
 
+## Session Discovery
+
+List past Claude Code sessions from disk without spawning a CLI subprocess:
+
+```ruby
+# All sessions (most recent first)
+sessions = ClaudeAgent.list_sessions
+
+# Scoped to a project directory (includes git worktree siblings)
+sessions = ClaudeAgent.list_sessions(dir: "/path/to/project", limit: 10)
+
+sessions.each do |s|
+  puts "#{s.summary} (#{s.git_branch || 'no branch'})"
+  puts "  Session: #{s.session_id}"
+  puts "  Modified: #{Time.at(s.last_modified / 1000)}"
+  puts "  Prompt: #{s.first_prompt}" if s.first_prompt
+end
+```
+
+Each session is a `SessionInfo` with these fields:
+
+| Field            | Type            | Description                                      |
+|------------------|-----------------|--------------------------------------------------|
+| `session_id`     | `String`        | UUID of the session                              |
+| `summary`        | `String`        | Custom title, last summary, or first prompt      |
+| `last_modified`  | `Integer`       | Epoch milliseconds of last modification          |
+| `file_size`      | `Integer`       | Session file size in bytes                       |
+| `custom_title`   | `String\|nil`   | User-set title, if any                           |
+| `first_prompt`   | `String\|nil`   | First meaningful user prompt                     |
+| `git_branch`     | `String\|nil`   | Git branch the session was on                    |
+| `cwd`            | `String\|nil`   | Working directory of the session                 |
+
+Use with `Conversation.resume` to pick up where you left off:
+
+```ruby
+sessions = ClaudeAgent.list_sessions(dir: Dir.pwd, limit: 5)
+session = sessions.first
+
+conversation = ClaudeAgent.resume_conversation(session.session_id)
+turn = conversation.say("Continue where we left off")
+conversation.close
+```
+
 ## V2 Session API (Unstable)
 
 > **Warning**: This API is unstable and may change without notice.
@@ -1279,6 +1322,7 @@ session = ClaudeAgent.unstable_v2_create_session(options)
 | `ModelUsage`          | Per-model usage stats (input_tokens, output_tokens, cost_usd)                    |
 | `McpSetServersResult` | Result of set_mcp_servers (added, removed, errors)                               |
 | `RewindFilesResult`   | Result of rewind_files (can_rewind, error, files_changed, insertions, deletions) |
+| `SessionInfo`         | Session metadata from `list_sessions` (session_id, summary, git_branch, cwd)     |
 | `SDKPermissionDenial` | Permission denial info (tool_name, tool_use_id, tool_input)                      |
 
 ## Logging
