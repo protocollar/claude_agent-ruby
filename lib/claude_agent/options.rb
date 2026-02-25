@@ -56,6 +56,7 @@ module ClaudeAgent
       system_prompt append_system_prompt
       model fallback_model
       permission_mode permission_prompt_tool_name can_use_tool allow_dangerously_skip_permissions
+      permission_queue
       continue_conversation resume fork_session resume_session_at session_id
       max_turns max_budget_usd thinking effort max_thinking_tokens
       strict_mcp_config mcp_servers hooks
@@ -309,10 +310,10 @@ module ClaudeAgent
         raise ConfigurationError, "can_use_tool must be callable (Proc, Lambda, or object responding to #call)"
       end
 
-      # Auto-set permission_prompt_tool_name to "stdio" when can_use_tool is configured
-      # (Python/TypeScript SDK parity) so the CLI routes permission prompts through the
-      # control protocol instead of interactive terminal prompts
-      if can_use_tool && !permission_prompt_tool_name
+      # Auto-set permission_prompt_tool_name to "stdio" when can_use_tool or
+      # permission_queue is configured, so the CLI routes permission prompts
+      # through the control protocol instead of interactive terminal prompts
+      if (can_use_tool || permission_queue) && !permission_prompt_tool_name
         @permission_prompt_tool_name = "stdio"
       end
 

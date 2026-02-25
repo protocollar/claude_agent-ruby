@@ -674,6 +674,39 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     refute_includes args, "--debug-file"
   end
 
+  # --- Permission Queue ---
+
+  test "permission_queue_default_nil" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.permission_queue
+  end
+
+  test "permission_queue_explicit_true" do
+    options = ClaudeAgent::Options.new(permission_queue: true)
+    assert_equal true, options.permission_queue
+  end
+
+  test "permission_queue_auto_sets_permission_prompt_tool_name" do
+    options = ClaudeAgent::Options.new(permission_queue: true)
+    assert_equal "stdio", options.permission_prompt_tool_name
+  end
+
+  test "permission_queue_does_not_override_explicit_permission_prompt_tool_name" do
+    options = ClaudeAgent::Options.new(
+      permission_queue: true,
+      permission_prompt_tool_name: "custom"
+    )
+    assert_equal "custom", options.permission_prompt_tool_name
+  end
+
+  test "to_cli_args_includes_permission_prompt_tool_with_permission_queue" do
+    options = ClaudeAgent::Options.new(permission_queue: true)
+    args = options.to_cli_args
+    assert_includes args, "--permission-prompt-tool"
+    idx = args.index("--permission-prompt-tool")
+    assert_equal "stdio", args[idx + 1]
+  end
+
   # --- Prompt Suggestions ---
 
   test "prompt_suggestions_default_false" do

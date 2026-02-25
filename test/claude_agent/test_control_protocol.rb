@@ -380,6 +380,134 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     assert_equal "my-remote-server", msg["request"]["serverName"]
   end
 
+  # --- Permission Queue Mode ---
+
+  test "handle can use tool with permission queue" do
+    queue = ClaudeAgent::PermissionQueue.new
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: @options)
+    protocol.permission_queue = queue
+
+    request = { "tool_name" => "Bash", "input" => { "command" => "ls" }, "tool_use_id" => "t1" }
+
+    # Resolve from another thread
+    Thread.new do
+      sleep 0.05
+      perm_request = queue.pop(timeout: 2)
+      perm_request.allow!
+    end
+
+    result = protocol.send(:handle_can_use_tool, request)
+
+    assert_equal "allow", result[:behavior]
+    assert_equal({ command: "ls" }, result[:updatedInput])
+  end
+
+  test "handle can use tool with permission queue deny" do
+    queue = ClaudeAgent::PermissionQueue.new
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: @options)
+    protocol.permission_queue = queue
+
+    request = { "tool_name" => "Bash", "input" => { "command" => "rm -rf /" } }
+
+    Thread.new do
+      sleep 0.05
+      perm_request = queue.pop(timeout: 2)
+      perm_request.deny!(message: "Too dangerous")
+    end
+
+    result = protocol.send(:handle_can_use_tool, request)
+
+    assert_equal "deny", result[:behavior]
+    assert_equal "Too dangerous", result[:message]
+  end
+
+  test "handle can use tool callback takes priority over queue" do
+    queue = ClaudeAgent::PermissionQueue.new
+    options = ClaudeAgent::Options.new(
+      can_use_tool: ->(name, input, context) {
+        ClaudeAgent::PermissionResultAllow.new
+      }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+    protocol.permission_queue = queue
+
+    request = { "tool_name" => "Read", "input" => {} }
+    result = protocol.send(:handle_can_use_tool, request)
+
+    assert_equal "allow", result[:behavior]
+    assert queue.empty?, "Queue should not be used when callback is set"
+  end
+
+  test "handle can use tool hybrid defer mode" do
+    queue = ClaudeAgent::PermissionQueue.new
+    options = ClaudeAgent::Options.new(
+      can_use_tool: ->(name, input, context) {
+        if name == "Read"
+          ClaudeAgent::PermissionResultAllow.new
+        else
+          context.request.defer!
+        end
+      }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+    protocol.permission_queue = queue
+
+    # Read should be allowed synchronously
+    read_result = protocol.send(:handle_can_use_tool, { "tool_name" => "Read", "input" => {} })
+    assert_equal "allow", read_result[:behavior]
+    assert queue.empty?
+
+    # Bash should be deferred to the queue
+    Thread.new do
+      sleep 0.05
+      perm_request = queue.pop(timeout: 2)
+      perm_request.allow!
+    end
+
+    bash_result = protocol.send(:handle_can_use_tool, { "tool_name" => "Bash", "input" => { "command" => "ls" } })
+    assert_equal "allow", bash_result[:behavior]
+  end
+
+  test "handle can use tool provides context on queued request" do
+    queue = ClaudeAgent::PermissionQueue.new
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: @options)
+    protocol.permission_queue = queue
+
+    request = {
+      "tool_name" => "Write",
+      "input" => { "file_path" => "/tmp/test.txt" },
+      "tool_use_id" => "t-42",
+      "blocked_path" => "/tmp/test.txt",
+      "decision_reason" => "Path needs approval"
+    }
+
+    captured_request = nil
+    Thread.new do
+      sleep 0.05
+      captured_request = queue.pop(timeout: 2)
+      captured_request.allow!
+    end
+
+    protocol.send(:handle_can_use_tool, request)
+
+    assert_not_nil captured_request
+    assert_equal "Write", captured_request.tool_name
+    assert_equal({ file_path: "/tmp/test.txt" }, captured_request.input)
+    assert_equal "t-42", captured_request.context.tool_use_id
+    assert_equal "/tmp/test.txt", captured_request.context.blocked_path
+    assert_equal "Path needs approval", captured_request.context.decision_reason
+  end
+
+  test "handle can use tool default allow without queue or callback" do
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: @options)
+    # No queue, no callback
+
+    request = { "tool_name" => "Read", "input" => {} }
+    result = protocol.send(:handle_can_use_tool, request)
+
+    assert_equal "allow", result[:behavior]
+  end
+
   test "mcp_toggle sends correct request format" do
     @transport.connect
 

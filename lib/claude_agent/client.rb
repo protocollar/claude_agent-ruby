@@ -32,7 +32,7 @@ module ClaudeAgent
   #   end
   #
   class Client
-    attr_reader :options, :transport, :server_info, :cumulative_usage, :event_handler
+    attr_reader :options, :transport, :server_info, :cumulative_usage, :event_handler, :permission_queue
 
     # Open a client with automatic cleanup
     #
@@ -63,6 +63,7 @@ module ClaudeAgent
       @connected = false
       @cumulative_usage = CumulativeUsage.new
       @event_handler = EventHandler.new
+      @permission_queue = PermissionQueue.new
     end
 
     # Connect to the CLI
@@ -76,6 +77,7 @@ module ClaudeAgent
 
       logger.info("client") { "Connecting" }
       @protocol = ControlProtocol.new(transport: @transport, options: @options)
+      @protocol.permission_queue = @permission_queue
       @server_info = @protocol.start(streaming: true)
       @connected = true
       logger.info("client") { "Connected" }
@@ -90,6 +92,7 @@ module ClaudeAgent
       return unless @connected
 
       logger.info("client") { "Disconnecting" }
+      @permission_queue.drain!(reason: "Client disconnected")
       @protocol&.stop
       @protocol = nil
       @connected = false
@@ -309,6 +312,7 @@ module ClaudeAgent
     def abort!(reason = nil)
       return unless @connected
 
+      @permission_queue.drain!(reason: reason || "Operation aborted")
       @options.abort_controller&.abort(reason)
       @protocol&.abort!
     end
@@ -515,6 +519,30 @@ module ClaudeAgent
       require_connection!
 
       @protocol.mcp_clear_auth(server_name)
+    end
+
+    # Non-blocking poll for the next pending permission request.
+    #
+    # Returns the next {PermissionRequest} from the queue, or nil if
+    # no requests are pending. Call {PermissionRequest#allow!} or
+    # {PermissionRequest#deny!} to resolve it.
+    #
+    # @return [PermissionRequest, nil] The next pending request, or nil
+    #
+    # @example UI poll loop
+    #   if request = client.pending_permission
+    #     show_permission_dialog(request)
+    #   end
+    #
+    def pending_permission
+      @permission_queue.poll
+    end
+
+    # Check if there are any pending permission requests.
+    #
+    # @return [Boolean]
+    def pending_permissions?
+      !@permission_queue.empty?
     end
 
     private
