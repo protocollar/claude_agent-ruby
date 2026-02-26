@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.9] - 2026-02-25
+
 ### Added
 - `Conversation` — high-level wrapper managing the full conversation lifecycle with auto-connect, multi-turn history, callbacks, and tool activity timeline
 - `Conversation#say(prompt)` — send a message and receive a `TurnResult`, auto-connecting on first call
