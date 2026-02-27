@@ -1132,14 +1132,44 @@ module ClaudeAgent
 
   # Event handler for dispatching typed events from message streams
   class EventHandler
+    TYPE_EVENTS: Array[Symbol]
+    DECOMPOSED_EVENTS: Array[Symbol]
+    META_EVENTS: Array[Symbol]
+    EVENTS: Array[Symbol]
+
     def initialize: () -> void
     def on: (Symbol event) { (*untyped) -> void } -> self
+
+    # Meta events
     def on_message: () { (message) -> void } -> self
+
+    # Type-based events
+    def on_user: () { (UserMessage | UserMessageReplay) -> void } -> self
+    def on_assistant: () { (AssistantMessage) -> void } -> self
+    def on_system: () { (SystemMessage) -> void } -> self
+    def on_result: () { (ResultMessage) -> void } -> self
+    def on_stream_event: () { (StreamEvent) -> void } -> self
+    def on_compact_boundary: () { (CompactBoundaryMessage) -> void } -> self
+    def on_status: () { (StatusMessage) -> void } -> self
+    def on_tool_progress: () { (ToolProgressMessage) -> void } -> self
+    def on_hook_response: () { (HookResponseMessage) -> void } -> self
+    def on_auth_status: () { (AuthStatusMessage) -> void } -> self
+    def on_task_notification: () { (TaskNotificationMessage) -> void } -> self
+    def on_hook_started: () { (HookStartedMessage) -> void } -> self
+    def on_hook_progress: () { (HookProgressMessage) -> void } -> self
+    def on_tool_use_summary: () { (ToolUseSummaryMessage) -> void } -> self
+    def on_task_started: () { (TaskStartedMessage) -> void } -> self
+    def on_task_progress: () { (TaskProgressMessage) -> void } -> self
+    def on_rate_limit_event: () { (RateLimitEvent) -> void } -> self
+    def on_prompt_suggestion: () { (PromptSuggestionMessage) -> void } -> self
+    def on_files_persisted: () { (FilesPersistedEvent) -> void } -> self
+
+    # Decomposed events
     def on_text: () { (String) -> void } -> self
     def on_thinking: () { (String) -> void } -> self
     def on_tool_use: () { (ToolUseBlock | ServerToolUseBlock) -> void } -> self
     def on_tool_result: () { (ToolResultBlock | ServerToolResultBlock, (ToolUseBlock | ServerToolUseBlock)?) -> void } -> self
-    def on_result: () { (ResultMessage) -> void } -> self
+
     def handle: (message) -> void
     def reset!: () -> void
     def has_handlers?: () -> bool
@@ -1164,14 +1194,64 @@ module ClaudeAgent
     def duration: () -> Float?
   end
 
+  # Mutable wrapper around a ToolUseBlock for real-time status tracking
+  class LiveToolActivity
+    attr_reader tool_use: ToolUseBlock | ServerToolUseBlock
+    attr_reader tool_result: ToolResultBlock | ServerToolResultBlock | nil
+    attr_reader status: Symbol
+    attr_reader started_at: Time
+    attr_reader elapsed: Float?
+
+    def initialize: (ToolUseBlock | ServerToolUseBlock tool_use) -> void
+    def id: () -> String
+    def name: () -> String
+    def input: () -> Hash[Symbol | String, untyped]
+    def display_label: () -> String
+    def summary: (?max: Integer) -> String
+    def file_path: () -> String?
+    def complete!: (ToolResultBlock | ServerToolResultBlock result) -> void
+    def update_elapsed: (Float seconds) -> void
+    def running?: () -> bool
+    def done?: () -> bool
+    def error?: () -> bool
+    def complete?: () -> bool
+    def to_h: () -> Hash[Symbol, untyped]
+    def inspect: () -> String
+  end
+
+  # Enumerable collection of LiveToolActivity entries with auto-wiring
+  class ToolActivityTracker
+    include Enumerable[LiveToolActivity]
+
+    def self.attach: (EventHandler | Client target) -> ToolActivityTracker
+
+    def initialize: () -> void
+    def on_start: () { (LiveToolActivity) -> void } -> self
+    def on_complete: () { (LiveToolActivity) -> void } -> self
+    def on_progress: () { (LiveToolActivity) -> void } -> self
+    def on_change: () { (Symbol, LiveToolActivity) -> void } -> self
+    def each: () { (LiveToolActivity) -> void } -> void
+            | () -> Enumerator[LiveToolActivity, void]
+    def size: () -> Integer
+    def empty?: () -> bool
+    def find_by_id: (String id) -> LiveToolActivity?
+    def []: (String id) -> LiveToolActivity?
+    def running: () -> Array[LiveToolActivity]
+    def done: () -> Array[LiveToolActivity]
+    def errored: () -> Array[LiveToolActivity]
+    def reset!: () -> void
+  end
+
   # High-level conversation interface managing the full lifecycle
   class Conversation
     CONVERSATION_KEYS: Array[Symbol]
+    CALLBACK_ALIASES: Hash[Symbol, Symbol]
 
     attr_reader turns: Array[TurnResult]
     attr_reader messages: Array[message]
     attr_reader tool_activity: Array[ToolActivity]
     attr_reader client: Client
+    attr_reader tool_tracker: ToolActivityTracker?
 
     def self.open: (**untyped) { (Conversation) -> void } -> void
     def self.resume: (String session_id, **untyped) -> Conversation
@@ -1245,12 +1325,37 @@ module ClaudeAgent
     def send_message: (String | Array[content_block] content, ?session_id: String, ?uuid: String?) -> void
     alias query send_message
     def on: (Symbol event) { (*untyped) -> void } -> self
+
+    # Meta events
     def on_message: () { (message) -> void } -> self
+
+    # Type-based events
+    def on_user: () { (UserMessage | UserMessageReplay) -> void } -> self
+    def on_assistant: () { (AssistantMessage) -> void } -> self
+    def on_system: () { (SystemMessage) -> void } -> self
+    def on_result: () { (ResultMessage) -> void } -> self
+    def on_stream_event: () { (StreamEvent) -> void } -> self
+    def on_compact_boundary: () { (CompactBoundaryMessage) -> void } -> self
+    def on_status: () { (StatusMessage) -> void } -> self
+    def on_tool_progress: () { (ToolProgressMessage) -> void } -> self
+    def on_hook_response: () { (HookResponseMessage) -> void } -> self
+    def on_auth_status: () { (AuthStatusMessage) -> void } -> self
+    def on_task_notification: () { (TaskNotificationMessage) -> void } -> self
+    def on_hook_started: () { (HookStartedMessage) -> void } -> self
+    def on_hook_progress: () { (HookProgressMessage) -> void } -> self
+    def on_tool_use_summary: () { (ToolUseSummaryMessage) -> void } -> self
+    def on_task_started: () { (TaskStartedMessage) -> void } -> self
+    def on_task_progress: () { (TaskProgressMessage) -> void } -> self
+    def on_rate_limit_event: () { (RateLimitEvent) -> void } -> self
+    def on_prompt_suggestion: () { (PromptSuggestionMessage) -> void } -> self
+    def on_files_persisted: () { (FilesPersistedEvent) -> void } -> self
+
+    # Decomposed events
     def on_text: () { (String) -> void } -> self
     def on_thinking: () { (String) -> void } -> self
     def on_tool_use: () { (ToolUseBlock | ServerToolUseBlock) -> void } -> self
     def on_tool_result: () { (ToolResultBlock | ServerToolResultBlock, (ToolUseBlock | ServerToolUseBlock)?) -> void } -> self
-    def on_result: () { (ResultMessage) -> void } -> self
+
     def receive_messages: () { (message) -> void } -> void
                         | () -> Enumerator[message, void]
     def receive_response: () { (message) -> void } -> void

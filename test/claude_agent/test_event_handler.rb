@@ -351,6 +351,123 @@ class TestClaudeAgentEventHandler < ActiveSupport::TestCase
     assert_equal expected, log
   end
 
+  # --- Type-based dispatch ---
+
+  test "type-based dispatch fires for StreamEvent" do
+    received = []
+    @handler.on_stream_event { |msg| received << msg }
+
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta" }
+    )
+    @handler.handle(event)
+
+    assert_equal 1, received.size
+    assert_instance_of ClaudeAgent::StreamEvent, received[0]
+  end
+
+  test "type-based dispatch fires for ToolProgressMessage" do
+    received = []
+    @handler.on_tool_progress { |msg| received << msg }
+
+    progress = ClaudeAgent::ToolProgressMessage.new(
+      uuid: "m1", session_id: "s1",
+      tool_use_id: "t1", tool_name: "Bash",
+      elapsed_time_seconds: 5.0
+    )
+    @handler.handle(progress)
+
+    assert_equal 1, received.size
+    assert_instance_of ClaudeAgent::ToolProgressMessage, received[0]
+  end
+
+  test "type-based dispatch fires for StatusMessage" do
+    received = []
+    @handler.on_status { |msg| received << msg }
+
+    status = ClaudeAgent::StatusMessage.new(
+      uuid: "m1", session_id: "s1", status: "compacting"
+    )
+    @handler.handle(status)
+
+    assert_equal 1, received.size
+    assert_instance_of ClaudeAgent::StatusMessage, received[0]
+  end
+
+  test "type-based dispatch fires :assistant for AssistantMessage" do
+    received = []
+    @handler.on_assistant { |msg| received << msg }
+
+    @handler.handle(make_assistant("Hello"))
+
+    assert_equal 1, received.size
+    assert_instance_of ClaudeAgent::AssistantMessage, received[0]
+  end
+
+  test "type-based dispatch fires :user for UserMessage" do
+    received = []
+    @handler.on_user { |msg| received << msg }
+
+    @handler.handle(ClaudeAgent::UserMessage.new(content: "Hello"))
+
+    assert_equal 1, received.size
+    assert_instance_of ClaudeAgent::UserMessage, received[0]
+  end
+
+  test "GenericMessage fires its dynamic type" do
+    received = []
+    @handler.on(:fancy_new_type) { |msg| received << msg }
+
+    generic = ClaudeAgent::GenericMessage.new(
+      message_type: "fancy_new_type",
+      raw: { data: "hello" }
+    )
+    @handler.handle(generic)
+
+    assert_equal 1, received.size
+    assert_instance_of ClaudeAgent::GenericMessage, received[0]
+  end
+
+  test "all three layers fire in order: message, type, decomposed" do
+    log = []
+
+    @handler.on_message { |_| log << :message }
+    @handler.on_assistant { |_| log << :assistant }
+    @handler.on_text { |_| log << :text }
+    @handler.on_tool_use { |_| log << :tool_use }
+
+    @handler.handle(ClaudeAgent::AssistantMessage.new(
+      content: [
+        ClaudeAgent::TextBlock.new(text: "Hello"),
+        ClaudeAgent::ToolUseBlock.new(id: "t1", name: "Read", input: {})
+      ],
+      model: "claude"
+    ))
+
+    assert_equal [ :message, :assistant, :text, :tool_use ], log
+  end
+
+  test "result fires via type-based dispatch" do
+    log = []
+
+    @handler.on_message { |_| log << :message }
+    @handler.on_result { |_| log << :result }
+
+    @handler.handle(make_result)
+
+    assert_equal [ :message, :result ], log
+  end
+
+  test "unknown event registration via on still works" do
+    received = []
+    @handler.on(:custom_event) { |data| received << data }
+
+    # Custom events won't fire from handle() but direct emit works
+    # Just verify registration doesn't blow up
+    assert @handler.has_handlers?
+  end
+
   # --- Handles non-dispatched message types gracefully ---
 
   test "handles stream events without error" do
@@ -376,6 +493,20 @@ class TestClaudeAgentEventHandler < ActiveSupport::TestCase
     @handler.handle(status)
 
     assert_equal 1, received.size
+  end
+
+  # --- Constants ---
+
+  test "EVENTS includes all meta, type, and decomposed events" do
+    assert_includes ClaudeAgent::EventHandler::EVENTS, :message
+    assert_includes ClaudeAgent::EventHandler::EVENTS, :assistant
+    assert_includes ClaudeAgent::EventHandler::EVENTS, :stream_event
+    assert_includes ClaudeAgent::EventHandler::EVENTS, :text
+    assert_includes ClaudeAgent::EventHandler::EVENTS, :tool_result
+  end
+
+  test "EVENTS is frozen" do
+    assert ClaudeAgent::EventHandler::EVENTS.frozen?
   end
 
   private

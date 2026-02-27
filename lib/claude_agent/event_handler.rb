@@ -3,7 +3,13 @@
 module ClaudeAgent
   # Dispatches typed events as messages flow through a conversation turn.
   #
-  # Register handlers for specific events instead of writing `case` statements
+  # Three event layers fire for every message:
+  #
+  # 1. **Catch-all** — +:message+ fires for every message
+  # 2. **Type-based** — +message.type+ fires (e.g. +:assistant+, +:stream_event+, +:status+)
+  # 3. **Decomposed** — convenience events for rich content types (+:text+, +:thinking+, etc.)
+  #
+  # Register handlers for specific events instead of writing +case+ statements
   # over raw message types. Use standalone or via {Client#on}.
   #
   # @example Standalone
@@ -13,6 +19,11 @@ module ClaudeAgent
   #   handler.on_result { |result| puts "Cost: $#{result.total_cost_usd}" }
   #
   #   client.receive_response.each { |msg| handler.handle(msg) }
+  #
+  # @example Type-based events
+  #   handler.on_stream_event { |evt| handle_stream(evt) }
+  #   handler.on_tool_progress { |prog| update_spinner(prog) }
+  #   handler.on_status { |status| show_status(status) }
   #
   # @example Via Client
   #   client.on_text { |text| print text }
@@ -25,13 +36,22 @@ module ClaudeAgent
   #     .on_result { |r| puts "\nDone!" }
   #
   class EventHandler
-    # Events:
-    #   :message      — every message (catch-all)
-    #   :text         — AssistantMessage text content
-    #   :thinking     — AssistantMessage thinking content
-    #   :tool_use     — ToolUseBlock or ServerToolUseBlock
-    #   :tool_result  — ToolResultBlock or ServerToolResultBlock, paired with original tool_use
-    #   :result       — ResultMessage (end of turn)
+    # Type-based events — one per message type, auto-dispatched from message.type
+    TYPE_EVENTS = %i[
+      user assistant system result stream_event compact_boundary
+      status tool_progress hook_response auth_status task_notification
+      hook_started hook_progress tool_use_summary task_started
+      task_progress rate_limit_event prompt_suggestion files_persisted
+    ].freeze
+
+    # Decomposed events — extracted content from rich message types
+    DECOMPOSED_EVENTS = %i[text thinking tool_use tool_result].freeze
+
+    # Meta events — catch-all
+    META_EVENTS = %i[message].freeze
+
+    # All known events
+    EVENTS = (META_EVENTS + TYPE_EVENTS + DECOMPOSED_EVENTS).freeze
 
     def initialize
       @handlers = Hash.new { |h, k| h[k] = [] }
@@ -40,7 +60,7 @@ module ClaudeAgent
 
     # Register a handler for an event
     #
-    # @param event [Symbol] Event name
+    # @param event [Symbol] Event name (any symbol, including future/unknown types)
     # @yield Event-specific arguments
     # @return [self]
     def on(event, &block)
@@ -49,53 +69,82 @@ module ClaudeAgent
     end
 
     # @!method on_message(&block)
-    #   Register a handler for every message
+    #   Register a handler for every message (catch-all)
     #   @yield [message] Any message object
     #   @return [self]
 
+    # @!method on_assistant(&block)
+    #   Register a handler for AssistantMessage
+    #   @yield [AssistantMessage] The assistant message
+    #   @return [self]
+
+    # @!method on_user(&block)
+    #   Register a handler for UserMessage
+    #   @yield [UserMessage] The user message
+    #   @return [self]
+
+    # @!method on_result(&block)
+    #   Register a handler for ResultMessage (end of turn)
+    #   @yield [ResultMessage] The result
+    #   @return [self]
+
+    # @!method on_stream_event(&block)
+    #   Register a handler for StreamEvent
+    #   @yield [StreamEvent] The stream event
+    #   @return [self]
+
+    # @!method on_status(&block)
+    #   Register a handler for StatusMessage
+    #   @yield [StatusMessage] The status message
+    #   @return [self]
+
+    # @!method on_tool_progress(&block)
+    #   Register a handler for ToolProgressMessage
+    #   @yield [ToolProgressMessage] The tool progress message
+    #   @return [self]
+
     # @!method on_text(&block)
-    #   Register a handler for assistant text content
+    #   Register a handler for assistant text content (decomposed)
     #   @yield [String] Text from the AssistantMessage
     #   @return [self]
 
     # @!method on_thinking(&block)
-    #   Register a handler for assistant thinking content
+    #   Register a handler for assistant thinking content (decomposed)
     #   @yield [String] Thinking from the AssistantMessage
     #   @return [self]
 
     # @!method on_tool_use(&block)
-    #   Register a handler for tool use requests
+    #   Register a handler for tool use requests (decomposed)
     #   @yield [ToolUseBlock, ServerToolUseBlock] The tool use block
     #   @return [self]
 
     # @!method on_tool_result(&block)
-    #   Register a handler for tool results, paired with the original request
+    #   Register a handler for tool results, paired with the original request (decomposed)
     #   @yield [ToolResultBlock, ToolUseBlock|nil] Result block and matched tool use
     #   @return [self]
 
-    # @!method on_result(&block)
-    #   Register a handler for the final ResultMessage
-    #   @yield [ResultMessage] The result
-    #   @return [self]
-
-    %i[message text thinking tool_use tool_result result].each do |event|
+    EVENTS.each do |event|
       define_method(:"on_#{event}") { |&block| on(event, &block) }
     end
 
     # Dispatch a message to registered handlers
     #
+    # Fires events in order:
+    # 1. +:message+ (catch-all)
+    # 2. +message.type+ (type-based, e.g. +:assistant+, +:stream_event+)
+    # 3. Decomposed events (+:text+, +:thinking+, +:tool_use+, +:tool_result+)
+    #
     # @param message [Message] Any SDK message
     # @return [void]
     def handle(message)
       emit(:message, message)
+      emit(message.type, message)
 
       case message
       when AssistantMessage
         handle_assistant(message)
       when UserMessage, UserMessageReplay
         handle_user(message)
-      when ResultMessage
-        emit(:result, message)
       end
     end
 

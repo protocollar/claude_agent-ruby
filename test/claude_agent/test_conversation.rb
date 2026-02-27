@@ -348,6 +348,67 @@ class TestClaudeAgentConversation < ActiveSupport::TestCase
     assert_equal 2, messages.size
   end
 
+  test "on_stream_event callback fires for StreamEvent" do
+    transport = MockTransport.new
+    events = []
+    conversation = build_conversation(
+      transport: transport,
+      on_stream_event: ->(evt) { events << evt }
+    )
+
+    transport.add_response({
+      "type" => "stream_event",
+      "uuid" => "e1",
+      "session_id" => "s1",
+      "event" => { "type" => "content_block_delta" }
+    })
+    transport.add_response(assistant_response)
+    transport.add_response(result_response)
+    conversation.say("Hi")
+
+    assert_equal 1, events.size
+    assert_instance_of ClaudeAgent::StreamEvent, events[0]
+  end
+
+  test "on_status callback fires for StatusMessage" do
+    transport = MockTransport.new
+    statuses = []
+    conversation = build_conversation(
+      transport: transport,
+      on_status: ->(msg) { statuses << msg }
+    )
+
+    transport.add_response({
+      "type" => "system",
+      "subtype" => "status",
+      "uuid" => "m1",
+      "session_id" => "s1",
+      "status" => "compacting"
+    })
+    transport.add_response(assistant_response)
+    transport.add_response(result_response)
+    conversation.say("Hi")
+
+    assert_equal 1, statuses.size
+    assert_instance_of ClaudeAgent::StatusMessage, statuses[0]
+  end
+
+  test "on_assistant callback fires for AssistantMessage" do
+    transport = MockTransport.new
+    assistants = []
+    conversation = build_conversation(
+      transport: transport,
+      on_assistant: ->(msg) { assistants << msg }
+    )
+
+    transport.add_response(assistant_response(text: "Hello!"))
+    transport.add_response(result_response)
+    conversation.say("Hi")
+
+    assert_equal 1, assistants.size
+    assert_instance_of ClaudeAgent::AssistantMessage, assistants[0]
+  end
+
   test "callbacks persist across turns" do
     transport = MockTransport.new
     texts = []
@@ -525,6 +586,47 @@ class TestClaudeAgentConversation < ActiveSupport::TestCase
     client = ClaudeAgent::Client.new(transport: transport)
     conversation = ClaudeAgent.resume_conversation("session-abc", client: client)
     assert_instance_of ClaudeAgent::Conversation, conversation
+  end
+
+  # --- Tool Tracker ---
+
+  test "tool_tracker is nil by default" do
+    conversation = build_conversation
+    assert_nil conversation.tool_tracker
+  end
+
+  test "track_tools true creates a tracker" do
+    conversation = build_conversation(track_tools: true)
+    assert_instance_of ClaudeAgent::ToolActivityTracker, conversation.tool_tracker
+  end
+
+  test "tracker resets between turns" do
+    transport = MockTransport.new
+    conversation = build_conversation(transport: transport, track_tools: true)
+
+    # Turn 1 with a tool
+    transport.add_response(assistant_response(
+      text: "Reading.",
+      tool_use: { id: "t1", name: "Read", input: { "file_path" => "/a.rb" } }
+    ))
+    transport.add_response(tool_result_response(tool_use_id: "t1"))
+    transport.add_response(result_response)
+    conversation.say("Read a.rb")
+
+    # After turn completes, tracker should be reset
+    assert conversation.tool_tracker.empty?
+
+    # Turn 2 with a different tool
+    transport.add_response(assistant_response(
+      text: "Writing.",
+      tool_use: { id: "t2", name: "Write", input: { "file_path" => "/b.rb", "content" => "hello" } }
+    ))
+    transport.add_response(tool_result_response(tool_use_id: "t2"))
+    transport.add_response(result_response)
+    conversation.say("Write b.rb")
+
+    # After second turn, tracker is reset again
+    assert conversation.tool_tracker.empty?
   end
 
   # --- on_permission ---

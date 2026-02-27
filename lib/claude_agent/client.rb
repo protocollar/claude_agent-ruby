@@ -159,50 +159,28 @@ module ClaudeAgent
     # Handlers persist across turns and fire automatically during
     # {#receive_turn} and {#send_and_receive}.
     #
-    # @param event [Symbol] Event name (:message, :text, :thinking, :tool_use, :tool_result, :result)
+    # See {EventHandler} for the full event hierarchy:
+    # - +:message+ — catch-all for every message
+    # - Type-based — +:assistant+, +:stream_event+, +:status+, etc.
+    # - Decomposed — +:text+, +:thinking+, +:tool_use+, +:tool_result+
+    #
+    # @param event [Symbol] Event name (see {EventHandler::EVENTS})
     # @yield Event-specific arguments
     # @return [self]
     #
     # @example
     #   client.on(:text) { |text| print text }
     #   client.on(:tool_use) { |tool| show_spinner(tool) }
+    #   client.on(:stream_event) { |evt| handle_stream(evt) }
     #
     def on(event, &block)
       @event_handler.on(event, &block)
       self
     end
 
-    # @!method on_text(&block)
-    #   Register a handler for assistant text content
-    #   @yield [String] Text from the AssistantMessage
-    #   @return [self]
-
-    # @!method on_thinking(&block)
-    #   Register a handler for assistant thinking content
-    #   @yield [String] Thinking from the AssistantMessage
-    #   @return [self]
-
-    # @!method on_tool_use(&block)
-    #   Register a handler for tool use requests
-    #   @yield [ToolUseBlock, ServerToolUseBlock] The tool use block
-    #   @return [self]
-
-    # @!method on_tool_result(&block)
-    #   Register a handler for tool results, paired with the original request
-    #   @yield [ToolResultBlock, ToolUseBlock|nil] Result block and matched tool use
-    #   @return [self]
-
-    # @!method on_result(&block)
-    #   Register a handler for the final ResultMessage
-    #   @yield [ResultMessage] The result
-    #   @return [self]
-
-    # @!method on_message(&block)
-    #   Register a handler for every message (catch-all)
-    #   @yield [message] Any message object
-    #   @return [self]
-
-    %i[message text thinking tool_use tool_result result].each do |event|
+    # Generates on_* convenience methods for all known events.
+    # See {EventHandler::EVENTS} for the complete list.
+    EventHandler::EVENTS.each do |event|
       define_method(:"on_#{event}") { |&block| on(event, &block) }
     end
 

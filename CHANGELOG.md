@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `LiveToolActivity` — mutable, real-time tool status tracker (`:running` → `:done`/`:error`) with elapsed time and delegation to `ToolUseBlock`
+- `ToolActivityTracker` — `Enumerable` collection that auto-wires to `EventHandler` or `Client` via `.attach`, with `on_start`/`on_complete`/`on_progress` callbacks, `on_change` catch-all, `running`/`done`/`errored` filtered views, and `reset!`
+- `Conversation` accepts `track_tools: true` to opt into live tool tracking via `tool_tracker` accessor
+- Convention-based event dispatch — every message type now auto-fires a dedicated event based on `message.type` (e.g. `:assistant`, `:stream_event`, `:status`, `:tool_progress`)
+- `EventHandler::EVENTS`, `TYPE_EVENTS`, `DECOMPOSED_EVENTS`, `META_EVENTS` constants enumerating all known events
+- `on_assistant`, `on_user`, `on_stream_event`, `on_status`, `on_tool_progress`, `on_hook_response`, `on_auth_status`, `on_task_notification`, `on_hook_started`, `on_hook_progress`, `on_tool_use_summary`, `on_task_started`, `on_task_progress`, `on_rate_limit_event`, `on_prompt_suggestion`, `on_files_persisted` convenience methods on `EventHandler` and `Client`
+- `Conversation` now accepts any `on_*` keyword argument as a callback (pattern-based, no longer limited to a hardcoded list)
+- `GenericMessage` fires its dynamic type symbol, so `on(:fancy_new_type)` works for future/unknown CLI message types
+
+### Changed
+- `EventHandler#handle` now fires three layers per message: `:message` (catch-all) → `message.type` (type-based) → decomposed (`:text`, `:thinking`, `:tool_use`, `:tool_result`)
+- `Conversation::CONVERSATION_KEYS` now contains only infrastructure keys (`client`, `options`, `on_permission`); callback detection is pattern-based via `on_*` prefix
+
 ## [0.7.10] - 2026-02-26
 
 ### Added
