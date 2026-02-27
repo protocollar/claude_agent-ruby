@@ -79,18 +79,18 @@ class TestClaudeAgentListSessions < ActiveSupport::TestCase
   # --- Directory Encoding ---
 
   test "encode_project_dir replaces non-alphanumeric with dashes" do
-    result = ClaudeAgent::ListSessions.send(:encode_project_dir, "/Users/tom/myproject")
+    result = ClaudeAgent::SessionPaths.encode_project_dir("/Users/tom/myproject")
     assert_equal "-Users-tom-myproject", result
   end
 
   test "encode_project_dir preserves alphanumeric characters" do
-    result = ClaudeAgent::ListSessions.send(:encode_project_dir, "abc123")
+    result = ClaudeAgent::SessionPaths.encode_project_dir("abc123")
     assert_equal "abc123", result
   end
 
   test "encode_project_dir truncates long paths with hash suffix" do
     long_path = "/Users/very/" + "a" * 300 + "/project"
-    result = ClaudeAgent::ListSessions.send(:encode_project_dir, long_path)
+    result = ClaudeAgent::SessionPaths.encode_project_dir(long_path)
 
     assert result.length > 200, "result should be longer than 200 (slug + hash)"
     assert result.start_with?("-Users-very-")
@@ -101,14 +101,14 @@ class TestClaudeAgentListSessions < ActiveSupport::TestCase
 
   test "encode_project_dir short path is not truncated" do
     path = "/Users/dev/code"
-    result = ClaudeAgent::ListSessions.send(:encode_project_dir, path)
+    result = ClaudeAgent::SessionPaths.encode_project_dir(path)
     assert result.length <= 200
     assert_equal "-Users-dev-code", result
   end
 
   test "java_string_hash matches TypeScript DM function" do
     # Test with known values - the algorithm is: hash = ((hash << 5) - hash + charCode) | 0
-    hash = ClaudeAgent::ListSessions.send(:java_string_hash, "test")
+    hash = ClaudeAgent::SessionPaths.java_string_hash("test")
     assert_instance_of String, hash
     refute_empty hash
     # The hash should be a base-36 string
@@ -116,14 +116,14 @@ class TestClaudeAgentListSessions < ActiveSupport::TestCase
   end
 
   test "java_string_hash is deterministic" do
-    hash1 = ClaudeAgent::ListSessions.send(:java_string_hash, "/Users/tom/project")
-    hash2 = ClaudeAgent::ListSessions.send(:java_string_hash, "/Users/tom/project")
+    hash1 = ClaudeAgent::SessionPaths.java_string_hash("/Users/tom/project")
+    hash2 = ClaudeAgent::SessionPaths.java_string_hash("/Users/tom/project")
     assert_equal hash1, hash2
   end
 
   test "java_string_hash differs for different inputs" do
-    hash1 = ClaudeAgent::ListSessions.send(:java_string_hash, "/Users/tom/project1")
-    hash2 = ClaudeAgent::ListSessions.send(:java_string_hash, "/Users/tom/project2")
+    hash1 = ClaudeAgent::SessionPaths.java_string_hash("/Users/tom/project1")
+    hash2 = ClaudeAgent::SessionPaths.java_string_hash("/Users/tom/project2")
     refute_equal hash1, hash2
   end
 
@@ -491,7 +491,7 @@ class TestClaudeAgentListSessions < ActiveSupport::TestCase
   private
 
   def create_project_dir(path)
-    slug = ClaudeAgent::ListSessions.send(:encode_project_dir, path)
+    slug = ClaudeAgent::SessionPaths.encode_project_dir(path)
     dir = File.join(@projects_dir, slug)
     FileUtils.mkdir_p(dir)
     dir

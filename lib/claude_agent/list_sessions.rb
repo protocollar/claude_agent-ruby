@@ -17,9 +17,7 @@ module ClaudeAgent
   #
   module ListSessions
     # Constants matching TypeScript SDK
-    MAX_SLUG_LENGTH = 200
     BUFFER_SIZE = 65_536 # 64KB
-    UUID_PATTERN = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i
 
     # Patterns for filtering non-meaningful user prompts (matches TypeScript MM regex)
     META_MESSAGE_PATTERN = /\A(?:<local-command-stdout>|<session-start-hook>|<tick>|<goal>|\[Request interrupted by user[^\]]*\]|\s*<ide_opened_file>[\s\S]*<\/ide_opened_file>\s*\z|\s*<ide_selection>[\s\S]*<\/ide_selection>\s*\z)/
@@ -43,57 +41,6 @@ module ClaudeAgent
       end
 
       private
-
-      # --- Directory Encoding ---
-
-      # Encode a project directory path to a slug for the projects directory.
-      # Matches the TypeScript SDK's q9 function exactly.
-      #
-      # @param path [String] Absolute directory path
-      # @return [String] Encoded slug
-      def encode_project_dir(path)
-        slug = path.gsub(/[^a-zA-Z0-9]/, "-")
-        return slug if slug.length <= MAX_SLUG_LENGTH
-
-        hash = java_string_hash(path)
-        "#{slug[0, MAX_SLUG_LENGTH]}-#{hash}"
-      end
-
-      # Java-style string hash (matches TypeScript DM function).
-      # Computes hash = ((hash << 5) - hash + charCode) as 32-bit signed integer,
-      # then returns absolute value in base 36.
-      #
-      # @param str [String]
-      # @return [String] Base-36 hash
-      def java_string_hash(str)
-        hash = 0
-        str.each_char do |c|
-          hash = ((hash << 5) - hash + c.ord) & 0xFFFFFFFF
-          # Convert to signed 32-bit integer
-          hash -= 0x100000000 if hash >= 0x80000000
-        end
-        hash.abs.to_s(36)
-      end
-
-      # --- Config Paths ---
-
-      # @return [String] Claude config directory
-      def config_dir
-        (ENV["CLAUDE_CONFIG_DIR"] || File.join(Dir.home, ".claude"))
-      end
-
-      # @return [String] Projects directory within config
-      def projects_dir
-        File.join(config_dir, "projects")
-      end
-
-      # Get the expected project directory path for a given working directory.
-      #
-      # @param path [String] Working directory
-      # @return [String] Full path to project sessions directory
-      def project_dir_for(path)
-        File.join(projects_dir, encode_project_dir(path))
-      end
 
       # --- Session File Reading ---
 
@@ -329,7 +276,7 @@ module ClaudeAgent
           next unless entry.end_with?(".jsonl")
 
           stem = entry[0...-6] # Remove .jsonl extension
-          next unless UUID_PATTERN.match?(stem)
+          next unless SessionPaths::UUID_PATTERN.match?(stem)
 
           full_path = File.join(dir_path, entry)
           session = parse_session_file(full_path, stem)
@@ -337,63 +284,6 @@ module ClaudeAgent
         end
 
         sessions
-      end
-
-      # Look up the project directory for a given path, handling hash suffix fallback.
-      # Matches TypeScript's tQ function.
-      #
-      # @param path [String] Working directory
-      # @return [String, nil] Project directory path or nil
-      def find_project_dir(path)
-        expected = project_dir_for(path)
-        return expected if File.directory?(expected)
-
-        # Try prefix matching for hash-suffixed directories
-        slug = encode_project_dir(path)
-        return nil if slug.length <= MAX_SLUG_LENGTH
-
-        prefix = slug[0, MAX_SLUG_LENGTH]
-        base = projects_dir
-        return nil unless File.directory?(base)
-
-        Dir.entries(base).each do |entry|
-          next if entry.start_with?(".")
-          next unless File.directory?(File.join(base, entry))
-          return File.join(base, entry) if entry.start_with?("#{prefix}-")
-        end
-
-        nil
-      end
-
-      # --- Worktree Support ---
-
-      # Get git worktree paths for a directory.
-      #
-      # @param dir [String] Working directory
-      # @return [Array<String>] Worktree paths
-      def git_worktrees(dir)
-        output = nil
-        IO.popen([ "git", "worktree", "list", "--porcelain" ], chdir: dir, err: File::NULL) do |io|
-          Timeout.timeout(5) { output = io.read }
-        end
-
-        return [] unless output
-
-        output.lines
-          .select { |line| line.start_with?("worktree ") }
-          .map { |line| line[9..].strip.unicode_normalize(:nfc) }
-      rescue SystemCallError, Timeout::Error, Errno::ENOENT
-        []
-      end
-
-      # Resolve symlinks and normalize a path.
-      #
-      # @param path [String]
-      # @return [String]
-      def realpath(path)
-        File.realpath(path).unicode_normalize(:nfc)
-      rescue SystemCallError
-        path.unicode_normalize(:nfc)
       end
 
       # --- Listing Modes ---
@@ -405,28 +295,28 @@ module ClaudeAgent
       # @param limit [Integer, nil]
       # @return [Array<SessionInfo>]
       def list_for_directory(dir, limit)
-        resolved = realpath(dir)
-        worktrees = git_worktrees(resolved)
+        resolved = SessionPaths.realpath(dir)
+        worktrees = SessionPaths.git_worktrees(resolved)
 
         # Simple case: not in a worktree (or single worktree)
         if worktrees.length <= 1
-          project_dir = find_project_dir(resolved)
+          project_dir = SessionPaths.find_project_dir(resolved)
           return [] unless project_dir
           return sort_and_limit(scan_project_dir(project_dir), limit)
         end
 
         # Complex case: multiple worktrees - scan all related project directories
-        base = projects_dir
+        base = SessionPaths.projects_dir
 
         # Build prefix list from worktree paths (longest first for matching)
-        prefixes = worktrees.map { |wt| { path: wt, prefix: encode_project_dir(wt) } }
+        prefixes = worktrees.map { |wt| { path: wt, prefix: SessionPaths.encode_project_dir(wt) } }
         prefixes.sort_by! { |p| -p[:prefix].length }
 
         all_sessions = []
         seen_dirs = Set.new
 
         # First: sessions from the exact directory
-        project_dir = find_project_dir(resolved)
+        project_dir = SessionPaths.find_project_dir(resolved)
         if project_dir
           seen_dirs.add(File.basename(project_dir))
           all_sessions.concat(scan_project_dir(project_dir))
@@ -442,7 +332,7 @@ module ClaudeAgent
 
             prefixes.each do |p|
               prefix = p[:prefix]
-              if entry == prefix || (prefix.length >= MAX_SLUG_LENGTH && entry.start_with?("#{prefix[0, MAX_SLUG_LENGTH]}-"))
+              if entry == prefix || (prefix.length >= SessionPaths::MAX_SLUG_LENGTH && entry.start_with?("#{prefix[0, SessionPaths::MAX_SLUG_LENGTH]}-"))
                 seen_dirs.add(entry)
                 all_sessions.concat(scan_project_dir(entry_path))
                 break
@@ -460,7 +350,7 @@ module ClaudeAgent
       # @param limit [Integer, nil]
       # @return [Array<SessionInfo>]
       def list_all(limit)
-        base = projects_dir
+        base = SessionPaths.projects_dir
         return [] unless File.directory?(base)
 
         all_sessions = []

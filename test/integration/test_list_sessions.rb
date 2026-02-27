@@ -10,7 +10,7 @@ class TestIntegrationListSessions < IntegrationTestCase
     sessions.each do |session|
       assert_instance_of ClaudeAgent::SessionInfo, session
       assert_instance_of String, session.session_id
-      assert_match ClaudeAgent::ListSessions::UUID_PATTERN, session.session_id
+      assert_match ClaudeAgent::SessionPaths::UUID_PATTERN, session.session_id
       assert_instance_of String, session.summary
       assert_instance_of Integer, session.last_modified
       assert session.last_modified > 0

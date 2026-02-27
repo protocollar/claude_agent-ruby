@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `Session.find(id, dir:)` — find a past session by UUID, returns `Session` or `nil`
+- `Session.all` — list all past sessions as `Session` objects
+- `Session.where(dir:, limit:)` — query sessions with optional directory and limit filters
+- `Session#messages` — returns a chainable, `Enumerable` `SessionMessageRelation` for reading transcript messages
+- `SessionMessageRelation#where(limit:, offset:)` — paginate messages with immutable chaining
+- `ClaudeAgent.get_session_messages(session_id, dir:, limit:, offset:)` — read session transcripts from disk (TypeScript SDK v0.2.59 parity)
+- `SessionMessage` type — message from a session transcript with `type`, `uuid`, `session_id`, `message`
+- `SessionPaths` module — shared path infrastructure for session discovery (extracted from `ListSessions`)
+
+### Changed
+- Renamed `Session` (V2 multi-turn API) to `V2Session` to free the `Session` name for the finder API
+- `unstable_v2_create_session`, `unstable_v2_resume_session`, and `unstable_v2_prompt` now return `V2Session`
+
 ## [0.7.9] - 2026-02-25
 
 ### Added

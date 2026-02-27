@@ -215,6 +215,17 @@ module ClaudeAgent
     def initialize: (session_id: String, summary: String, last_modified: Integer, file_size: Integer, ?custom_title: String?, ?first_prompt: String?, ?git_branch: String?, ?cwd: String?) -> void
   end
 
+  # Session transcript message returned by get_session_messages (TypeScript SDK v0.2.59 parity)
+  class SessionMessage
+    attr_reader type: String
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader message: untyped
+    attr_reader parent_tool_use_id: nil
+
+    def initialize: (type: String, uuid: String, session_id: String, message: untyped, ?parent_tool_use_id: nil) -> void
+  end
+
   # Agent definition for custom subagents (TypeScript SDK parity)
   class AgentDefinition
     attr_reader description: String
@@ -1181,14 +1192,35 @@ module ClaudeAgent
 
   # Session discovery
   def self.list_sessions: (?dir: String?, ?limit: Integer?) -> Array[SessionInfo]
+  def self.get_session_messages: (String session_id, ?dir: String?, ?limit: Integer?, ?offset: Integer?) -> Array[SessionMessage]
+
+  # Shared session path infrastructure
+  module SessionPaths
+    MAX_SLUG_LENGTH: Integer
+    UUID_PATTERN: Regexp
+
+    def self.config_dir: () -> String
+    def self.projects_dir: () -> String
+    def self.project_dir_for: (String path) -> String
+    def self.encode_project_dir: (String path) -> String
+    def self.java_string_hash: (String str) -> String
+    def self.find_project_dir: (String path) -> String?
+    def self.realpath: (String path) -> String
+    def self.git_worktrees: (String dir) -> Array[String]
+  end
 
   # ListSessions module
   module ListSessions
-    MAX_SLUG_LENGTH: Integer
     BUFFER_SIZE: Integer
-    UUID_PATTERN: Regexp
 
     def self.call: (?dir: String?, ?limit: Integer?) -> Array[SessionInfo]
+  end
+
+  # GetSessionMessages module (TypeScript SDK v0.2.59 parity)
+  module GetSessionMessages
+    PARSEABLE_TYPES: Array[String]
+
+    def self.call: (String session_id, ?dir: String?, ?limit: Integer?, ?offset: Integer?) -> Array[SessionMessage]
   end
 
   # Convenience methods
@@ -1423,7 +1455,7 @@ module ClaudeAgent
   end
 
   # V2 Session interface for multi-turn conversations
-  class Session
+  class V2Session
     attr_reader session_id: String?
     attr_reader options: SessionOptions
 
@@ -1436,7 +1468,37 @@ module ClaudeAgent
   end
 
   # V2 API module-level methods
-  def self.unstable_v2_create_session: (Hash[Symbol, untyped] | SessionOptions options) -> Session
-  def self.unstable_v2_resume_session: (String session_id, Hash[Symbol, untyped] | SessionOptions options) -> Session
+  def self.unstable_v2_create_session: (Hash[Symbol, untyped] | SessionOptions options) -> V2Session
+  def self.unstable_v2_resume_session: (String session_id, Hash[Symbol, untyped] | SessionOptions options) -> V2Session
   def self.unstable_v2_prompt: (String message, Hash[Symbol, untyped] | SessionOptions options) -> ResultMessage
+
+  # Chainable, lazy query object for session transcript messages
+  class SessionMessageRelation
+    include Enumerable[SessionMessage]
+
+    def initialize: (String session_id, ?dir: String?, ?limit: Integer?, ?offset: Integer?) -> void
+    def where: (?limit: Integer?, ?offset: Integer?) -> SessionMessageRelation
+    def each: () { (SessionMessage) -> void } -> void
+            | () -> Enumerator[SessionMessage, void]
+    def to_a: () -> Array[SessionMessage]
+  end
+
+  # Historical session finder with Rails-like API
+  class Session
+    attr_reader session_id: String
+    attr_reader summary: String
+    attr_reader last_modified: Integer
+    attr_reader file_size: Integer
+    attr_reader custom_title: String?
+    attr_reader first_prompt: String?
+    attr_reader git_branch: String?
+    attr_reader cwd: String?
+
+    def initialize: (SessionInfo session_info) -> void
+    def messages: () -> SessionMessageRelation
+
+    def self.find: (String session_id, ?dir: String?) -> Session?
+    def self.all: () -> Array[Session]
+    def self.where: (?dir: String?, ?limit: Integer?) -> Array[Session]
+  end
 end

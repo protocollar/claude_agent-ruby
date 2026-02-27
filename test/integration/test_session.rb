@@ -8,7 +8,7 @@ class TestIntegrationSession < IntegrationTestCase
   test "creates session with options hash" do
     session = ClaudeAgent.unstable_v2_create_session(model: "sonnet")
 
-    assert_instance_of ClaudeAgent::Session, session
+    assert_instance_of ClaudeAgent::V2Session, session
     assert_equal "sonnet", session.options.model
     refute session.closed?
   ensure
@@ -19,7 +19,7 @@ class TestIntegrationSession < IntegrationTestCase
     opts = ClaudeAgent::SessionOptions.new(model: "sonnet")
     session = ClaudeAgent.unstable_v2_create_session(opts)
 
-    assert_instance_of ClaudeAgent::Session, session
+    assert_instance_of ClaudeAgent::V2Session, session
     assert_equal opts, session.options
   ensure
     session&.close
@@ -129,7 +129,7 @@ class TestIntegrationSession < IntegrationTestCase
 
     # Resume the session
     resumed_session = ClaudeAgent.unstable_v2_resume_session(session_id, model: "sonnet")
-    assert_instance_of ClaudeAgent::Session, resumed_session
+    assert_instance_of ClaudeAgent::V2Session, resumed_session
   ensure
     original_session&.close
     resumed_session&.close

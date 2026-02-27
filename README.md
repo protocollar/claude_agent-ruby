@@ -1180,14 +1180,20 @@ client.disconnect
 
 ## Session Discovery
 
-List past Claude Code sessions from disk without spawning a CLI subprocess:
+Find and inspect past Claude Code sessions from disk without spawning a CLI subprocess.
+
+### Session.find / Session.all
 
 ```ruby
-# All sessions (most recent first)
-sessions = ClaudeAgent.list_sessions
+# Find a specific session by ID
+session = ClaudeAgent::Session.find("abc-123-def")
+session = ClaudeAgent::Session.find("abc-123-def", dir: "/my/project")
 
-# Scoped to a project directory (includes git worktree siblings)
-sessions = ClaudeAgent.list_sessions(dir: "/path/to/project", limit: 10)
+# List all sessions (most recent first)
+sessions = ClaudeAgent::Session.all
+
+# Filter by directory, limit results
+sessions = ClaudeAgent::Session.where(dir: "/path/to/project", limit: 10)
 
 sessions.each do |s|
   puts "#{s.summary} (#{s.git_branch || 'no branch'})"
@@ -1197,7 +1203,27 @@ sessions.each do |s|
 end
 ```
 
-Each session is a `SessionInfo` with these fields:
+### Reading Messages
+
+`Session#messages` returns a chainable, `Enumerable` relation:
+
+```ruby
+session = ClaudeAgent::Session.find("abc-123-def")
+
+# All messages
+session.messages.each { |m| puts "#{m.type}: #{m.uuid}" }
+
+# Paginated
+session.messages.where(limit: 10).map(&:uuid)
+session.messages.where(offset: 5, limit: 10).to_a
+
+# Enumerable methods work
+session.messages.first
+session.messages.count
+session.messages.select { |m| m.type == "assistant" }
+```
+
+### Session Fields
 
 | Field            | Type            | Description                                      |
 |------------------|-----------------|--------------------------------------------------|
@@ -1210,11 +1236,24 @@ Each session is a `SessionInfo` with these fields:
 | `git_branch`     | `String\|nil`   | Git branch the session was on                    |
 | `cwd`            | `String\|nil`   | Working directory of the session                 |
 
+### Functional API
+
+The lower-level functional API is also available:
+
+```ruby
+# List sessions (returns SessionInfo objects)
+infos = ClaudeAgent.list_sessions(dir: "/path/to/project", limit: 10)
+
+# Read messages directly
+messages = ClaudeAgent.get_session_messages("abc-123-def", limit: 10, offset: 5)
+```
+
+### Resume a Past Session
+
 Use with `Conversation.resume` to pick up where you left off:
 
 ```ruby
-sessions = ClaudeAgent.list_sessions(dir: Dir.pwd, limit: 5)
-session = sessions.first
+session = ClaudeAgent::Session.where(dir: Dir.pwd, limit: 5).first
 
 conversation = ClaudeAgent.resume_conversation(session.session_id)
 turn = conversation.say("Continue where we left off")
@@ -1307,23 +1346,26 @@ session = ClaudeAgent.unstable_v2_create_session(options)
 
 ### Return Types
 
-| Type                  | Purpose                                                                          |
-|-----------------------|----------------------------------------------------------------------------------|
-| `TurnResult`          | Complete agent turn with text, tools, usage, and status accessors                |
-| `ToolActivity`        | Tool use/result pair with turn index and timing                                  |
-| `CumulativeUsage`     | Running totals of tokens, cost, turns, and duration                              |
-| `PermissionRequest`   | Deferred permission promise resolvable from any thread                           |
-| `PermissionQueue`     | Thread-safe queue of pending permission requests                                 |
-| `EventHandler`        | Typed event callback registry                                                    |
-| `SlashCommand`        | Available slash commands (name, description, argument_hint)                      |
-| `ModelInfo`           | Available models (value, display_name, description)                              |
-| `McpServerStatus`     | MCP server status (name, status, server_info)                                    |
-| `AccountInfo`         | Account information (email, organization, subscription_type)                     |
-| `ModelUsage`          | Per-model usage stats (input_tokens, output_tokens, cost_usd)                    |
-| `McpSetServersResult` | Result of set_mcp_servers (added, removed, errors)                               |
-| `RewindFilesResult`   | Result of rewind_files (can_rewind, error, files_changed, insertions, deletions) |
-| `SessionInfo`         | Session metadata from `list_sessions` (session_id, summary, git_branch, cwd)     |
-| `SDKPermissionDenial` | Permission denial info (tool_name, tool_use_id, tool_input)                      |
+| Type                     | Purpose                                                                          |
+|--------------------------|----------------------------------------------------------------------------------|
+| `TurnResult`             | Complete agent turn with text, tools, usage, and status accessors                |
+| `ToolActivity`           | Tool use/result pair with turn index and timing                                  |
+| `CumulativeUsage`        | Running totals of tokens, cost, turns, and duration                              |
+| `PermissionRequest`      | Deferred permission promise resolvable from any thread                           |
+| `PermissionQueue`        | Thread-safe queue of pending permission requests                                 |
+| `EventHandler`           | Typed event callback registry                                                    |
+| `SlashCommand`           | Available slash commands (name, description, argument_hint)                      |
+| `ModelInfo`              | Available models (value, display_name, description)                              |
+| `McpServerStatus`        | MCP server status (name, status, server_info)                                    |
+| `AccountInfo`            | Account information (email, organization, subscription_type)                     |
+| `ModelUsage`             | Per-model usage stats (input_tokens, output_tokens, cost_usd)                    |
+| `McpSetServersResult`    | Result of set_mcp_servers (added, removed, errors)                               |
+| `RewindFilesResult`      | Result of rewind_files (can_rewind, error, files_changed, insertions, deletions) |
+| `Session`                | Session finder with `.find`, `.all`, `#messages` (wraps SessionInfo)             |
+| `SessionMessageRelation` | Chainable, Enumerable query object for session messages                          |
+| `SessionInfo`            | Session metadata from `list_sessions` (session_id, summary, git_branch, cwd)     |
+| `SessionMessage`         | Message from a session transcript (type, uuid, session_id, message)              |
+| `SDKPermissionDenial`    | Permission denial info (tool_name, tool_use_id, tool_input)                      |
 
 ## Logging
 
