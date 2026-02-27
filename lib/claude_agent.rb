@@ -30,8 +30,11 @@ require_relative "claude_agent/tool_activity"
 require_relative "claude_agent/query"
 require_relative "claude_agent/client"
 require_relative "claude_agent/conversation"
+require_relative "claude_agent/session_paths"        # Shared session path infrastructure
 require_relative "claude_agent/list_sessions"       # Session discovery (TypeScript SDK v0.2.53 parity)
-require_relative "claude_agent/session"            # V2 Session API (unstable)
+require_relative "claude_agent/get_session_messages"    # Session transcript reading (TypeScript SDK v0.2.59 parity)
+require_relative "claude_agent/session_message_relation" # Chainable message query object
+require_relative "claude_agent/session"                  # Session finder + V2 Session API (unstable)
 
 module ClaudeAgent
   class << self
@@ -54,6 +57,21 @@ module ClaudeAgent
     # @return [Array<SessionInfo>]
     def list_sessions(dir: nil, limit: nil)
       ListSessions.call(dir: dir, limit: limit)
+    end
+
+    # Read messages from a past session's transcript
+    #
+    # Reads the session JSONL file from disk, reconstructs the main conversation
+    # thread, and returns user/assistant messages with optional pagination.
+    #
+    # @param session_id [String] UUID of the session to read
+    # @param dir [String, nil] Project directory to find the session in.
+    #   When nil, searches all projects.
+    # @param limit [Integer, nil] Maximum number of messages to return.
+    # @param offset [Integer, nil] Number of messages to skip from the start.
+    # @return [Array<SessionMessage>]
+    def get_session_messages(session_id, dir: nil, limit: nil, offset: nil)
+      GetSessionMessages.call(session_id, dir: dir, limit: limit, offset: offset)
     end
 
     # Resume a previous Conversation by session ID

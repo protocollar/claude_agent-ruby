@@ -213,6 +213,22 @@ module ClaudeAgent
     end
   end
 
+  # Message from a session transcript returned by get_session_messages (TypeScript SDK v0.2.59 parity)
+  #
+  # @example
+  #   msg = SessionMessage.new(
+  #     type: "user",
+  #     uuid: "abc-123",
+  #     session_id: "def-456",
+  #     message: { "role" => "user", "content" => [{ "type" => "text", "text" => "Hello" }] }
+  #   )
+  #
+  SessionMessage = Data.define(:type, :uuid, :session_id, :message, :parent_tool_use_id) do
+    def initialize(type:, uuid:, session_id:, message:, parent_tool_use_id: nil)
+      super
+    end
+  end
+
   AgentDefinition = Data.define(
     :description,
     :prompt,
