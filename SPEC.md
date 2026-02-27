@@ -199,6 +199,62 @@ Messages exchanged between SDK and CLI.
 | `stdout`     |     ✅      |   ❌    |  ✅   | Standard output so far                   |
 | `stderr`     |     ✅      |   ❌    |  ✅   | Standard error so far                    |
 
+#### TaskStartedMessage
+
+| Field         | TypeScript | Python | Ruby | Notes                   |
+|---------------|:----------:|:------:|:----:|-------------------------|
+| `task_id`     |     ✅      |   ❌    |  ✅   | Task identifier         |
+| `tool_use_id` |     ✅      |   ❌    |  ✅   | Correlating tool use ID |
+| `description` |     ✅      |   ❌    |  ✅   | Task description        |
+| `task_type`   |     ✅      |   ❌    |  ✅   | Task type (e.g., bash)  |
+
+#### TaskProgressMessage
+
+| Field            | TypeScript | Python | Ruby | Notes                                             |
+|------------------|:----------:|:------:|:----:|---------------------------------------------------|
+| `task_id`        |     ✅      |   ❌    |  ✅   | Task identifier                                   |
+| `tool_use_id`    |     ✅      |   ❌    |  ✅   | Correlating tool use ID                           |
+| `description`    |     ✅      |   ❌    |  ✅   | Current progress description                      |
+| `usage`          |     ✅      |   ❌    |  ✅   | Cumulative {total_tokens, tool_uses, duration_ms} |
+| `last_tool_name` |     ✅      |   ❌    |  ✅   | Last tool executed                                |
+
+#### AuthStatusMessage
+
+| Field              | TypeScript | Python | Ruby | Notes                   |
+|--------------------|:----------:|:------:|:----:|-------------------------|
+| `isAuthenticating` |     ✅      |   ❌    |  ✅   | Authentication active   |
+| `output`           |     ✅      |   ❌    |  ✅   | Auth output messages    |
+| `error`            |     ✅      |   ❌    |  ✅   | Auth error message      |
+
+#### ToolUseSummaryMessage
+
+| Field                    | TypeScript | Python | Ruby | Notes                         |
+|--------------------------|:----------:|:------:|:----:|-------------------------------|
+| `summary`                |     ✅      |   ❌    |  ✅   | Summary text                  |
+| `preceding_tool_use_ids` |     ✅      |   ❌    |  ✅   | Tool use IDs being summarized |
+
+#### RateLimitEvent
+
+| Field             | TypeScript | Python | Ruby | Notes                           |
+|-------------------|:----------:|:------:|:----:|---------------------------------|
+| `rate_limit_info` |     ✅      |   ❌    |  ✅   | Rate limit details object       |
+
+Rate limit info contains: `status`, `resetsAt`, `rateLimitType`, `utilization`, `isUsingOverage`, `overageStatus`.
+
+#### PromptSuggestionMessage
+
+| Field        | TypeScript | Python | Ruby | Notes                   |
+|--------------|:----------:|:------:|:----:|-------------------------|
+| `suggestion` |     ✅      |   ❌    |  ✅   | Suggested next prompt   |
+
+#### FilesPersistedEvent
+
+| Field          | TypeScript | Python | Ruby | Notes                                      |
+|----------------|:----------:|:------:|:----:|--------------------------------------------|
+| `files`        |     ✅      |   ❌    |  ✅   | Successfully persisted {filename, file_id} |
+| `failed`       |     ✅      |   ❌    |  ✅   | Failed files {filename, error}             |
+| `processed_at` |     ✅      |   ❌    |  ✅   | Processing timestamp                       |
+
 ---
 
 ## 3. Content Blocks
@@ -240,28 +296,28 @@ Bidirectional control protocol for SDK-CLI communication.
 
 ### Control Request Types
 
-| Request Subtype           | TypeScript | Python | Ruby | Notes                             |
-|---------------------------|:----------:|:------:|:----:|-----------------------------------|
-| `initialize`              |     ✅      |   ✅    |  ✅   | Initialize session with hooks/MCP |
-| `interrupt`               |     ✅      |   ✅    |  ✅   | Interrupt current operation       |
-| `can_use_tool`            |     ✅      |   ✅    |  ✅   | Permission callback               |
-| `hook_callback`           |     ✅      |   ✅    |  ✅   | Execute hook callback             |
-| `set_permission_mode`     |     ✅      |   ✅    |  ✅   | Change permission mode            |
-| `set_model`               |     ✅      |   ✅    |  ✅   | Change model                      |
-| `set_max_thinking_tokens` |     ✅      |   ❌    |  ✅   | Change thinking tokens limit      |
-| `rewind_files`            |     ✅      |   ✅    |  ✅   | Rewind file checkpoints           |
-| `mcp_message`             |     ✅      |   ✅    |  ✅   | Route MCP message                 |
-| `mcp_set_servers`         |     ✅      |   ❌    |  ✅   | Dynamically set MCP servers       |
-| `mcp_status`              |     ✅      |   ✅    |  ✅   | Get MCP server status             |
-| `mcp_reconnect`           |     ✅      |   ❌    |  ✅   | Reconnect to MCP server           |
-| `mcp_toggle`              |     ✅      |   ❌    |  ✅   | Enable/disable MCP server         |
-| `stop_task`               |     ✅      |   ❌    |  ✅   | Stop a running background task    |
-| `mcp_authenticate`        |     ✅      |   ❌    |  ✅   | Authenticate MCP server (v0.2.52) |
-| `mcp_clear_auth`          |     ✅      |   ❌    |  ✅   | Clear MCP server auth (v0.2.52)   |
-| `supported_commands`      |     ✅      |   ❌    |  ✅   | Get available slash commands      |
-| `supported_models`        |     ✅      |   ❌    |  ✅   | Get available models              |
-| `account_info`            |     ✅      |   ❌    |  ✅   | Get account information           |
-| `apply_flag_settings`     |     ✅      |   ❌    |  ✅   | Merge settings into flag layer    |
+| Request Subtype           | TypeScript | Python | Ruby | Notes                                      |
+|---------------------------|:----------:|:------:|:----:|--------------------------------------------|
+| `initialize`              |     ✅      |   ✅    |  ✅   | Initialize session with hooks/MCP          |
+| `interrupt`               |     ✅      |   ✅    |  ✅   | Interrupt current operation                |
+| `can_use_tool`            |     ✅      |   ✅    |  ✅   | Permission callback                        |
+| `hook_callback`           |     ✅      |   ✅    |  ✅   | Execute hook callback                      |
+| `set_permission_mode`     |     ✅      |   ✅    |  ✅   | Change permission mode                     |
+| `set_model`               |     ✅      |   ✅    |  ✅   | Change model                               |
+| `set_max_thinking_tokens` |     ✅      |   ❌    |  ✅   | Change thinking tokens limit               |
+| `rewind_files`            |     ✅      |   ✅    |  ✅   | Rewind file checkpoints (supports dry_run) |
+| `mcp_message`             |     ✅      |   ✅    |  ✅   | Route MCP message                          |
+| `mcp_set_servers`         |     ✅      |   ❌    |  ✅   | Dynamically set MCP servers                |
+| `mcp_status`              |     ✅      |   ✅    |  ✅   | Get MCP server status                      |
+| `mcp_reconnect`           |     ✅      |   ❌    |  ✅   | Reconnect to MCP server                    |
+| `mcp_toggle`              |     ✅      |   ❌    |  ✅   | Enable/disable MCP server                  |
+| `stop_task`               |     ✅      |   ❌    |  ✅   | Stop a running background task             |
+| `mcp_authenticate`        |     ✅      |   ❌    |  ✅   | Authenticate MCP server (v0.2.52)          |
+| `mcp_clear_auth`          |     ✅      |   ❌    |  ✅   | Clear MCP server auth (v0.2.52)            |
+| `supported_commands`      |     ✅      |   ❌    |  ✅   | Get available slash commands               |
+| `supported_models`        |     ✅      |   ❌    |  ✅   | Get available models                       |
+| `account_info`            |     ✅      |   ❌    |  ✅   | Get account information                    |
+| `apply_flag_settings`     |     ✅      |   ❌    |  ✅   | Merge settings into flag layer             |
 
 ### Return Types
 
@@ -297,6 +353,34 @@ Bidirectional control protocol for SDK-CLI communication.
 | `config`     |     ✅      |   ❌    |  ✅   | Server configuration               |
 | `scope`      |     ✅      |   ❌    |  ✅   | Config scope (project, user, etc.) |
 | `tools`      |     ✅      |   ❌    |  ✅   | Tools with annotations             |
+
+#### InitializationResult Fields
+
+| Field                     | TypeScript | Python | Ruby | Notes                             |
+|---------------------------|:----------:|:------:|:----:|-----------------------------------|
+| `commands`                |     ✅      |   ❌    |  ✅   | Available slash commands          |
+| `output_style`            |     ✅      |   ❌    |  ✅   | Current output style              |
+| `available_output_styles` |     ✅      |   ❌    |  ✅   | All available output styles       |
+| `models`                  |     ✅      |   ❌    |  ✅   | Available models (ModelInfo[])    |
+| `account`                 |     ✅      |   ❌    |  ✅   | Account information (AccountInfo) |
+
+#### RewindFilesResult Fields
+
+| Field          | TypeScript | Python | Ruby | Notes                         |
+|----------------|:----------:|:------:|:----:|-------------------------------|
+| `canRewind`    |     ✅      |   ✅    |  ✅   | Whether rewind is possible    |
+| `error`        |     ✅      |   ❌    |  ✅   | Error message if can't rewind |
+| `filesChanged` |     ✅      |   ❌    |  ✅   | List of changed file paths    |
+| `insertions`   |     ✅      |   ❌    |  ✅   | Number of line insertions     |
+| `deletions`    |     ✅      |   ❌    |  ✅   | Number of line deletions      |
+
+#### McpSetServersResult Fields
+
+| Field     | TypeScript | Python | Ruby | Notes                             |
+|-----------|:----------:|:------:|:----:|-----------------------------------|
+| `added`   |     ✅      |   ❌    |  ✅   | Server names that were added      |
+| `removed` |     ✅      |   ❌    |  ✅   | Server names that were removed    |
+| `errors`  |     ✅      |   ❌    |  ✅   | Map of server name to error       |
 
 ---
 
@@ -560,6 +644,14 @@ Model Context Protocol server support.
 | `type`     |     ✅      |   ✅    |  ✅   |
 | `name`     |     ✅      |   ✅    |  ✅   |
 | `instance` |     ✅      |   ✅    |  ✅   |
+
+#### claudeai-proxy
+
+| Field  | TypeScript | Python | Ruby |
+|--------|:----------:|:------:|:----:|
+| `type` |     ✅      |   ❌    |  ✅   |
+| `url`  |     ✅      |   ❌    |  ✅   |
+| `id`   |     ✅      |   ❌    |  ✅   |
 
 ### SDK MCP Server
 

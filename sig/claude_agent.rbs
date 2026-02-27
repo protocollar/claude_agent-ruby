@@ -591,6 +591,7 @@ module ClaudeAgent
     attr_reader is_error: bool
     attr_reader num_turns: Integer
     attr_reader session_id: String
+    attr_reader uuid: String?
     attr_reader total_cost_usd: Float?
     attr_reader usage: Hash[String, untyped]?
     attr_reader result: String?
@@ -607,6 +608,7 @@ module ClaudeAgent
       is_error: bool,
       num_turns: Integer,
       session_id: String,
+      ?uuid: String?,
       ?total_cost_usd: Float?,
       ?usage: Hash[String, untyped]?,
       ?result: String?,

@@ -159,6 +159,7 @@ module ClaudeAgent
         is_error: raw[:is_error] || false,
         num_turns: raw[:num_turns] || 0,
         session_id: raw[:session_id] || "",
+        uuid: raw[:uuid],
         total_cost_usd: raw[:total_cost_usd],
         usage: raw[:usage],
         result: raw[:result],

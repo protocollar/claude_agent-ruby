@@ -137,6 +137,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
       "is_error" => false,
       "num_turns" => 3,
       "session_id" => "sess-123",
+      "uuid" => "uuid-123",
       "total_cost_usd" => 0.05,
       "usage" => { "input_tokens" => 100, "output_tokens" => 50 }
     }
@@ -149,6 +150,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     refute msg.error?
     assert_equal 3, msg.num_turns
     assert_equal "sess-123", msg.session_id
+    assert_equal "uuid-123", msg.uuid
     assert_equal 0.05, msg.total_cost_usd
     assert_equal({ input_tokens: 100, output_tokens: 50 }, msg.usage)
   end
@@ -205,6 +207,21 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     msg = @parser.parse(raw)
 
     assert_equal "max_tokens", msg.stop_reason
+  end
+
+  test "parse_result_message_uuid_default_nil" do
+    raw = {
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 1500,
+      "duration_api_ms" => 1200,
+      "is_error" => false,
+      "num_turns" => 3,
+      "session_id" => "sess-123"
+    }
+    msg = @parser.parse(raw)
+
+    assert_nil msg.uuid
   end
 
   test "parse_result_message_stop_reason_default_nil" do
