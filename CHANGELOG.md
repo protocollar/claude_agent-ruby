@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.10] - 2026-02-26
+
 ### Added
 - `Session.find(id, dir:)` — find a past session by UUID, returns `Session` or `nil`
 - `Session.all` — list all past sessions as `Session` objects
