@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.12] - 2026-02-27
+
 ### Added
 - `ResultMessage#uuid` field (TypeScript SDK parity — every other message type already had it)
 - `sdkMcpServers` is now sent in the initialize request when SDK MCP servers are configured (TypeScript SDK parity)
