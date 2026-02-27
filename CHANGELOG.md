@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.11] - 2026-02-27
+
 ### Added
 - `LiveToolActivity` — mutable, real-time tool status tracker (`:running` → `:done`/`:error`) with elapsed time and delegation to `ToolUseBlock`
 - `ToolActivityTracker` — `Enumerable` collection that auto-wires to `EventHandler` or `Client` via `.attach`, with `on_start`/`on_complete`/`on_progress` callbacks, `on_change` catch-all, `running`/`done`/`errored` filtered views, and `reset!`
