@@ -262,8 +262,10 @@ class TestClaudeAgentToolActivityTracker < ActiveSupport::TestCase
 
   test "callbacks are optional" do
     # No callbacks registered — should not error
-    emit_tool_use(make_tool_use)
-    emit_tool_result(make_tool_result)
+    assert_nothing_raised do
+      emit_tool_use(make_tool_use)
+      emit_tool_result(make_tool_result)
+    end
   end
 
   # --- attach with Client ---

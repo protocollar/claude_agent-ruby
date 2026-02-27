@@ -111,6 +111,60 @@ class TestClaudeAgentAbortError < ActiveSupport::TestCase
   end
 end
 
+class TestClaudeAgentAbortCancelRequests < ActiveSupport::TestCase
+  test "abort sends control_cancel_request for pending requests" do
+    transport = MockTransport.new
+    options = ClaudeAgent::Options.new
+    protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: options)
+
+    transport.connect
+
+    # Simulate pending requests by inserting into internal state
+    protocol.instance_variable_get(:@mutex).synchronize do
+      protocol.instance_variable_get(:@pending_requests)["req_1"] = true
+      protocol.instance_variable_get(:@pending_requests)["req_2"] = true
+    end
+
+    protocol.abort!
+
+    cancel_messages = transport.written_messages.select { |m| m["type"] == "control_cancel_request" }
+    assert_equal 2, cancel_messages.length
+
+    cancel_ids = cancel_messages.map { |m| m["request_id"] }.sort
+    assert_equal [ "req_1", "req_2" ], cancel_ids
+  end
+
+  test "abort handles transport errors during cancel gracefully" do
+    transport = MockTransport.new
+    options = ClaudeAgent::Options.new
+    protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: options)
+
+    transport.connect
+
+    protocol.instance_variable_get(:@mutex).synchronize do
+      protocol.instance_variable_get(:@pending_requests)["req_1"] = true
+    end
+
+    # Close transport to trigger write errors
+    transport.close
+
+    # Should not raise
+    assert_nothing_raised { protocol.abort! }
+  end
+
+  test "abort without pending requests sends no cancel messages" do
+    transport = MockTransport.new
+    options = ClaudeAgent::Options.new
+    protocol = ClaudeAgent::ControlProtocol.new(transport: transport, options: options)
+
+    transport.connect
+    protocol.abort!
+
+    cancel_messages = transport.written_messages.select { |m| m["type"] == "control_cancel_request" }
+    assert_equal 0, cancel_messages.length
+  end
+end
+
 class TestClaudeAgentOptionsAbortController < ActiveSupport::TestCase
   test "options_accepts_abort_controller" do
     controller = ClaudeAgent::AbortController.new

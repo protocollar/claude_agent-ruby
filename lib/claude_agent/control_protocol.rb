@@ -99,6 +99,17 @@ module ClaudeAgent
       # Drain permission queue so reader thread unblocks
       @permission_queue&.drain!(reason: "Operation aborted")
 
+      # Send cancel requests for pending operations (protocol courtesy)
+      @mutex.synchronize do
+        @pending_requests.each_key do |request_id|
+          begin
+            write_message({ type: "control_cancel_request", request_id: request_id })
+          rescue
+            # Ignore transport errors during abort — fire-and-forget
+          end
+        end
+      end
+
       # Fail all pending requests
       @mutex.synchronize do
         @pending_requests.each_key do |request_id|
@@ -585,8 +596,18 @@ module ClaudeAgent
       request = { subtype: "initialize" }
       request[:hooks] = hooks_config if hooks_config
       request[:promptSuggestions] = true if options.prompt_suggestions
+      request[:sdkMcpServers] = sdk_mcp_server_names if options.has_sdk_mcp_servers?
 
       send_control_request(**request)
+    end
+
+    # Extract SDK MCP server names from options
+    # @return [Array<String>]
+    def sdk_mcp_server_names
+      options.mcp_servers
+        .select { |_, v| v.is_a?(Hash) && v[:type] == "sdk" }
+        .keys
+        .map(&:to_s)
     end
 
     # Build hooks configuration for initialization

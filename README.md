@@ -488,6 +488,7 @@ message.has_tool_use?  # Check if tools are being used
 Final message with usage statistics:
 
 ```ruby
+result.uuid            # Message UUID
 result.session_id      # Session identifier
 result.num_turns       # Number of conversation turns
 result.duration_ms     # Total duration in milliseconds

@@ -508,6 +508,53 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     assert_equal "allow", result[:behavior]
   end
 
+  # --- send_initialize SDK MCP servers ---
+
+  test "sdk_mcp_server_names extracts SDK server names" do
+    options = ClaudeAgent::Options.new(
+      mcp_servers: {
+        "my-sdk-server" => { type: "sdk", instance: nil },
+        "other-server" => { type: "stdio", command: "node" },
+        "another-sdk" => { type: "sdk", instance: nil }
+      }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+
+    names = protocol.send(:sdk_mcp_server_names)
+    assert_includes names, "my-sdk-server"
+    assert_includes names, "another-sdk"
+    refute_includes names, "other-server"
+    assert_equal 2, names.length
+  end
+
+  test "send_initialize includes sdkMcpServers when SDK servers configured" do
+    options = ClaudeAgent::Options.new(
+      mcp_servers: {
+        "my-sdk-server" => { type: "sdk", instance: nil }
+      }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+
+    protocol.start(streaming: true)
+    protocol.stop
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" && m["request"]["subtype"] == "initialize" }
+    assert_not_nil msg
+    assert_equal [ "my-sdk-server" ], msg["request"]["sdkMcpServers"]
+  end
+
+  test "send_initialize omits sdkMcpServers when no SDK servers" do
+    options = ClaudeAgent::Options.new
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+
+    protocol.start(streaming: true)
+    protocol.stop
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" && m["request"]["subtype"] == "initialize" }
+    assert_not_nil msg
+    refute msg["request"].key?("sdkMcpServers"), "Should not include sdkMcpServers when no SDK servers configured"
+  end
+
   test "mcp_toggle sends correct request format" do
     @transport.connect
 

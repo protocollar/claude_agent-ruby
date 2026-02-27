@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `ResultMessage#uuid` field (TypeScript SDK parity — every other message type already had it)
+- `sdkMcpServers` is now sent in the initialize request when SDK MCP servers are configured (TypeScript SDK parity)
+- `abort!` now sends `control_cancel_request` for each pending request before failing them locally (TypeScript SDK parity)
+
 ## [0.7.11] - 2026-02-27
 
 ### Added
