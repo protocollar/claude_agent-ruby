@@ -375,74 +375,28 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     assert parsed["autoAllowBashIfSandboxed"]
   end
 
-  # --- Setup Hook Options ---
+  # --- Extra Args Passthrough ---
 
-  test "init_option_default_false" do
-    options = ClaudeAgent::Options.new
-    assert_equal false, options.init
-  end
-
-  test "init_only_option_default_false" do
-    options = ClaudeAgent::Options.new
-    assert_equal false, options.init_only
-  end
-
-  test "maintenance_option_default_false" do
-    options = ClaudeAgent::Options.new
-    assert_equal false, options.maintenance
-  end
-
-  test "to_cli_args_with_init" do
-    options = ClaudeAgent::Options.new(init: true)
-    args = options.to_cli_args
-    assert_includes args, "--init"
-    refute_includes args, "--init-only"
-    refute_includes args, "--maintenance"
-  end
-
-  test "to_cli_args_with_init_only" do
-    options = ClaudeAgent::Options.new(init_only: true)
+  test "extra_args_boolean_flag_produces_flag_only" do
+    options = ClaudeAgent::Options.new(extra_args: { "init-only" => nil })
     args = options.to_cli_args
     assert_includes args, "--init-only"
-    refute_includes args, "--init"
-    refute_includes args, "--maintenance"
   end
 
-  test "to_cli_args_with_maintenance" do
-    options = ClaudeAgent::Options.new(maintenance: true)
+  test "extra_args_with_value_produces_flag_and_value" do
+    options = ClaudeAgent::Options.new(extra_args: { "settings" => "/path/to/settings" })
     args = options.to_cli_args
-    assert_includes args, "--maintenance"
-    refute_includes args, "--init"
-    refute_includes args, "--init-only"
+    idx = args.index("--settings")
+    assert idx, "expected --settings flag"
+    assert_equal "/path/to/settings", args[idx + 1]
   end
 
-  test "to_cli_args_without_setup_options" do
-    options = ClaudeAgent::Options.new
+  test "extra_args_with_user_flag" do
+    options = ClaudeAgent::Options.new(extra_args: { "user" => "my-user" })
     args = options.to_cli_args
-    refute_includes args, "--init"
-    refute_includes args, "--init-only"
-    refute_includes args, "--maintenance"
-  end
-
-  test "raises_when_multiple_setup_options_set" do
-    error = assert_raises(ClaudeAgent::ConfigurationError) do
-      ClaudeAgent::Options.new(init: true, init_only: true)
-    end
-    assert_match(/Only one of init, init_only, or maintenance/, error.message)
-  end
-
-  test "raises_when_init_and_maintenance_set" do
-    error = assert_raises(ClaudeAgent::ConfigurationError) do
-      ClaudeAgent::Options.new(init: true, maintenance: true)
-    end
-    assert_match(/Only one of init, init_only, or maintenance/, error.message)
-  end
-
-  test "raises_when_all_setup_options_set" do
-    error = assert_raises(ClaudeAgent::ConfigurationError) do
-      ClaudeAgent::Options.new(init: true, init_only: true, maintenance: true)
-    end
-    assert_match(/Only one of init, init_only, or maintenance/, error.message)
+    idx = args.index("--user")
+    assert idx, "expected --user flag"
+    assert_equal "my-user", args[idx + 1]
   end
 
   # --- Session ID ---

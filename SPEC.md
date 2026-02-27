@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.61 (npm package)
+- TypeScript SDK: v0.2.62 (npm package)
 - Python SDK: v0.1.44 from GitHub (commit 7297bdc)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-26
+**Last Updated:** 2026-02-27
 
 ---
 
@@ -68,7 +68,6 @@ Configuration options for SDK queries and clients.
 | `additionalDirectories`           |     ✅      |   ✅    |  ✅   | Extra allowed directories                                    |
 | `env`                             |     ✅      |   ✅    |  ✅   | Environment variables                                        |
 | `sandbox`                         |     ✅      |   ✅    |  ✅   | Sandbox settings                                             |
-| `settings`                        |     ✅      |   ✅    |  ✅   | Settings file path or JSON string (e.g., plansDirectory)     |
 | `settingSources`                  |     ✅      |   ✅    |  ✅   | Which settings to load                                       |
 | `plugins`                         |     ✅      |   ✅    |  ✅   | Plugin configurations                                        |
 | `betas`                           |     ✅      |   ✅    |  ✅   | Beta features (e.g., context-1m-2025-08-07)                  |
@@ -79,10 +78,6 @@ Configuration options for SDK queries and clients.
 | `executable`                      |     ✅      |  N/A   | N/A  | JS runtime (node/bun/deno) - JS-specific                     |
 | `executableArgs`                  |     ✅      |  N/A   | N/A  | JS runtime args - JS-specific                                |
 | `extraArgs`                       |     ✅      |   ✅    |  ✅   | Extra CLI arguments                                          |
-| `user`                            |     ✅      |   ✅    |  ✅   | User identifier (V2 Session API)                             |
-| `init`                            |     ✅      |   ❌    |  ✅   | Run Setup hooks (init trigger), then continue (hidden CLI)   |
-| `initOnly`                        |     ✅      |   ❌    |  ✅   | Run Setup hooks (init trigger), then exit (hidden CLI)       |
-| `maintenance`                     |     ✅      |   ❌    |  ✅   | Run Setup hooks (maintenance trigger), continue (hidden CLI) |
 | `promptSuggestions`               |     ✅      |   ❌    |  ✅   | Enable prompt suggestion after each turn (v0.2.47)           |
 | `debug`                           |     ✅      |   ❌    |  ✅   | Enable verbose debug logging                                 |
 | `debugFile`                       |     ✅      |   ❌    |  ✅   | Write debug logs to specific file path                       |
@@ -147,6 +142,34 @@ Messages exchanged between SDK and CLI.
 | `error_max_turns`                     |     ✅      |   ✅    |  ✅   | Max turns exceeded                 |
 | `error_max_budget_usd`                |     ✅      |   ✅    |  ✅   | Budget exceeded                    |
 | `error_max_structured_output_retries` |     ✅      |   ❌    |  ✅   | Structured output retries exceeded |
+
+#### TaskNotificationMessage
+
+| Field         | TypeScript | Python | Ruby | Notes                       |
+|---------------|:----------:|:------:|:----:|-----------------------------|
+| `task_id`     |     ✅      |   ❌    |  ✅   | Task identifier             |
+| `tool_use_id` |     ✅      |   ❌    |  ✅   | Correlating tool call ID    |
+| `status`      |     ✅      |   ❌    |  ✅   | completed/failed/stopped    |
+| `output_file` |     ✅      |   ❌    |  ✅   | Path to task output         |
+| `summary`     |     ✅      |   ❌    |  ✅   | Task summary                |
+| `usage`       |     ✅      |   ❌    |  ✅   | Tokens/tool counts/duration |
+
+#### ToolProgressMessage
+
+| Field                  | TypeScript | Python | Ruby | Notes                   |
+|------------------------|:----------:|:------:|:----:|-------------------------|
+| `tool_use_id`          |     ✅      |   ❌    |  ✅   | Tool use ID             |
+| `tool_name`            |     ✅      |   ❌    |  ✅   | Tool name               |
+| `parent_tool_use_id`   |     ✅      |   ❌    |  ✅   | Parent tool use ID      |
+| `elapsed_time_seconds` |     ✅      |   ❌    |  ✅   | Elapsed time            |
+| `task_id`              |     ✅      |   ❌    |  ✅   | Associated task ID      |
+
+#### StatusMessage
+
+| Field            | TypeScript | Python | Ruby | Notes                   |
+|------------------|:----------:|:------:|:----:|-------------------------|
+| `status`         |     ✅      |   ❌    |  ✅   | Current status          |
+| `permissionMode` |     ✅      |   ❌    |  ✅   | Current permission mode |
 
 #### HookResponseMessage Fields
 
@@ -252,6 +275,29 @@ Bidirectional control protocol for SDK-CLI communication.
 | `McpSetServersResult`  |     ✅      |   ❌    |  ✅   | Set servers result     |
 | `RewindFilesResult`    |     ✅      |   ✅    |  ✅   | Rewind result          |
 
+#### ModelInfo Fields
+
+| Field                      | TypeScript | Python | Ruby | Notes                           |
+|----------------------------|:----------:|:------:|:----:|---------------------------------|
+| `value`                    |     ✅      |   ❌    |  ✅   | Model identifier                |
+| `displayName`              |     ✅      |   ❌    |  ✅   | Human-readable name             |
+| `description`              |     ✅      |   ❌    |  ✅   | Model description               |
+| `supportsEffort`           |     ✅      |   ❌    |  ✅   | Whether model supports effort   |
+| `supportedEffortLevels`    |     ✅      |   ❌    |  ✅   | Available effort levels         |
+| `supportsAdaptiveThinking` |     ✅      |   ❌    |  ✅   | Whether adaptive thinking works |
+
+#### McpServerStatus Fields
+
+| Field        | TypeScript | Python | Ruby | Notes                              |
+|--------------|:----------:|:------:|:----:|------------------------------------|
+| `name`       |     ✅      |   ✅    |  ✅   | Server name                        |
+| `status`     |     ✅      |   ✅    |  ✅   | Connection status                  |
+| `serverInfo` |     ✅      |   ❌    |  ✅   | Server name/version                |
+| `error`      |     ✅      |   ❌    |  ✅   | Error message (when failed)        |
+| `config`     |     ✅      |   ❌    |  ✅   | Server configuration               |
+| `scope`      |     ✅      |   ❌    |  ✅   | Config scope (project, user, etc.) |
+| `tools`      |     ✅      |   ❌    |  ✅   | Tools with annotations             |
+
 ---
 
 ## 5. Hooks
@@ -303,6 +349,23 @@ Event hooks for intercepting and modifying SDK behavior.
 | `ConfigChangeHookInput`       |     ✅      |   ❌    |  ✅   |
 | `WorktreeCreateHookInput`     |     ✅      |   ❌    |  ✅   |
 | `WorktreeRemoveHookInput`     |     ✅      |   ❌    |  ✅   |
+
+#### StopHookInput Fields
+
+| Field                    | TypeScript | Python | Ruby | Notes                                  |
+|--------------------------|:----------:|:------:|:----:|----------------------------------------|
+| `stop_hook_active`       |     ✅      |   ✅    |  ✅   | Whether stop hook is active            |
+| `last_assistant_message` |     ✅      |   ❌    |  ✅   | Last assistant message text (v0.2.51+) |
+
+#### SubagentStopHookInput Fields
+
+| Field                    | TypeScript | Python | Ruby | Notes                                  |
+|--------------------------|:----------:|:------:|:----:|----------------------------------------|
+| `stop_hook_active`       |     ✅      |   ✅    |  ✅   | Whether stop hook is active            |
+| `agent_id`               |     ✅      |   ✅    |  ✅   | Subagent identifier                    |
+| `agent_transcript_path`  |     ✅      |   ✅    |  ✅   | Path to agent transcript               |
+| `agent_type`             |     ✅      |   ✅    |  ✅   | Agent type                             |
+| `last_assistant_message` |     ✅      |   ❌    |  ✅   | Last assistant message text (v0.2.51+) |
 
 ### Hook Output Types
 
@@ -651,7 +714,7 @@ Error types and hierarchy.
 | `CLIConnectionError` |     ❌      |   ✅    |  ✅   | Connection failed              |
 | `ProcessError`       |     ❌      |   ✅    |  ✅   | CLI process failed             |
 | `JSONDecodeError`    |     ❌      |   ✅    |  ✅   | JSON parsing failed            |
-| `MessageParseError`  |     ❌      |   ❌    |  ✅   | Message parsing failed         |
+| `MessageParseError`  |     ❌      |   ✅    |  ✅   | Message parsing failed         |
 | `TimeoutError`       |     ❌      |   ❌    |  ✅   | Control request timeout        |
 | `ConfigurationError` |     ❌      |   ❌    |  ✅   | Invalid configuration          |
 
@@ -747,25 +810,28 @@ Public API surface for SDK clients.
 - Source is bundled/minified, but `sdk.d.ts` provides complete type definitions
 - Includes unstable V2 session API
 - `executable`/`executableArgs` are JS-specific (`node`/`bun`/`deno`)
+- Does NOT have `settings`, `user`, `init`/`initOnly`/`maintenance` as typed Options (use `extraArgs` or `settingSources`)
+- `ApiKeySource` includes `'oauth'`
 - v0.2.45: Added `TaskStartedMessage`, `RateLimitEvent` message types
 - v0.2.47: Added `promptSuggestions` option and `PromptSuggestionMessage`
 - v0.2.49: Added `ConfigChange` hook event, `SandboxFilesystemConfig`, ModelInfo capability fields
 - v0.2.50: Added `WorktreeCreate`/`WorktreeRemove` hook events, `apply_flag_settings` control request
-- v0.2.51: Added `TaskProgressMessage` for real-time background agent progress reporting
+- v0.2.51: Added `TaskProgressMessage`, `StopHookInput.last_assistant_message`, `SubagentStopHookInput.last_assistant_message`
 - v0.2.52: Added `mcp_authenticate`/`mcp_clear_auth` control requests for MCP server authentication
 - v0.2.53: Added `listSessions()` for discovering and listing past sessions with `SDKSessionInfo` metadata
 - v0.2.54 – v0.2.58: CLI parity updates (no new SDK-facing features)
 - v0.2.59: Added `getSessionMessages()` for reading session transcript history with pagination (limit/offset)
-- v0.2.61: CLI parity update (no new SDK-facing features)
+- v0.2.61 – v0.2.62: CLI parity updates (no new SDK-facing features)
 
 ### Python SDK
 - Full source available with `Transport` abstract class
 - Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus
-- Has `CLINotFoundError`, `CLIConnectionError`, `ProcessError`, `CLIJSONDecodeError` error types
+- Has `CLINotFoundError`, `CLIConnectionError`, `ProcessError`, `CLIJSONDecodeError`, `MessageParseError` error types
 - Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted, ConfigChange, WorktreeCreate, WorktreeRemove
 - Missing permission modes: `dontAsk`
 - Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
+- Has `agent_type` field in `SubagentStopHookInput`
 - Has SDK MCP server support with `tool()` helper and annotations
 - Added `thinking` config and `effort` option in v0.1.36
 - Handles `rate_limit_event` and unknown message types gracefully (v0.1.40)
@@ -773,8 +839,9 @@ Public API surface for SDK clients.
 - v0.1.42 – v0.1.44: CLI parity updates (no new SDK-facing features; latest commit bumps bundled CLI to v2.1.61)
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.61
+- Feature parity with TypeScript SDK v0.2.62
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)
+- Has `settings`, `init`/`initOnly`/`maintenance`, `user` options (not typed in TS SDK)

@@ -167,13 +167,13 @@ module ClaudeAgent
     required: [ :reason ]
 
   BaseHookInput.define_input "Stop",
-    optional: { stop_hook_active: false }
+    optional: { stop_hook_active: false, last_assistant_message: nil }
 
   BaseHookInput.define_input "SubagentStart",
     required: [ :agent_id, :agent_type ]
 
   BaseHookInput.define_input "SubagentStop",
-    optional: { stop_hook_active: false, agent_id: nil, agent_transcript_path: nil }
+    optional: { stop_hook_active: false, agent_id: nil, agent_transcript_path: nil, agent_type: nil, last_assistant_message: nil }
 
   BaseHookInput.define_input "PreCompact",
     required: [ :trigger ],

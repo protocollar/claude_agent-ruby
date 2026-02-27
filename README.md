@@ -93,26 +93,6 @@ ClaudeAgent::Client.open do |client|
 end
 ```
 
-### Run Setup Hooks
-
-Run Setup hooks without starting a conversation (useful for CI/CD pipelines):
-
-```ruby
-require "claude_agent"
-
-# Run init Setup hooks (default)
-messages = ClaudeAgent.run_setup
-result = messages.last
-puts "Setup completed" if result.success?
-
-# Run init Setup hooks with custom options
-options = ClaudeAgent::Options.new(cwd: "/my/project")
-ClaudeAgent.run_setup(trigger: :init, options: options)
-
-# Run maintenance Setup hooks
-ClaudeAgent.run_setup(trigger: :maintenance)
-```
-
 ## Conversation API
 
 The `Conversation` class manages the full lifecycle: auto-connects on first message, tracks multi-turn history, accumulates usage, and builds a unified tool activity timeline.
@@ -162,17 +142,20 @@ conversation.close
 
 ### Callbacks
 
-Register callbacks for real-time event handling:
+Register callbacks for real-time event handling. Any `on_*` keyword is accepted — see [Event Handlers](#event-handlers) for the full list.
 
 ```ruby
 conversation = ClaudeAgent.conversation(
-  on_text:        ->(text)    { print text },
-  on_stream:      ->(text)    { print text },          # Alias for on_text
-  on_thinking:    ->(thought) { puts "Thinking: #{thought}" },
-  on_tool_use:    ->(tool)    { puts "Tool: #{tool.display_label}" },
-  on_tool_result: ->(result)  { puts "Result: #{result.content&.slice(0, 80)}" },
-  on_result:      ->(result)  { puts "Done! Cost: $#{result.total_cost_usd}" },
-  on_message:     ->(msg)     { log(msg) }             # Catch-all
+  on_text:           ->(text)    { print text },
+  on_stream:         ->(text)    { print text },          # Alias for on_text
+  on_thinking:       ->(thought) { puts "Thinking: #{thought}" },
+  on_tool_use:       ->(tool)    { puts "Tool: #{tool.display_label}" },
+  on_tool_result:    ->(result)  { puts "Result: #{result.content&.slice(0, 80)}" },
+  on_result:         ->(result)  { puts "Done! Cost: $#{result.total_cost_usd}" },
+  on_message:        ->(msg)     { log(msg) },            # Catch-all
+  on_stream_event:   ->(evt)     { handle_stream(evt) },  # Type-based
+  on_status:         ->(status)  { show_status(status) },
+  on_tool_progress:  ->(prog)    { update_spinner(prog) }
 )
 ```
 
@@ -192,12 +175,49 @@ ClaudeAgent::Conversation.open(permission_mode: "acceptEdits") do |c|
 end
 ```
 
+### Live Tool Tracking
+
+Track tool status in real time for live UIs. Unlike `tool_activity` (built after a turn), `LiveToolActivity` updates as tools run:
+
+```ruby
+# Conversation level — opt in with track_tools: true
+ClaudeAgent::Conversation.open(
+  permission_mode: "acceptEdits",
+  track_tools: true
+) do |c|
+  c.tool_tracker.on_start    { |entry| puts "▸ #{entry.display_label}" }
+  c.tool_tracker.on_progress { |entry| puts "  #{entry.elapsed&.round(1)}s..." }
+  c.tool_tracker.on_complete { |entry| puts "✓ #{entry.display_label}" }
+
+  c.say("Fix the bug in auth.rb")
+  # Tracker resets between turns automatically
+end
+
+# Client level — attach directly
+tracker = ClaudeAgent::ToolActivityTracker.attach(client)
+tracker.on_start    { |entry| show_spinner(entry) }
+tracker.on_complete { |entry| hide_spinner(entry) }
+
+# Standalone — attach to any EventHandler
+tracker = ClaudeAgent::ToolActivityTracker.attach(event_handler)
+
+# Catch-all callback (receives event symbol + entry)
+tracker.on_change { |event, entry| log(event, entry.id) }
+
+# Query running/completed tools at any point
+tracker.running   # => [LiveToolActivity, ...]
+tracker.done      # => [LiveToolActivity, ...]
+tracker.errored   # => [LiveToolActivity, ...]
+tracker["toolu_01ABC"] # => LiveToolActivity (O(1) lookup by tool use ID)
+```
+
 ### Conversation Accessors
 
 ```ruby
 conversation.turns             # Array of TurnResult objects
 conversation.messages          # All messages across all turns
 conversation.tool_activity     # Array of ToolActivity objects
+conversation.tool_tracker      # ToolActivityTracker (when track_tools: true)
 conversation.total_cost        # Total cost in USD
 conversation.session_id        # Session ID from most recent turn
 conversation.usage             # CumulativeUsage stats
@@ -390,14 +410,26 @@ turn.content_blocks      # All content blocks across assistant messages
 
 Register typed callbacks instead of writing `case` statements. Works with `Client`, `Conversation`, or standalone.
 
+Three event layers fire for every message:
+
+1. **Catch-all** — `:message` fires for every message
+2. **Type-based** — `message.type` fires (e.g. `:assistant`, `:stream_event`, `:status`, `:tool_progress`)
+3. **Decomposed** — convenience events for rich content (`:text`, `:thinking`, `:tool_use`, `:tool_result`)
+
 ### Via Client
 
 ```ruby
 ClaudeAgent::Client.open do |client|
+  # Decomposed events (extracted content)
   client.on_text { |text| print text }
   client.on_tool_use { |tool| puts "\nUsing: #{tool.display_label}" }
   client.on_tool_result { |result, tool_use| puts "Done: #{tool_use&.name}" }
   client.on_result { |result| puts "\nCost: $#{result.total_cost_usd}" }
+
+  # Type-based events (full message object)
+  client.on_stream_event { |evt| handle_stream(evt) }
+  client.on_status { |status| show_status(status) }
+  client.on_tool_progress { |prog| update_spinner(prog) }
 
   client.send_and_receive("Fix the bug in auth.rb")
 end
@@ -423,6 +455,10 @@ handler.on(:tool_use) { |tool| puts "Tool: #{tool.display_label}" }
 handler.on(:tool_result) { |result, tool_use| puts "Result for #{tool_use&.name}" }
 handler.on(:result) { |result| puts "Cost: $#{result.total_cost_usd}" }
 handler.on(:message) { |msg| log(msg) }  # Catch-all
+
+# Type-based events work with on() too
+handler.on(:stream_event) { |evt| handle_stream(evt) }
+handler.on(:status) { |status| show_status(status) }
 
 # Dispatch manually
 client.receive_response.each { |msg| handler.handle(msg) }
@@ -1133,6 +1169,11 @@ client.on_tool_result { |result, tool_use| puts "Done: #{tool_use&.name}" }
 client.on_thinking { |thought| puts thought }
 client.on_result { |result| puts "Cost: $#{result.total_cost_usd}" }
 client.on_message { |msg| log(msg) }
+# Type-based events for all message types
+client.on_assistant { |msg| handle_assistant(msg) }
+client.on_stream_event { |evt| handle_stream(evt) }
+client.on_status { |status| show_status(status) }
+client.on_tool_progress { |prog| update_spinner(prog) }
 
 # Control methods
 client.interrupt                              # Cancel current operation
@@ -1349,7 +1390,9 @@ session = ClaudeAgent.unstable_v2_create_session(options)
 | Type                     | Purpose                                                                          |
 |--------------------------|----------------------------------------------------------------------------------|
 | `TurnResult`             | Complete agent turn with text, tools, usage, and status accessors                |
-| `ToolActivity`           | Tool use/result pair with turn index and timing                                  |
+| `ToolActivity`           | Tool use/result pair with turn index and timing (immutable, post-turn)            |
+| `LiveToolActivity`       | Mutable real-time tool status (running/done/error) with elapsed time             |
+| `ToolActivityTracker`    | Enumerable collection of `LiveToolActivity` with auto-wiring and `on_change`     |
 | `CumulativeUsage`        | Running totals of tokens, cost, turns, and duration                              |
 | `PermissionRequest`      | Deferred permission promise resolvable from any thread                           |
 | `PermissionQueue`        | Thread-safe queue of pending permission requests                                 |

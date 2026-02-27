@@ -16,6 +16,26 @@ class TestClaudeAgentTypes < ActiveSupport::TestCase
     assert_equal({ type: "preset", preset: "claude_code" }, preset.to_h)
   end
 
+  # --- TaskUsage ---
+
+  test "task_usage" do
+    usage = ClaudeAgent::TaskUsage.new(
+      total_tokens: 5000,
+      tool_uses: 3,
+      duration_ms: 2500
+    )
+    assert_equal 5000, usage.total_tokens
+    assert_equal 3, usage.tool_uses
+    assert_equal 2500, usage.duration_ms
+  end
+
+  test "task_usage_defaults" do
+    usage = ClaudeAgent::TaskUsage.new
+    assert_equal 0, usage.total_tokens
+    assert_equal 0, usage.tool_uses
+    assert_equal 0, usage.duration_ms
+  end
+
   # --- SlashCommand ---
 
   test "slash_command" do
@@ -52,6 +72,21 @@ class TestClaudeAgentTypes < ActiveSupport::TestCase
     model = ClaudeAgent::ModelInfo.new(value: "claude-sonnet")
     assert_nil model.display_name
     assert_nil model.description
+    assert_nil model.supports_effort
+    assert_nil model.supported_effort_levels
+    assert_nil model.supports_adaptive_thinking
+  end
+
+  test "model_info_with_effort_fields" do
+    model = ClaudeAgent::ModelInfo.new(
+      value: "claude-sonnet",
+      supports_effort: true,
+      supported_effort_levels: [ "low", "medium", "high" ],
+      supports_adaptive_thinking: false
+    )
+    assert_equal true, model.supports_effort
+    assert_equal [ "low", "medium", "high" ], model.supported_effort_levels
+    assert_equal false, model.supports_adaptive_thinking
   end
 
   # --- McpServerStatus ---
@@ -70,6 +105,26 @@ class TestClaudeAgentTypes < ActiveSupport::TestCase
   test "mcp_server_status_defaults" do
     status = ClaudeAgent::McpServerStatus.new(name: "test", status: "pending")
     assert_nil status.server_info
+    assert_nil status.error
+    assert_nil status.config
+    assert_nil status.scope
+    assert_nil status.tools
+  end
+
+  test "mcp_server_status_with_new_fields" do
+    tools = [ { "name" => "read", "description" => "Read a file" } ]
+    status = ClaudeAgent::McpServerStatus.new(
+      name: "filesystem",
+      status: "failed",
+      error: "Connection refused",
+      config: { "command" => "node", "args" => [ "server.js" ] },
+      scope: "project",
+      tools: tools
+    )
+    assert_equal "Connection refused", status.error
+    assert_equal({ "command" => "node", "args" => [ "server.js" ] }, status.config)
+    assert_equal "project", status.scope
+    assert_equal tools, status.tools
   end
 
   # --- AccountInfo ---
@@ -344,6 +399,7 @@ class TestClaudeAgentTypes < ActiveSupport::TestCase
     assert_includes ClaudeAgent::API_KEY_SOURCES, "project"
     assert_includes ClaudeAgent::API_KEY_SOURCES, "org"
     assert_includes ClaudeAgent::API_KEY_SOURCES, "temporary"
+    assert_includes ClaudeAgent::API_KEY_SOURCES, "oauth"
   end
 
   # --- Assistant Message Error Types ---

@@ -233,6 +233,16 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
   test "stop_input_defaults" do
     input = ClaudeAgent::StopInput.new
     assert_equal false, input.stop_hook_active
+    assert_nil input.last_assistant_message
+  end
+
+  test "stop_input_with_last_assistant_message" do
+    input = ClaudeAgent::StopInput.new(
+      stop_hook_active: true,
+      last_assistant_message: "I've completed the task."
+    )
+    assert_equal true, input.stop_hook_active
+    assert_equal "I've completed the task.", input.last_assistant_message
   end
 
   # --- SubagentStartInput ---
@@ -266,6 +276,19 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert_equal false, input.stop_hook_active
     assert_nil input.agent_id
     assert_nil input.agent_transcript_path
+    assert_nil input.agent_type
+    assert_nil input.last_assistant_message
+  end
+
+  test "subagent_stop_input_with_agent_type_and_last_assistant_message" do
+    input = ClaudeAgent::SubagentStopInput.new(
+      agent_id: "agent-123",
+      agent_type: "Explore",
+      last_assistant_message: "Search complete."
+    )
+    assert_equal "agent-123", input.agent_id
+    assert_equal "Explore", input.agent_type
+    assert_equal "Search complete.", input.last_assistant_message
   end
 
   # --- PreCompactInput ---

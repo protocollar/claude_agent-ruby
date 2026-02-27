@@ -15,7 +15,7 @@ module ClaudeAgent
 
   # API key source types (TypeScript SDK parity)
   # Indicates where the API key was sourced from
-  API_KEY_SOURCES = %w[user project org temporary].freeze
+  API_KEY_SOURCES = %w[user project org temporary oauth].freeze
 
   # Tools preset configuration (TypeScript SDK parity)
   #
@@ -52,8 +52,8 @@ module ClaudeAgent
   #   model.value        # => "claude-3-opus"
   #   model.display_name # => "Claude 3 Opus"
   #
-  ModelInfo = Data.define(:value, :display_name, :description) do
-    def initialize(value:, display_name: nil, description: nil)
+  ModelInfo = Data.define(:value, :display_name, :description, :supports_effort, :supported_effort_levels, :supports_adaptive_thinking) do
+    def initialize(value:, display_name: nil, description: nil, supports_effort: nil, supported_effort_levels: nil, supports_adaptive_thinking: nil)
       super
     end
   end
@@ -64,8 +64,19 @@ module ClaudeAgent
   # @example
   #   status = McpServerStatus.new(name: "filesystem", status: "connected", server_info: {name: "fs", version: "1.0"})
   #
-  McpServerStatus = Data.define(:name, :status, :server_info) do
-    def initialize(name:, status:, server_info: nil)
+  McpServerStatus = Data.define(:name, :status, :server_info, :error, :config, :scope, :tools) do
+    def initialize(name:, status:, server_info: nil, error: nil, config: nil, scope: nil, tools: nil)
+      super
+    end
+  end
+
+  # Task usage statistics for TaskNotificationMessage (TypeScript SDK parity)
+  #
+  # @example
+  #   usage = TaskUsage.new(total_tokens: 5000, tool_uses: 3, duration_ms: 2500)
+  #
+  TaskUsage = Data.define(:total_tokens, :tool_uses, :duration_ms) do
+    def initialize(total_tokens: 0, tool_uses: 0, duration_ms: 0)
       super
     end
   end

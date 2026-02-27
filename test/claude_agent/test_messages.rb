@@ -231,6 +231,25 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     assert_equal :status, msg.type
   end
 
+  test "status_message_with_permission_mode" do
+    msg = ClaudeAgent::StatusMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      status: "compacting",
+      permission_mode: "acceptEdits"
+    )
+    assert_equal "acceptEdits", msg.permission_mode
+  end
+
+  test "status_message_permission_mode_default_nil" do
+    msg = ClaudeAgent::StatusMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      status: "compacting"
+    )
+    assert_nil msg.permission_mode
+  end
+
   test "status_message_in_types_constant" do
     assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::StatusMessage
   end
@@ -264,6 +283,29 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
       parent_tool_use_id: "parent-789"
     )
     assert_equal "parent-789", msg.parent_tool_use_id
+  end
+
+  test "tool_progress_message_with_task_id" do
+    msg = ClaudeAgent::ToolProgressMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      tool_use_id: "tool-456",
+      tool_name: "Bash",
+      elapsed_time_seconds: 5.2,
+      task_id: "task-789"
+    )
+    assert_equal "task-789", msg.task_id
+  end
+
+  test "tool_progress_message_task_id_default_nil" do
+    msg = ClaudeAgent::ToolProgressMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      tool_use_id: "tool-456",
+      tool_name: "Bash",
+      elapsed_time_seconds: 5.2
+    )
+    assert_nil msg.task_id
   end
 
   test "tool_progress_message_in_types_constant" do
@@ -450,6 +492,37 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     refute msg.completed?
     refute msg.failed?
     assert msg.stopped?
+  end
+
+  test "task_notification_message_with_tool_use_id_and_usage" do
+    usage = ClaudeAgent::TaskUsage.new(total_tokens: 5000, tool_uses: 3, duration_ms: 2500)
+    msg = ClaudeAgent::TaskNotificationMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      task_id: "task-456",
+      status: "completed",
+      output_file: "/path/to/output.txt",
+      summary: "Done",
+      tool_use_id: "tool-789",
+      usage: usage
+    )
+    assert_equal "tool-789", msg.tool_use_id
+    assert_equal 5000, msg.usage.total_tokens
+    assert_equal 3, msg.usage.tool_uses
+    assert_equal 2500, msg.usage.duration_ms
+  end
+
+  test "task_notification_message_new_fields_default_nil" do
+    msg = ClaudeAgent::TaskNotificationMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      task_id: "task-456",
+      status: "completed",
+      output_file: "/path/to/output.txt",
+      summary: "Done"
+    )
+    assert_nil msg.tool_use_id
+    assert_nil msg.usage
   end
 
   test "task_notification_message_in_types_constant" do

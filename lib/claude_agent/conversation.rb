@@ -29,14 +29,13 @@ module ClaudeAgent
   #   conversation.say("Continue where we left off")
   #
   class Conversation
-    # Keys consumed by Conversation; everything else forwards to Options
-    CONVERSATION_KEYS = %i[
-      on_text on_stream on_tool_use on_tool_result
-      on_thinking on_result on_message on_permission
-      client options
-    ].freeze
+    # Keys consumed directly by Conversation; everything else is a callback or forwarded to Options
+    CONVERSATION_KEYS = %i[client options on_permission track_tools].freeze
 
-    attr_reader :turns, :messages, :tool_activity, :client
+    # Callback aliases (alternative names mapping to canonical events)
+    CALLBACK_ALIASES = { on_stream: :text }.freeze
+
+    attr_reader :turns, :messages, :tool_activity, :client, :tool_tracker
 
     # Open a conversation with automatic cleanup.
     #
@@ -62,7 +61,8 @@ module ClaudeAgent
     # Create a new conversation.
     #
     # Accepts all {Options} keyword arguments plus conversation-level
-    # callbacks:
+    # callbacks. Any +on_*+ keyword is registered as an event callback
+    # (see {EventHandler::EVENTS} for available events).
     #
     # @param on_text [Proc] Handler for streaming text
     # @param on_stream [Proc] Alias for on_text
@@ -71,13 +71,15 @@ module ClaudeAgent
     # @param on_thinking [Proc] Handler for thinking events
     # @param on_result [Proc] Handler for result events
     # @param on_message [Proc] Handler for all messages
+    # @param on_stream_event [Proc] Handler for stream events
+    # @param on_status [Proc] Handler for status messages
+    # @param on_tool_progress [Proc] Handler for tool progress messages
     # @param on_permission [Symbol, Proc] :queue (default) or a callable for can_use_tool
     # @param client [Client] Pre-built client (for testing)
     # @param options [Options] Pre-built options object
     #
     def initialize(**kwargs)
-      conversation_kwargs = kwargs.slice(*CONVERSATION_KEYS)
-      options_kwargs = kwargs.except(*CONVERSATION_KEYS)
+      callbacks, conversation_kwargs, options_kwargs = partition_kwargs(kwargs)
 
       @options = conversation_kwargs[:options] || build_options(options_kwargs, conversation_kwargs)
       @client = conversation_kwargs[:client] || Client.new(options: @options)
@@ -89,8 +91,9 @@ module ClaudeAgent
       @tool_result_timestamps = {}
       @connected = false
       @closed = false
+      @tool_tracker = conversation_kwargs[:track_tools] ? ToolActivityTracker.attach(@client) : nil
 
-      register_callbacks(conversation_kwargs)
+      register_callbacks(callbacks)
       register_timing_hooks
     end
 
@@ -113,6 +116,7 @@ module ClaudeAgent
 
       @turns << turn
       build_tool_activities(turn, @turns.size - 1)
+      @tool_tracker&.reset!
 
       logger.info("conversation") { "Turn #{@turns.size - 1} complete (#{turn.tool_uses.size} tools, cost=$#{total_cost})" }
 
@@ -189,6 +193,24 @@ module ClaudeAgent
 
     private
 
+    def partition_kwargs(kwargs)
+      callbacks = {}
+      conversation_kwargs = {}
+      options_kwargs = {}
+
+      kwargs.each do |key, value|
+        if CONVERSATION_KEYS.include?(key)
+          conversation_kwargs[key] = value
+        elsif key.to_s.start_with?("on_")
+          callbacks[key] = value
+        else
+          options_kwargs[key] = value
+        end
+      end
+
+      [ callbacks, conversation_kwargs, options_kwargs ]
+    end
+
     def build_options(options_kwargs, conversation_kwargs)
       permission = conversation_kwargs[:on_permission]
 
@@ -201,16 +223,12 @@ module ClaudeAgent
       Options.new(**options_kwargs)
     end
 
-    def register_callbacks(kwargs)
-      mapping = {
-        on_text: :text, on_stream: :text, on_thinking: :thinking,
-        on_tool_use: :tool_use, on_tool_result: :tool_result,
-        on_result: :result, on_message: :message
-      }
+    def register_callbacks(callbacks)
+      callbacks.each do |key, callback|
+        next unless callback
 
-      mapping.each do |key, event|
-        callback = kwargs[key]
-        @client.on(event, &callback) if callback
+        event = CALLBACK_ALIASES[key] || key.to_s.delete_prefix("on_").to_sym
+        @client.on(event, &callback)
       end
     end
 
