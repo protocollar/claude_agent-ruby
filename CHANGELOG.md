@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `on_assistant`, `on_user`, `on_stream_event`, `on_status`, `on_tool_progress`, `on_hook_response`, `on_auth_status`, `on_task_notification`, `on_hook_started`, `on_hook_progress`, `on_tool_use_summary`, `on_task_started`, `on_task_progress`, `on_rate_limit_event`, `on_prompt_suggestion`, `on_files_persisted` convenience methods on `EventHandler` and `Client`
 - `Conversation` now accepts any `on_*` keyword argument as a callback (pattern-based, no longer limited to a hardcoded list)
 - `GenericMessage` fires its dynamic type symbol, so `on(:fancy_new_type)` works for future/unknown CLI message types
+- `TaskNotificationMessage#tool_use_id` and `#usage` fields with new `TaskUsage` type (TypeScript SDK parity)
+- `ToolProgressMessage#task_id` field (TypeScript SDK parity)
+- `StatusMessage#permission_mode` field (TypeScript SDK parity)
+- `ModelInfo#supports_effort`, `#supported_effort_levels`, `#supports_adaptive_thinking` fields (TypeScript SDK parity)
+- `McpServerStatus#error`, `#config`, `#scope`, `#tools` fields (TypeScript SDK parity)
+- `StopInput#last_assistant_message` hook field (TypeScript SDK parity)
+- `SubagentStopInput#agent_type` and `#last_assistant_message` hook fields (TypeScript SDK parity)
+- `'oauth'` source in `API_KEY_SOURCES` constant (TypeScript SDK parity)
+- RBS signatures for all new fields
 
 ### Changed
 - `EventHandler#handle` now fires three layers per message: `:message` (catch-all) → `message.type` (type-based) → decomposed (`:text`, `:thinking`, `:tool_use`, `:tool_result`)

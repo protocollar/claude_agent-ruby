@@ -288,7 +288,11 @@ module ClaudeAgent
   #     status: "compacting"
   #   )
   #
-  StatusMessage = Data.define(:uuid, :session_id, :status) do
+  StatusMessage = Data.define(:uuid, :session_id, :status, :permission_mode) do
+    def initialize(uuid:, session_id:, status:, permission_mode: nil)
+      super
+    end
+
     def type
       :status
     end
@@ -313,7 +317,8 @@ module ClaudeAgent
     :tool_use_id,
     :tool_name,
     :parent_tool_use_id,
-    :elapsed_time_seconds
+    :elapsed_time_seconds,
+    :task_id
   ) do
     def initialize(
       uuid:,
@@ -321,7 +326,8 @@ module ClaudeAgent
       tool_use_id:,
       tool_name:,
       elapsed_time_seconds:,
-      parent_tool_use_id: nil
+      parent_tool_use_id: nil,
+      task_id: nil
     )
       super
     end
@@ -469,7 +475,9 @@ module ClaudeAgent
     :task_id,
     :status,
     :output_file,
-    :summary
+    :summary,
+    :tool_use_id,
+    :usage
   ) do
     def initialize(
       uuid:,
@@ -477,7 +485,9 @@ module ClaudeAgent
       task_id:,
       status:,
       output_file:,
-      summary:
+      summary:,
+      tool_use_id: nil,
+      usage: nil
     )
       super
     end

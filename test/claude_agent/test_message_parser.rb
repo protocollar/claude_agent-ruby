@@ -465,6 +465,47 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal "processing", msg.status
   end
 
+  test "parse_status_message_with_permission_mode" do
+    raw = {
+      "type" => "system",
+      "subtype" => "status",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "status" => "compacting",
+      "permission_mode" => "acceptEdits"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "acceptEdits", msg.permission_mode
+  end
+
+  test "parse_status_message_with_permission_mode_camel_case" do
+    raw = {
+      "type" => "system",
+      "subtype" => "status",
+      "uuid" => "msg-123",
+      "sessionId" => "sess-abc",
+      "status" => "compacting",
+      "permissionMode" => "bypassPermissions"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "bypassPermissions", msg.permission_mode
+  end
+
+  test "parse_status_message_permission_mode_default_nil" do
+    raw = {
+      "type" => "system",
+      "subtype" => "status",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "status" => "compacting"
+    }
+    msg = @parser.parse(raw)
+
+    assert_nil msg.permission_mode
+  end
+
   # --- ToolProgressMessage parsing ---
 
   test "parse_tool_progress_message" do
@@ -505,6 +546,35 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal "Write", msg.tool_name
     assert_equal 10.5, msg.elapsed_time_seconds
     assert_equal "parent-789", msg.parent_tool_use_id
+  end
+
+  test "parse_tool_progress_message_with_task_id" do
+    raw = {
+      "type" => "tool_progress",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "tool_use_id" => "tool-456",
+      "tool_name" => "Bash",
+      "elapsed_time_seconds" => 5.2,
+      "task_id" => "task-789"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "task-789", msg.task_id
+  end
+
+  test "parse_tool_progress_message_task_id_default_nil" do
+    raw = {
+      "type" => "tool_progress",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "tool_use_id" => "tool-456",
+      "tool_name" => "Bash",
+      "elapsed_time_seconds" => 5.2
+    }
+    msg = @parser.parse(raw)
+
+    assert_nil msg.task_id
   end
 
   # --- HookResponseMessage parsing ---
@@ -667,6 +737,67 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal "failed", msg.status
     assert_equal "/path/to/error.log", msg.output_file
     assert_equal "Task failed", msg.summary
+  end
+
+  test "parse_task_notification_message_with_tool_use_id_and_usage" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_notification",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "task_id" => "task-456",
+      "status" => "completed",
+      "output_file" => "/path/to/output.txt",
+      "summary" => "Done",
+      "tool_use_id" => "tool-789",
+      "usage" => { "total_tokens" => 5000, "tool_uses" => 3, "duration_ms" => 2500 }
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "tool-789", msg.tool_use_id
+    assert_instance_of ClaudeAgent::TaskUsage, msg.usage
+    assert_equal 5000, msg.usage.total_tokens
+    assert_equal 3, msg.usage.tool_uses
+    assert_equal 2500, msg.usage.duration_ms
+  end
+
+  test "parse_task_notification_message_without_new_fields" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_notification",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "task_id" => "task-456",
+      "status" => "completed",
+      "output_file" => "/path/to/output.txt",
+      "summary" => "Done"
+    }
+    msg = @parser.parse(raw)
+
+    assert_nil msg.tool_use_id
+    assert_nil msg.usage
+  end
+
+  test "parse_task_notification_message_with_usage_camel_case" do
+    raw = {
+      "type" => "system",
+      "subtype" => "task_notification",
+      "uuid" => "msg-123",
+      "sessionId" => "sess-abc",
+      "taskId" => "task-456",
+      "status" => "completed",
+      "outputFile" => "/path/to/output.txt",
+      "summary" => "Done",
+      "toolUseId" => "tool-789",
+      "usage" => { "totalTokens" => 10000, "toolUses" => 5, "durationMs" => 5000 }
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "tool-789", msg.tool_use_id
+    assert_instance_of ClaudeAgent::TaskUsage, msg.usage
+    assert_equal 10000, msg.usage.total_tokens
+    assert_equal 5, msg.usage.tool_uses
+    assert_equal 5000, msg.usage.duration_ms
   end
 
   test "parse_task_notification_message_status_helpers" do

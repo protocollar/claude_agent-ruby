@@ -39,9 +39,6 @@ module ClaudeAgent
       enable_file_checkpointing: false,
       persist_session: true,
       betas: [],
-      init: false,
-      init_only: false,
-      maintenance: false,
       prompt_suggestions: false,
       debug: false,
       debug_file: nil
@@ -60,12 +57,11 @@ module ClaudeAgent
       continue_conversation resume fork_session resume_session_at session_id
       max_turns max_budget_usd thinking effort max_thinking_tokens
       strict_mcp_config mcp_servers hooks
-      settings sandbox cwd add_dirs env user agent
+      sandbox cwd add_dirs env agent
       cli_path extra_args agents setting_sources plugins
       include_partial_messages output_format enable_file_checkpointing
       persist_session prompt_suggestions betas max_buffer_size stderr_callback
       abort_controller spawn_claude_code_process
-      init init_only maintenance
       debug debug_file
       logger
     ].freeze
@@ -93,10 +89,9 @@ module ClaudeAgent
         args.concat(conversation_args)
         args.concat(limits_args)
         args.concat(mcp_args)
-        args.concat(settings_args)
+        args.concat(sandbox_args)
         args.concat(environment_args)
         args.concat(output_args)
-        args.concat(setup_hook_args)
         args.concat(debug_args)
         args.concat(extra_cli_args)
       end
@@ -233,9 +228,8 @@ module ClaudeAgent
       end
     end
 
-    def settings_args
+    def sandbox_args
       [].tap do |args|
-        args.push("--settings", settings) if settings
         if sandbox
           args.push("--sandbox", JSON.generate(sandbox.to_h))
         end
@@ -244,7 +238,6 @@ module ClaudeAgent
 
     def environment_args
       [].tap do |args|
-        args.push("--user", user) if user
         args.push("--agent", agent) if agent
         add_dirs.each { |dir| args.push("--add-dir", dir.to_s) }
         args.push("--setting-sources", setting_sources.join(",")) if setting_sources&.any?
@@ -267,14 +260,6 @@ module ClaudeAgent
           agents_hash = agents.transform_values(&:to_h)
           args.push("--agents", JSON.generate(agents_hash))
         end
-      end
-    end
-
-    def setup_hook_args
-      [].tap do |args|
-        args.push("--init") if init
-        args.push("--init-only") if init_only
-        args.push("--maintenance") if maintenance
       end
     end
 
@@ -341,11 +326,6 @@ module ClaudeAgent
 
       if session_id && (continue_conversation || resume) && !fork_session
         raise ConfigurationError, "session_id cannot be used with continue or resume unless fork_session is also set"
-      end
-
-      setup_options = [ init, init_only, maintenance ].count { |opt| opt }
-      if setup_options > 1
-        raise ConfigurationError, "Only one of init, init_only, or maintenance can be set at a time"
       end
     end
   end

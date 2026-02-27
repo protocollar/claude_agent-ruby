@@ -254,7 +254,8 @@ module ClaudeAgent
       StatusMessage.new(
         uuid: raw[:uuid] || "",
         session_id: raw[:session_id] || "",
-        status: raw[:status]
+        status: raw[:status],
+        permission_mode: raw[:permission_mode]
       )
     end
 
@@ -265,7 +266,8 @@ module ClaudeAgent
         tool_use_id: raw[:tool_use_id] || "",
         tool_name: raw[:tool_name] || "",
         parent_tool_use_id: raw[:parent_tool_use_id],
-        elapsed_time_seconds: raw[:elapsed_time_seconds] || 0
+        elapsed_time_seconds: raw[:elapsed_time_seconds] || 0,
+        task_id: raw[:task_id]
       )
     end
 
@@ -295,13 +297,24 @@ module ClaudeAgent
     end
 
     def parse_task_notification_message(raw)
+      usage = raw[:usage]
+      parsed_usage = if usage
+        TaskUsage.new(
+          total_tokens: usage[:total_tokens] || 0,
+          tool_uses: usage[:tool_uses] || 0,
+          duration_ms: usage[:duration_ms] || 0
+        )
+      end
+
       TaskNotificationMessage.new(
         uuid: raw[:uuid] || "",
         session_id: raw[:session_id] || "",
         task_id: raw[:task_id] || "",
         status: raw[:status] || "unknown",
         output_file: raw[:output_file] || "",
-        summary: raw[:summary] || ""
+        summary: raw[:summary] || "",
+        tool_use_id: raw[:tool_use_id],
+        usage: parsed_usage
       )
     end
 

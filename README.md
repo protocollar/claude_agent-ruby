@@ -93,26 +93,6 @@ ClaudeAgent::Client.open do |client|
 end
 ```
 
-### Run Setup Hooks
-
-Run Setup hooks without starting a conversation (useful for CI/CD pipelines):
-
-```ruby
-require "claude_agent"
-
-# Run init Setup hooks (default)
-messages = ClaudeAgent.run_setup
-result = messages.last
-puts "Setup completed" if result.success?
-
-# Run init Setup hooks with custom options
-options = ClaudeAgent::Options.new(cwd: "/my/project")
-ClaudeAgent.run_setup(trigger: :init, options: options)
-
-# Run maintenance Setup hooks
-ClaudeAgent.run_setup(trigger: :maintenance)
-```
-
 ## Conversation API
 
 The `Conversation` class manages the full lifecycle: auto-connects on first message, tracks multi-turn history, accumulates usage, and builds a unified tool activity timeline.

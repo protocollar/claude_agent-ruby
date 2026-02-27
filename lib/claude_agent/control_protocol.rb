@@ -352,7 +352,10 @@ module ClaudeAgent
         ModelInfo.new(
           value: model["value"],
           display_name: model["displayName"],
-          description: model["description"]
+          description: model["description"],
+          supports_effort: model["supportsEffort"],
+          supported_effort_levels: model["supportedEffortLevels"],
+          supports_adaptive_thinking: model["supportsAdaptiveThinking"]
         )
       end
 
@@ -384,7 +387,10 @@ module ClaudeAgent
         ModelInfo.new(
           value: model["value"],
           display_name: model["displayName"],
-          description: model["description"]
+          description: model["description"],
+          supports_effort: model["supportsEffort"],
+          supported_effort_levels: model["supportedEffortLevels"],
+          supports_adaptive_thinking: model["supportsAdaptiveThinking"]
         )
       end
     end
@@ -397,7 +403,11 @@ module ClaudeAgent
         McpServerStatus.new(
           name: server["name"],
           status: server["status"],
-          server_info: server["serverInfo"]
+          server_info: server["serverInfo"],
+          error: server["error"],
+          config: server["config"],
+          scope: server["scope"],
+          tools: server["tools"]
         )
       end
     end

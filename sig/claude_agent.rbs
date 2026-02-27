@@ -128,16 +128,31 @@ module ClaudeAgent
     attr_reader value: String
     attr_reader display_name: String?
     attr_reader description: String?
+    attr_reader supports_effort: bool?
+    attr_reader supported_effort_levels: Array[String]?
+    attr_reader supports_adaptive_thinking: bool?
 
-    def initialize: (value: String, ?display_name: String?, ?description: String?) -> void
+    def initialize: (value: String, ?display_name: String?, ?description: String?, ?supports_effort: bool?, ?supported_effort_levels: Array[String]?, ?supports_adaptive_thinking: bool?) -> void
   end
 
   class McpServerStatus
     attr_reader name: String
     attr_reader status: String
     attr_reader server_info: Hash[String, untyped]?
+    attr_reader error: String?
+    attr_reader config: Hash[String, untyped]?
+    attr_reader scope: String?
+    attr_reader tools: Array[Hash[String, untyped]]?
 
-    def initialize: (name: String, status: String, ?server_info: Hash[String, untyped]?) -> void
+    def initialize: (name: String, status: String, ?server_info: Hash[String, untyped]?, ?error: String?, ?config: Hash[String, untyped]?, ?scope: String?, ?tools: Array[Hash[String, untyped]]?) -> void
+  end
+
+  class TaskUsage
+    attr_reader total_tokens: Integer
+    attr_reader tool_uses: Integer
+    attr_reader duration_ms: Integer
+
+    def initialize: (?total_tokens: Integer, ?tool_uses: Integer, ?duration_ms: Integer) -> void
   end
 
   class AccountInfo
@@ -357,15 +372,13 @@ module ClaudeAgent
     # Hooks
     attr_accessor hooks: Hash[String, Array[HookMatcher]]?
 
-    # Settings & sandbox
-    attr_accessor settings: String?
+    # Sandbox
     attr_accessor sandbox: SandboxSettings?
 
     # Environment
     attr_accessor cwd: String?
     attr_accessor add_dirs: Array[String]
     attr_accessor env: Hash[String, String]
-    attr_accessor user: String?
     attr_accessor agent: String?
 
     # CLI configuration
@@ -636,8 +649,9 @@ module ClaudeAgent
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader status: String
+    attr_reader permission_mode: String?
 
-    def initialize: (uuid: String, session_id: String, status: String) -> void
+    def initialize: (uuid: String, session_id: String, status: String, ?permission_mode: String?) -> void
     def type: () -> :status
   end
 
@@ -649,8 +663,9 @@ module ClaudeAgent
     attr_reader tool_name: String
     attr_reader parent_tool_use_id: String?
     attr_reader elapsed_time_seconds: Float
+    attr_reader task_id: String?
 
-    def initialize: (uuid: String, session_id: String, tool_use_id: String, tool_name: String, elapsed_time_seconds: Float, ?parent_tool_use_id: String?) -> void
+    def initialize: (uuid: String, session_id: String, tool_use_id: String, tool_name: String, elapsed_time_seconds: Float, ?parent_tool_use_id: String?, ?task_id: String?) -> void
     def type: () -> :tool_progress
   end
 
@@ -694,8 +709,10 @@ module ClaudeAgent
     attr_reader status: String
     attr_reader output_file: String
     attr_reader summary: String
+    attr_reader tool_use_id: String?
+    attr_reader usage: TaskUsage?
 
-    def initialize: (uuid: String, session_id: String, task_id: String, status: String, output_file: String, summary: String) -> void
+    def initialize: (uuid: String, session_id: String, task_id: String, status: String, output_file: String, summary: String, ?tool_use_id: String?, ?usage: TaskUsage?) -> void
     def type: () -> :task_notification
     def completed?: () -> bool
     def failed?: () -> bool
@@ -897,8 +914,9 @@ module ClaudeAgent
 
   class StopInput < BaseHookInput
     attr_reader stop_hook_active: bool
+    attr_reader last_assistant_message: String?
 
-    def initialize: (?stop_hook_active: bool, **untyped) -> void
+    def initialize: (?stop_hook_active: bool, ?last_assistant_message: String?, **untyped) -> void
   end
 
   class SubagentStartInput < BaseHookInput
@@ -912,8 +930,10 @@ module ClaudeAgent
     attr_reader stop_hook_active: bool
     attr_reader agent_id: String?
     attr_reader agent_transcript_path: String?
+    attr_reader agent_type: String?
+    attr_reader last_assistant_message: String?
 
-    def initialize: (?stop_hook_active: bool, ?agent_id: String?, ?agent_transcript_path: String?, **untyped) -> void
+    def initialize: (?stop_hook_active: bool, ?agent_id: String?, ?agent_transcript_path: String?, ?agent_type: String?, ?last_assistant_message: String?, **untyped) -> void
   end
 
   class PreCompactInput < BaseHookInput
