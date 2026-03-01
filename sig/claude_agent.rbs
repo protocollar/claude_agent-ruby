@@ -165,14 +165,23 @@ module ClaudeAgent
     def initialize: (?email: String?, ?organization: String?, ?subscription_type: String?, ?token_source: String?, ?api_key_source: String?) -> void
   end
 
+  class AgentInfo
+    attr_reader name: String
+    attr_reader description: String?
+    attr_reader model: String?
+
+    def initialize: (name: String, ?description: String?, ?model: String?) -> void
+  end
+
   class InitializationResult
     attr_reader commands: Array[SlashCommand]
     attr_reader output_style: String?
     attr_reader available_output_styles: Array[String]
     attr_reader models: Array[ModelInfo]
     attr_reader account: AccountInfo?
+    attr_reader agents: Array[AgentInfo]
 
-    def initialize: (?commands: Array[SlashCommand], ?output_style: String?, ?available_output_styles: Array[String], ?models: Array[ModelInfo], ?account: AccountInfo?) -> void
+    def initialize: (?commands: Array[SlashCommand], ?output_style: String?, ?available_output_styles: Array[String], ?models: Array[ModelInfo], ?account: AccountInfo?, ?agents: Array[AgentInfo]) -> void
   end
 
   class ModelUsage
@@ -345,6 +354,7 @@ module ClaudeAgent
     attr_accessor permission_mode: String?
     attr_accessor permission_prompt_tool_name: String?
     attr_accessor can_use_tool: (^(String, Hash[String, untyped], untyped) -> permission_result)?
+    attr_accessor on_elicitation: (^(Hash[Symbol, untyped], ?signal: AbortSignal?) -> Hash[Symbol, untyped]?)?
     attr_accessor allow_dangerously_skip_permissions: bool
     attr_accessor permission_queue: bool?
 
@@ -517,6 +527,27 @@ module ClaudeAgent
 
   CONTENT_BLOCK_TYPES: Array[Class]
 
+  # Elicitation complete message (TypeScript SDK v0.2.63 parity)
+  class ElicitationCompleteMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader mcp_server_name: String
+    attr_reader elicitation_id: String
+
+    def initialize: (?uuid: String, ?session_id: String, ?mcp_server_name: String, ?elicitation_id: String) -> void
+    def type: () -> :elicitation_complete
+  end
+
+  # Local command output message (TypeScript SDK v0.2.63 parity)
+  class LocalCommandOutputMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader content: String
+
+    def initialize: (?uuid: String, ?session_id: String, ?content: String) -> void
+    def type: () -> :local_command_output
+  end
+
   class GenericMessage
     attr_reader message_type: String?
     attr_reader raw: Hash[Symbol, untyped]
@@ -528,7 +559,7 @@ module ClaudeAgent
   end
 
   # Message types
-  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent | TaskStartedMessage | TaskProgressMessage | RateLimitEvent | PromptSuggestionMessage | GenericMessage
+  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent | TaskStartedMessage | TaskProgressMessage | RateLimitEvent | PromptSuggestionMessage | ElicitationCompleteMessage | LocalCommandOutputMessage | GenericMessage
 
   MESSAGE_TYPES: Array[Class]
 
@@ -600,6 +631,7 @@ module ClaudeAgent
     attr_reader permission_denials: Array[SDKPermissionDenial]?
     attr_reader model_usage: Hash[String, untyped]?
     attr_reader stop_reason: String?
+    attr_reader fast_mode_state: String?
 
     def initialize: (
       subtype: String,
@@ -616,7 +648,8 @@ module ClaudeAgent
       ?errors: Array[String]?,
       ?permission_denials: Array[SDKPermissionDenial]?,
       ?model_usage: Hash[String, untyped]?,
-      ?stop_reason: String?
+      ?stop_reason: String?,
+      ?fast_mode_state: String?
     ) -> void
 
     def type: () -> :result
@@ -976,6 +1009,27 @@ module ClaudeAgent
     attr_reader team_name: String?
 
     def initialize: (task_id: String, task_subject: String, ?task_description: String?, ?teammate_name: String?, ?team_name: String?, **untyped) -> void
+  end
+
+  class ElicitationInput < BaseHookInput
+    attr_reader mcp_server_name: String
+    attr_reader message: String
+    attr_reader mode: String?
+    attr_reader url: String?
+    attr_reader elicitation_id: String?
+    attr_reader requested_schema: untyped
+
+    def initialize: (mcp_server_name: String, message: String, ?mode: String?, ?url: String?, ?elicitation_id: String?, ?requested_schema: untyped, **untyped) -> void
+  end
+
+  class ElicitationResultInput < BaseHookInput
+    attr_reader mcp_server_name: String
+    attr_reader action: String
+    attr_reader elicitation_id: String?
+    attr_reader mode: String?
+    attr_reader content: untyped
+
+    def initialize: (mcp_server_name: String, action: String, ?elicitation_id: String?, ?mode: String?, ?content: untyped, **untyped) -> void
   end
 
   class ConfigChangeInput < BaseHookInput
@@ -1403,6 +1457,7 @@ module ClaudeAgent
     def apply_flag_settings: (Hash[String, untyped] settings) -> Hash[String, untyped]
     def supported_commands: () -> Array[SlashCommand]
     def supported_models: () -> Array[ModelInfo]
+    def supported_agents: () -> Array[AgentInfo]
     def mcp_server_status: () -> Array[McpServerStatus]
     def account_info: () -> AccountInfo
     def initialization_result: () -> InitializationResult
@@ -1446,6 +1501,7 @@ module ClaudeAgent
     def apply_flag_settings: (Hash[String, untyped] settings) -> Hash[String, untyped]
     def supported_commands: () -> Array[SlashCommand]
     def supported_models: () -> Array[ModelInfo]
+    def supported_agents: () -> Array[AgentInfo]
     def mcp_server_status: () -> Array[McpServerStatus]
     def account_info: () -> AccountInfo
     def initialization_result: () -> InitializationResult

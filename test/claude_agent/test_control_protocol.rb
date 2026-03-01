@@ -571,4 +571,89 @@ class TestClaudeAgentControlProtocol < ActiveSupport::TestCase
     assert_equal "my-server", msg["request"]["serverName"]
     assert_equal false, msg["request"]["enabled"]
   end
+
+  # --- Elicitation Handling ---
+
+  test "handle elicitation with callback" do
+    callback_request = nil
+    options = ClaudeAgent::Options.new(
+      on_elicitation: ->(request, signal:) {
+        callback_request = request
+        { action: "approve", content: { token: "abc" } }
+      }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+
+    request = {
+      "mcp_server_name" => "my-server",
+      "message" => "Auth needed",
+      "mode" => "modal",
+      "url" => "https://example.com",
+      "elicitation_id" => "elic-123",
+      "requested_schema" => { "type" => "object" }
+    }
+
+    result = protocol.send(:handle_elicitation, request)
+
+    assert_equal "approve", result[:action]
+    assert_equal({ token: "abc" }, result[:content])
+    assert_equal "my-server", callback_request[:server_name]
+    assert_equal "Auth needed", callback_request[:message]
+    assert_equal "modal", callback_request[:mode]
+    assert_equal "https://example.com", callback_request[:url]
+    assert_equal "elic-123", callback_request[:elicitation_id]
+  end
+
+  test "handle elicitation without callback defaults to decline" do
+    request = {
+      "mcp_server_name" => "my-server",
+      "message" => "Auth needed"
+    }
+
+    result = @protocol.send(:handle_elicitation, request)
+
+    assert_equal "decline", result[:action]
+  end
+
+  test "handle elicitation with nil callback result defaults to decline" do
+    options = ClaudeAgent::Options.new(
+      on_elicitation: ->(request, signal:) { nil }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+
+    request = {
+      "mcp_server_name" => "my-server",
+      "message" => "Auth needed"
+    }
+
+    result = protocol.send(:handle_elicitation, request)
+
+    assert_equal "decline", result[:action]
+  end
+
+  test "handle elicitation routed via handle_control_request" do
+    options = ClaudeAgent::Options.new(
+      on_elicitation: ->(request, signal:) { { action: "approve" } }
+    )
+    protocol = ClaudeAgent::ControlProtocol.new(transport: @transport, options: options)
+    @transport.connect
+
+    raw = {
+      "type" => "control_request",
+      "request_id" => "req-elic-1",
+      "request" => {
+        "subtype" => "elicitation",
+        "mcp_server_name" => "my-server",
+        "message" => "Auth needed"
+      }
+    }
+
+    protocol.send(:handle_control_request, raw)
+
+    response = @transport.written_messages.find { |m| m["type"] == "control_response" }
+    assert_not_nil response
+    assert_equal "success", response["response"]["subtype"]
+    assert_equal "req-elic-1", response["response"]["request_id"]
+    assert_equal "approve", response["response"]["response"]["action"]
+  end
 end

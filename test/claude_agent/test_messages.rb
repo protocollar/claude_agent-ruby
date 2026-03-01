@@ -154,6 +154,31 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     assert_nil msg.stop_reason
   end
 
+  test "result_message_with_fast_mode_state" do
+    msg = ClaudeAgent::ResultMessage.new(
+      subtype: "success",
+      duration_ms: 1500,
+      duration_api_ms: 1200,
+      is_error: false,
+      num_turns: 3,
+      session_id: "session-abc",
+      fast_mode_state: "enabled"
+    )
+    assert_equal "enabled", msg.fast_mode_state
+  end
+
+  test "result_message_fast_mode_state_default_nil" do
+    msg = ClaudeAgent::ResultMessage.new(
+      subtype: "success",
+      duration_ms: 1500,
+      duration_api_ms: 1200,
+      is_error: false,
+      num_turns: 3,
+      session_id: "session-abc"
+    )
+    assert_nil msg.fast_mode_state
+  end
+
   test "stream_event" do
     event = ClaudeAgent::StreamEvent.new(
       uuid: "evt-123",
@@ -792,6 +817,59 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
 
   test "prompt_suggestion_message_in_types_constant" do
     assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::PromptSuggestionMessage
+  end
+
+  # --- ElicitationCompleteMessage ---
+
+  test "elicitation_complete_message" do
+    msg = ClaudeAgent::ElicitationCompleteMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      mcp_server_name: "my-server",
+      elicitation_id: "elic-456"
+    )
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal "my-server", msg.mcp_server_name
+    assert_equal "elic-456", msg.elicitation_id
+    assert_equal :elicitation_complete, msg.type
+  end
+
+  test "elicitation_complete_message_defaults" do
+    msg = ClaudeAgent::ElicitationCompleteMessage.new
+    assert_equal "", msg.uuid
+    assert_equal "", msg.session_id
+    assert_equal "", msg.mcp_server_name
+    assert_equal "", msg.elicitation_id
+  end
+
+  test "elicitation_complete_message_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::ElicitationCompleteMessage
+  end
+
+  # --- LocalCommandOutputMessage ---
+
+  test "local_command_output_message" do
+    msg = ClaudeAgent::LocalCommandOutputMessage.new(
+      uuid: "msg-123",
+      session_id: "session-abc",
+      content: "command output here"
+    )
+    assert_equal "msg-123", msg.uuid
+    assert_equal "session-abc", msg.session_id
+    assert_equal "command output here", msg.content
+    assert_equal :local_command_output, msg.type
+  end
+
+  test "local_command_output_message_defaults" do
+    msg = ClaudeAgent::LocalCommandOutputMessage.new
+    assert_equal "", msg.uuid
+    assert_equal "", msg.session_id
+    assert_equal "", msg.content
+  end
+
+  test "local_command_output_message_in_types_constant" do
+    assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::LocalCommandOutputMessage
   end
 
   # --- GenericMessage ---

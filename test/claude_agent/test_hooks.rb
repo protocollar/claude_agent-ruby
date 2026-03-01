@@ -439,6 +439,83 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert_equal "acceptEdits", input.permission_mode
   end
 
+  # --- ElicitationInput ---
+
+  test "elicitation_event_in_hook_events" do
+    assert_includes ClaudeAgent::HOOK_EVENTS, "Elicitation"
+  end
+
+  test "elicitation_input" do
+    input = ClaudeAgent::ElicitationInput.new(
+      mcp_server_name: "my-server",
+      message: "Please provide credentials",
+      mode: "modal",
+      url: "https://example.com",
+      elicitation_id: "elic-123",
+      requested_schema: { type: "object" },
+      session_id: "sess-abc"
+    )
+    assert_equal "Elicitation", input.hook_event_name
+    assert_equal "my-server", input.mcp_server_name
+    assert_equal "Please provide credentials", input.message
+    assert_equal "modal", input.mode
+    assert_equal "https://example.com", input.url
+    assert_equal "elic-123", input.elicitation_id
+    assert_equal({ type: "object" }, input.requested_schema)
+    assert_equal "sess-abc", input.session_id
+  end
+
+  test "elicitation_input_with_required_fields_only" do
+    input = ClaudeAgent::ElicitationInput.new(
+      mcp_server_name: "server",
+      message: "Auth needed"
+    )
+    assert_equal "Elicitation", input.hook_event_name
+    assert_equal "server", input.mcp_server_name
+    assert_equal "Auth needed", input.message
+    assert_nil input.mode
+    assert_nil input.url
+    assert_nil input.elicitation_id
+    assert_nil input.requested_schema
+  end
+
+  # --- ElicitationResultInput ---
+
+  test "elicitation_result_event_in_hook_events" do
+    assert_includes ClaudeAgent::HOOK_EVENTS, "ElicitationResult"
+  end
+
+  test "elicitation_result_input" do
+    input = ClaudeAgent::ElicitationResultInput.new(
+      mcp_server_name: "my-server",
+      action: "approve",
+      elicitation_id: "elic-123",
+      mode: "modal",
+      content: { token: "abc" },
+      session_id: "sess-abc"
+    )
+    assert_equal "ElicitationResult", input.hook_event_name
+    assert_equal "my-server", input.mcp_server_name
+    assert_equal "approve", input.action
+    assert_equal "elic-123", input.elicitation_id
+    assert_equal "modal", input.mode
+    assert_equal({ token: "abc" }, input.content)
+    assert_equal "sess-abc", input.session_id
+  end
+
+  test "elicitation_result_input_with_required_fields_only" do
+    input = ClaudeAgent::ElicitationResultInput.new(
+      mcp_server_name: "server",
+      action: "decline"
+    )
+    assert_equal "ElicitationResult", input.hook_event_name
+    assert_equal "server", input.mcp_server_name
+    assert_equal "decline", input.action
+    assert_nil input.elicitation_id
+    assert_nil input.mode
+    assert_nil input.content
+  end
+
   # --- ConfigChangeInput ---
 
   test "config_change_event_in_hook_events" do
@@ -549,7 +626,7 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert ClaudeAgent::SetupInput < ClaudeAgent::BaseHookInput
   end
 
-  test "define_input generates all 18 input classes" do
+  test "define_input generates all 20 input classes" do
     ClaudeAgent::HOOK_EVENTS.each do |event|
       klass = ClaudeAgent.const_get("#{event}Input")
       assert klass < ClaudeAgent::BaseHookInput, "#{event}Input should inherit from BaseHookInput"

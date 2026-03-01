@@ -459,6 +459,35 @@ class TestClaudeAgentEventHandler < ActiveSupport::TestCase
     assert_equal [ :message, :result ], log
   end
 
+  test "type-based dispatch fires for ElicitationCompleteMessage" do
+    received = []
+    @handler.on_elicitation_complete { |msg| received << msg }
+
+    msg = ClaudeAgent::ElicitationCompleteMessage.new(
+      uuid: "e1", session_id: "s1",
+      mcp_server_name: "test-server", elicitation_id: "elicit-1"
+    )
+    @handler.handle(msg)
+
+    assert_equal 1, received.size
+    assert_instance_of ClaudeAgent::ElicitationCompleteMessage, received[0]
+    assert_equal "test-server", received[0].mcp_server_name
+  end
+
+  test "type-based dispatch fires for LocalCommandOutputMessage" do
+    received = []
+    @handler.on_local_command_output { |msg| received << msg }
+
+    msg = ClaudeAgent::LocalCommandOutputMessage.new(
+      uuid: "l1", session_id: "s1", content: "command output"
+    )
+    @handler.handle(msg)
+
+    assert_equal 1, received.size
+    assert_instance_of ClaudeAgent::LocalCommandOutputMessage, received[0]
+    assert_equal "command output", received[0].content
+  end
+
   test "unknown event registration via on still works" do
     received = []
     @handler.on(:custom_event) { |data| received << data }

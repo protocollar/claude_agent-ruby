@@ -239,6 +239,53 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_nil msg.stop_reason
   end
 
+  test "parse_result_message_with_fast_mode_state" do
+    raw = {
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 1500,
+      "duration_api_ms" => 1200,
+      "is_error" => false,
+      "num_turns" => 3,
+      "session_id" => "sess-123",
+      "fast_mode_state" => "enabled"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "enabled", msg.fast_mode_state
+  end
+
+  test "parse_result_message_with_fast_mode_state_camel_case" do
+    raw = {
+      "type" => "result",
+      "subtype" => "success",
+      "durationMs" => 1500,
+      "durationApiMs" => 1200,
+      "isError" => false,
+      "numTurns" => 3,
+      "sessionId" => "sess-123",
+      "fastModeState" => "disabled"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "disabled", msg.fast_mode_state
+  end
+
+  test "parse_result_message_fast_mode_state_default_nil" do
+    raw = {
+      "type" => "result",
+      "subtype" => "success",
+      "duration_ms" => 1500,
+      "duration_api_ms" => 1200,
+      "is_error" => false,
+      "num_turns" => 3,
+      "session_id" => "sess-123"
+    }
+    msg = @parser.parse(raw)
+
+    assert_nil msg.fast_mode_state
+  end
+
   test "parse_stream_event" do
     raw = {
       "type" => "stream_event",
@@ -1174,6 +1221,101 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_nil msg.last_tool_name
   end
 
+  # --- ElicitationCompleteMessage parsing ---
+
+  test "parse_elicitation_complete_message" do
+    raw = {
+      "type" => "system",
+      "subtype" => "elicitation_complete",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "mcp_server_name" => "my-server",
+      "elicitation_id" => "elic-456"
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::ElicitationCompleteMessage, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal "my-server", msg.mcp_server_name
+    assert_equal "elic-456", msg.elicitation_id
+    assert_equal :elicitation_complete, msg.type
+  end
+
+  test "parse_elicitation_complete_message_camel_case" do
+    raw = {
+      "type" => "system",
+      "subtype" => "elicitation_complete",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "mcpServerName" => "other-server",
+      "elicitationId" => "elic-789"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "other-server", msg.mcp_server_name
+    assert_equal "elic-789", msg.elicitation_id
+  end
+
+  test "parse_elicitation_complete_message_defaults" do
+    raw = {
+      "type" => "system",
+      "subtype" => "elicitation_complete"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "", msg.uuid
+    assert_equal "", msg.session_id
+    assert_equal "", msg.mcp_server_name
+    assert_equal "", msg.elicitation_id
+  end
+
+  # --- LocalCommandOutputMessage parsing ---
+
+  test "parse_local_command_output_message" do
+    raw = {
+      "type" => "system",
+      "subtype" => "local_command_output",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "content" => "command output here"
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::LocalCommandOutputMessage, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal "command output here", msg.content
+    assert_equal :local_command_output, msg.type
+  end
+
+  test "parse_local_command_output_message_camel_case" do
+    raw = {
+      "type" => "system",
+      "subtype" => "local_command_output",
+      "uuid" => "msg-456",
+      "sessionId" => "sess-xyz",
+      "content" => "some output"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "sess-xyz", msg.session_id
+    assert_equal "some output", msg.content
+  end
+
+  test "parse_local_command_output_message_defaults" do
+    raw = {
+      "type" => "system",
+      "subtype" => "local_command_output"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "", msg.uuid
+    assert_equal "", msg.session_id
+    assert_equal "", msg.content
+  end
+
   # --- RateLimitEvent parsing ---
 
   test "parse_rate_limit_event" do
@@ -1285,7 +1427,8 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     registry = ClaudeAgent::MessageParser.registry
 
     %w[compact_boundary status hook_response task_notification hook_started
-       hook_progress files_persisted task_started task_progress].each do |subtype|
+       hook_progress files_persisted task_started task_progress
+       elicitation_complete local_command_output].each do |subtype|
       assert registry.key?("system:#{subtype}"), "Registry should contain 'system:#{subtype}'"
     end
   end

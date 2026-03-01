@@ -92,6 +92,19 @@ module ClaudeAgent
     end
   end
 
+  # Return type for supported_agents() (TypeScript SDK v0.2.63 parity)
+  #
+  # @example
+  #   agent = AgentInfo.new(name: "Explore", description: "Search agent", model: "haiku")
+  #   agent.name         # => "Explore"
+  #   agent.description  # => "Search agent"
+  #
+  AgentInfo = Data.define(:name, :description, :model) do
+    def initialize(name:, description: nil, model: nil)
+      super
+    end
+  end
+
   # Composite initialization result from supported_commands request (TypeScript SDK parity)
   #
   # @example
@@ -100,11 +113,12 @@ module ClaudeAgent
   #     output_style: "default",
   #     available_output_styles: ["default", "concise"],
   #     models: [ModelInfo.new(value: "claude-sonnet")],
-  #     account: AccountInfo.new(email: "user@example.com")
+  #     account: AccountInfo.new(email: "user@example.com"),
+  #     agents: [AgentInfo.new(name: "Explore")]
   #   )
   #
-  InitializationResult = Data.define(:commands, :output_style, :available_output_styles, :models, :account) do
-    def initialize(commands: [], output_style: nil, available_output_styles: [], models: [], account: nil)
+  InitializationResult = Data.define(:commands, :output_style, :available_output_styles, :models, :account, :agents) do
+    def initialize(commands: [], output_style: nil, available_output_styles: [], models: [], account: nil, agents: [])
       super
     end
   end

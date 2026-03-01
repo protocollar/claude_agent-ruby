@@ -381,12 +381,21 @@ module ClaudeAgent
         )
       end
 
+      agents = (response["agents"] || []).map do |agent|
+        AgentInfo.new(
+          name: agent["name"],
+          description: agent["description"],
+          model: agent["model"]
+        )
+      end
+
       InitializationResult.new(
         commands: commands,
         output_style: response["output_style"],
         available_output_styles: response["available_output_styles"] || [],
         models: models,
-        account: account
+        account: account,
+        agents: agents
       )
     end
 
@@ -402,6 +411,19 @@ module ClaudeAgent
           supports_effort: model["supportsEffort"],
           supported_effort_levels: model["supportedEffortLevels"],
           supports_adaptive_thinking: model["supportsAdaptiveThinking"]
+        )
+      end
+    end
+
+    # Get available agents (TypeScript SDK v0.2.63 parity)
+    # @return [Array<AgentInfo>]
+    def supported_agents
+      response = send_control_request(subtype: "supported_agents")
+      (response["agents"] || []).map do |agent|
+        AgentInfo.new(
+          name: agent["name"],
+          description: agent["description"],
+          model: agent["model"]
         )
       end
     end
@@ -651,6 +673,8 @@ module ClaudeAgent
         handle_hook_callback(request)
       when "mcp_message"
         handle_mcp_message(request)
+      when "elicitation"
+        handle_elicitation(request)
       else
         { error: "Unknown control request subtype: #{subtype}" }
       end
@@ -791,6 +815,41 @@ module ClaudeAgent
       # Route message to server
       mcp_response = server_instance.handle_message(message)
       { mcp_response: mcp_response }
+    end
+
+    # Handle elicitation request from CLI (TypeScript SDK v0.2.63 parity)
+    # @param request [Hash] Request data
+    # @return [Hash] Response
+    def handle_elicitation(request)
+      elicitation_request = {
+        server_name: request["mcp_server_name"],
+        message: request["message"],
+        mode: request["mode"],
+        url: request["url"],
+        elicitation_id: request["elicitation_id"],
+        requested_schema: request["requested_schema"]
+      }
+
+      if options.on_elicitation
+        result = options.on_elicitation.call(elicitation_request, signal: @abort_signal)
+        return normalize_elicitation_result(result)
+      end
+
+      # Default: decline
+      { action: "decline" }
+    end
+
+    # Normalize an elicitation result for the CLI response
+    # @param result [Hash, nil] The result from the callback
+    # @return [Hash] Normalized response
+    def normalize_elicitation_result(result)
+      return { action: "decline" } unless result
+
+      result = result.to_h if result.respond_to?(:to_h) && !result.is_a?(Hash)
+      {
+        action: result[:action] || result["action"] || "decline",
+        content: result[:content] || result["content"]
+      }.compact
     end
 
     # Mapping of Ruby keys to CLI keys for hook responses

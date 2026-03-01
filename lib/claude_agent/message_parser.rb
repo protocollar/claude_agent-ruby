@@ -83,7 +83,9 @@ module ClaudeAgent
     register "system:hook_progress",     :parse_hook_progress_message
     register "system:files_persisted",   :parse_files_persisted_event
     register "system:task_started",      :parse_task_started_message
-    register "system:task_progress",     :parse_task_progress_message
+    register "system:task_progress",            :parse_task_progress_message
+    register "system:elicitation_complete",    :parse_elicitation_complete_message
+    register "system:local_command_output",    :parse_local_command_output_message
 
     private
 
@@ -167,7 +169,8 @@ module ClaudeAgent
         errors: raw[:errors],
         permission_denials: permission_denials,
         model_usage: raw[:model_usage],
-        stop_reason: raw[:stop_reason]
+        stop_reason: raw[:stop_reason],
+        fast_mode_state: raw[:fast_mode_state]
       )
     end
 
@@ -381,6 +384,23 @@ module ClaudeAgent
         description: raw[:description] || "",
         usage: raw[:usage],
         last_tool_name: raw[:last_tool_name]
+      )
+    end
+
+    def parse_elicitation_complete_message(raw)
+      ElicitationCompleteMessage.new(
+        uuid: raw[:uuid] || "",
+        session_id: raw[:session_id] || "",
+        mcp_server_name: raw[:mcp_server_name] || "",
+        elicitation_id: raw[:elicitation_id] || ""
+      )
+    end
+
+    def parse_local_command_output_message(raw)
+      LocalCommandOutputMessage.new(
+        uuid: raw[:uuid] || "",
+        session_id: raw[:session_id] || "",
+        content: raw[:content] || ""
       )
     end
 

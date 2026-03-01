@@ -18,6 +18,8 @@ module ClaudeAgent
     Setup
     TeammateIdle
     TaskCompleted
+    Elicitation
+    ElicitationResult
     ConfigChange
     WorktreeCreate
     WorktreeRemove
@@ -195,6 +197,14 @@ module ClaudeAgent
   BaseHookInput.define_input "TaskCompleted",
     required: [ :task_id, :task_subject ],
     optional: { task_description: nil, teammate_name: nil, team_name: nil }
+
+  BaseHookInput.define_input "Elicitation",
+    required: [ :mcp_server_name, :message ],
+    optional: { mode: nil, url: nil, elicitation_id: nil, requested_schema: nil }
+
+  BaseHookInput.define_input "ElicitationResult",
+    required: [ :mcp_server_name, :action ],
+    optional: { elicitation_id: nil, mode: nil, content: nil }
 
   BaseHookInput.define_input "ConfigChange",
     required: [ :source ],
