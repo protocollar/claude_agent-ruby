@@ -354,6 +354,15 @@ module ClaudeAgent
       @protocol.supported_models
     end
 
+    # Get available agents (TypeScript SDK v0.2.63 parity)
+    #
+    # @return [Array<AgentInfo>]
+    def supported_agents
+      require_connection!
+
+      @protocol.supported_agents
+    end
+
     # Get MCP server status (TypeScript SDK parity)
     #
     # @return [Array<McpServerStatus>]

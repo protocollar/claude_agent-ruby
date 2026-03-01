@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.62 (npm package)
-- Python SDK: v0.1.44 from GitHub (commit 7297bdc)
+- TypeScript SDK: v0.2.63 (npm package)
+- Python SDK: v0.1.44 from GitHub (commit a58d3ab)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-02-27
+**Last Updated:** 2026-03-01
 
 ---
 
@@ -81,6 +81,7 @@ Configuration options for SDK queries and clients.
 | `promptSuggestions`               |     ✅      |   ❌    |  ✅   | Enable prompt suggestion after each turn (v0.2.47)           |
 | `debug`                           |     ✅      |   ❌    |  ✅   | Enable verbose debug logging                                 |
 | `debugFile`                       |     ✅      |   ❌    |  ✅   | Write debug logs to specific file path                       |
+| `onElicitation`                   |     ✅      |   ❌    |  ✅   | MCP elicitation request handler callback                     |
 
 ---
 
@@ -88,28 +89,30 @@ Configuration options for SDK queries and clients.
 
 Messages exchanged between SDK and CLI.
 
-| Message Type              | TypeScript | Python | Ruby | Notes                              |
-|---------------------------|:----------:|:------:|:----:|------------------------------------|
-| `UserMessage`             |     ✅      |   ✅    |  ✅   | User input                         |
-| `UserMessageReplay`       |     ✅      |   ❌    |  ✅   | Replayed user message on resume    |
-| `AssistantMessage`        |     ✅      |   ✅    |  ✅   | Claude response                    |
-| `SystemMessage`           |     ✅      |   ✅    |  ✅   | System/init messages               |
-| `ResultMessage`           |     ✅      |   ✅    |  ✅   | Final result with usage            |
-| `StreamEvent`             |     ✅      |   ✅    |  ✅   | Partial streaming events           |
-| `CompactBoundaryMessage`  |     ✅      |   ❌    |  ✅   | Conversation compaction marker     |
-| `StatusMessage`           |     ✅      |   ❌    |  ✅   | Status updates (compacting)        |
-| `ToolProgressMessage`     |     ✅      |   ❌    |  ✅   | Long-running tool progress         |
-| `HookStartedMessage`      |     ✅      |   ❌    |  ✅   | Hook execution started             |
-| `HookProgressMessage`     |     ✅      |   ❌    |  ✅   | Hook progress during execution     |
-| `HookResponseMessage`     |     ✅      |   ❌    |  ✅   | Hook execution output              |
-| `AuthStatusMessage`       |     ✅      |   ❌    |  ✅   | Authentication status              |
-| `TaskNotificationMessage` |     ✅      |   ❌    |  ✅   | Background task completion         |
-| `ToolUseSummaryMessage`   |     ✅      |   ❌    |  ✅   | Summary of tool use (collapsed)    |
-| `TaskStartedMessage`      |     ✅      |   ❌    |  ✅   | Subagent task registered (v0.2.45) |
-| `TaskProgressMessage`     |     ✅      |   ❌    |  ✅   | Background task progress (v0.2.51) |
-| `RateLimitEvent`          |     ✅      |   ❌    |  ✅   | Rate limit status changes          |
-| `PromptSuggestionMessage` |     ✅      |   ❌    |  ✅   | Suggested next prompt (v0.2.47)    |
-| `FilesPersistedEvent`     |     ✅      |   ❌    |  ✅   | File persistence confirmation      |
+| Message Type                 | TypeScript | Python | Ruby | Notes                              |
+|------------------------------|:----------:|:------:|:----:|------------------------------------|
+| `UserMessage`                |     ✅      |   ✅    |  ✅   | User input                         |
+| `UserMessageReplay`          |     ✅      |   ❌    |  ✅   | Replayed user message on resume    |
+| `AssistantMessage`           |     ✅      |   ✅    |  ✅   | Claude response                    |
+| `SystemMessage`              |     ✅      |   ✅    |  ✅   | System/init messages               |
+| `ResultMessage`              |     ✅      |   ✅    |  ✅   | Final result with usage            |
+| `StreamEvent`                |     ✅      |   ✅    |  ✅   | Partial streaming events           |
+| `CompactBoundaryMessage`     |     ✅      |   ❌    |  ✅   | Conversation compaction marker     |
+| `StatusMessage`              |     ✅      |   ❌    |  ✅   | Status updates (compacting)        |
+| `ToolProgressMessage`        |     ✅      |   ❌    |  ✅   | Long-running tool progress         |
+| `HookStartedMessage`         |     ✅      |   ❌    |  ✅   | Hook execution started             |
+| `HookProgressMessage`        |     ✅      |   ❌    |  ✅   | Hook progress during execution     |
+| `HookResponseMessage`        |     ✅      |   ❌    |  ✅   | Hook execution output              |
+| `AuthStatusMessage`          |     ✅      |   ❌    |  ✅   | Authentication status              |
+| `TaskNotificationMessage`    |     ✅      |   ❌    |  ✅   | Background task completion         |
+| `ToolUseSummaryMessage`      |     ✅      |   ❌    |  ✅   | Summary of tool use (collapsed)    |
+| `TaskStartedMessage`         |     ✅      |   ❌    |  ✅   | Subagent task registered (v0.2.45) |
+| `TaskProgressMessage`        |     ✅      |   ❌    |  ✅   | Background task progress (v0.2.51) |
+| `RateLimitEvent`             |     ✅      |   ❌    |  ✅   | Rate limit status changes          |
+| `PromptSuggestionMessage`    |     ✅      |   ❌    |  ✅   | Suggested next prompt (v0.2.47)    |
+| `FilesPersistedEvent`        |     ✅      |   ❌    |  ✅   | File persistence confirmation      |
+| `ElicitationCompleteMessage` |     ✅      |   ❌    |  ✅   | MCP elicitation completed          |
+| `LocalCommandOutputMessage`  |     ✅      |   ❌    |  ✅   | Local command output               |
 
 ### Message Fields
 
@@ -132,6 +135,7 @@ Messages exchanged between SDK and CLI.
 | `uuid`               |     ✅      |   ❌    |  ✅   | Message UUID             |
 | `session_id`         |     ✅      |   ✅    |  ✅   | Session ID               |
 | `stop_reason`        |     ✅      |   ❌    |  ✅   | Why model stopped        |
+| `fast_mode_state`    |     ✅      |   ❌    |  ✅   | Fast mode status         |
 
 #### Result Subtypes
 
@@ -239,7 +243,7 @@ Messages exchanged between SDK and CLI.
 |-------------------|:----------:|:------:|:----:|---------------------------------|
 | `rate_limit_info` |     ✅      |   ❌    |  ✅   | Rate limit details object       |
 
-Rate limit info contains: `status`, `resetsAt`, `rateLimitType`, `utilization`, `isUsingOverage`, `overageStatus`.
+Rate limit info contains: `status`, `resetsAt`, `rateLimitType`, `utilization`, `isUsingOverage`, `overageStatus`, `overageResetsAt`, `overageDisabledReason` (v0.2.49+), `surpassedThreshold`.
 
 #### PromptSuggestionMessage
 
@@ -318,6 +322,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `supported_models`        |     ✅      |   ❌    |  ✅   | Get available models                       |
 | `account_info`            |     ✅      |   ❌    |  ✅   | Get account information                    |
 | `apply_flag_settings`     |     ✅      |   ❌    |  ✅   | Merge settings into flag layer             |
+| `supported_agents`        |     ✅      |   ❌    |  ✅   | Get available subagents (v0.2.63)          |
 
 ### Return Types
 
@@ -330,6 +335,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `InitializationResult` |     ✅      |   ❌    |  ✅   | Full init response     |
 | `McpSetServersResult`  |     ✅      |   ❌    |  ✅   | Set servers result     |
 | `RewindFilesResult`    |     ✅      |   ✅    |  ✅   | Rewind result          |
+| `AgentInfo`            |     ✅      |   ❌    |  ✅   | Available agent info   |
 
 #### ModelInfo Fields
 
@@ -363,6 +369,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `available_output_styles` |     ✅      |   ❌    |  ✅   | All available output styles       |
 | `models`                  |     ✅      |   ❌    |  ✅   | Available models (ModelInfo[])    |
 | `account`                 |     ✅      |   ❌    |  ✅   | Account information (AccountInfo) |
+| `agents`                  |     ✅      |   ❌    |  ✅   | Available agents (AgentInfo[])    |
 
 #### RewindFilesResult Fields
 
@@ -381,6 +388,14 @@ Bidirectional control protocol for SDK-CLI communication.
 | `added`   |     ✅      |   ❌    |  ✅   | Server names that were added      |
 | `removed` |     ✅      |   ❌    |  ✅   | Server names that were removed    |
 | `errors`  |     ✅      |   ❌    |  ✅   | Map of server name to error       |
+
+#### AgentInfo Fields
+
+| Field         | TypeScript | Python | Ruby | Notes                              |
+|---------------|:----------:|:------:|:----:|------------------------------------|
+| `name`        |     ✅      |   ❌    |  ✅   | Agent type identifier              |
+| `description` |     ✅      |   ❌    |  ✅   | When to use this agent             |
+| `model`       |     ✅      |   ❌    |  ✅   | Model alias (inherits if omitted)  |
 
 ---
 
@@ -407,6 +422,8 @@ Event hooks for intercepting and modifying SDK behavior.
 | `Setup`              |     ✅      |   ❌    |  ✅   | Initial setup/maintenance         |
 | `TeammateIdle`       |     ✅      |   ❌    |  ✅   | Teammate idle (v0.2.33)           |
 | `TaskCompleted`      |     ✅      |   ❌    |  ✅   | Task completed (v0.2.33)          |
+| `Elicitation`        |     ✅      |   ❌    |  ✅   | MCP elicitation request           |
+| `ElicitationResult`  |     ✅      |   ❌    |  ✅   | MCP elicitation response          |
 | `ConfigChange`       |     ✅      |   ❌    |  ✅   | Config file changed (v0.2.49)     |
 | `WorktreeCreate`     |     ✅      |   ❌    |  ✅   | Worktree creation (v0.2.50)       |
 | `WorktreeRemove`     |     ✅      |   ❌    |  ✅   | Worktree removal (v0.2.50)        |
@@ -430,6 +447,8 @@ Event hooks for intercepting and modifying SDK behavior.
 | `SetupHookInput`              |     ✅      |   ❌    |  ✅   |
 | `TeammateIdleHookInput`       |     ✅      |   ❌    |  ✅   |
 | `TaskCompletedHookInput`      |     ✅      |   ❌    |  ✅   |
+| `ElicitationHookInput`        |     ✅      |   ❌    |  ✅   |
+| `ElicitationResultHookInput`  |     ✅      |   ❌    |  ✅   |
 | `ConfigChangeHookInput`       |     ✅      |   ❌    |  ✅   |
 | `WorktreeCreateHookInput`     |     ✅      |   ❌    |  ✅   |
 | `WorktreeRemoveHookInput`     |     ✅      |   ❌    |  ✅   |
@@ -526,6 +545,20 @@ Event-specific fields returned via `hookSpecificOutput`:
 | Field               | TypeScript | Python | Ruby | Notes                            |
 |---------------------|:----------:|:------:|:----:|----------------------------------|
 | `additionalContext` |     ✅      |   ✅    |  ✅   | Context string returned to model |
+
+#### ElicitationHookSpecificOutput
+
+| Field     | TypeScript | Python | Ruby | Notes                            |
+|-----------|:----------:|:------:|:----:|----------------------------------|
+| `action`  |     ✅      |   ❌    |  ✅   | accept/decline/cancel            |
+| `content` |     ✅      |   ❌    |  ✅   | Response content for form mode   |
+
+#### ElicitationResultHookSpecificOutput
+
+| Field     | TypeScript | Python | Ruby | Notes                            |
+|-----------|:----------:|:------:|:----:|----------------------------------|
+| `action`  |     ✅      |   ❌    |  ✅   | accept/decline/cancel            |
+| `content` |     ✅      |   ❌    |  ✅   | Response content                 |
 
 ### Hook Matcher
 
@@ -862,6 +895,7 @@ Public API surface for SDK clients.
 | `streamInput()`          |     ✅      |   ✅    |  ✅   | Stream user input                            |
 | `initializationResult()` |     ✅      |   ✅    |  ✅   | Full init response (Py: `get_server_info()`) |
 | `close()`                |     ✅      |   ✅    |  ✅   | Close query/session                          |
+| `supportedAgents()`      |     ✅      |   ❌    |  ✅   | Get available subagents (v0.2.63)            |
 
 ### Client Class
 
@@ -914,24 +948,27 @@ Public API surface for SDK clients.
 - v0.2.54 – v0.2.58: CLI parity updates (no new SDK-facing features)
 - v0.2.59: Added `getSessionMessages()` for reading session transcript history with pagination (limit/offset)
 - v0.2.61 – v0.2.62: CLI parity updates (no new SDK-facing features)
+- v0.2.63: Added `supportedAgents()` method on Query, fixed `pathToClaudeCodeExecutable` PATH resolution
+- Includes `Elicitation`/`ElicitationResult` hook events, `onElicitation` option, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState` (undocumented in changelog, present in types)
 
 ### Python SDK
 - Full source available with `Transport` abstract class
 - Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus
 - Has `CLINotFoundError`, `CLIConnectionError`, `ProcessError`, `CLIJSONDecodeError`, `MessageParseError` error types
-- Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted, ConfigChange, WorktreeCreate, WorktreeRemove
+- Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted, Elicitation, ElicitationResult, ConfigChange, WorktreeCreate, WorktreeRemove
 - Missing permission modes: `dontAsk`
-- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`
+- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`, `onElicitation`
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
 - Has `agent_type` field in `SubagentStopHookInput`
 - Has SDK MCP server support with `tool()` helper and annotations
 - Added `thinking` config and `effort` option in v0.1.36
 - Handles `rate_limit_event` and unknown message types gracefully (v0.1.40)
 - Client has `get_server_info()` for accessing the initialization result (v0.1.31+)
-- v0.1.42 – v0.1.44: CLI parity updates (no new SDK-facing features; latest commit bumps bundled CLI to v2.1.61)
+- v0.1.42 – v0.1.44: CLI parity updates (no new SDK-facing features; latest commit bumps bundled CLI to v2.1.63)
+- Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.62
+- Feature parity with TypeScript SDK v0.2.63
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations

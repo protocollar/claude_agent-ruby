@@ -42,6 +42,7 @@ module ClaudeAgent
       status tool_progress hook_response auth_status task_notification
       hook_started hook_progress tool_use_summary task_started
       task_progress rate_limit_event prompt_suggestion files_persisted
+      elicitation_complete local_command_output
     ].freeze
 
     # Decomposed events — extracted content from rich message types

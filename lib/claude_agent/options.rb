@@ -52,7 +52,7 @@ module ClaudeAgent
       tools allowed_tools disallowed_tools
       system_prompt append_system_prompt
       model fallback_model
-      permission_mode permission_prompt_tool_name can_use_tool allow_dangerously_skip_permissions
+      permission_mode permission_prompt_tool_name can_use_tool on_elicitation allow_dangerously_skip_permissions
       permission_queue
       continue_conversation resume fork_session resume_session_at session_id
       max_turns max_budget_usd thinking effort max_thinking_tokens
@@ -293,6 +293,10 @@ module ClaudeAgent
 
       if can_use_tool && !can_use_tool.respond_to?(:call)
         raise ConfigurationError, "can_use_tool must be callable (Proc, Lambda, or object responding to #call)"
+      end
+
+      if on_elicitation && !on_elicitation.respond_to?(:call)
+        raise ConfigurationError, "on_elicitation must be callable (Proc, Lambda, or object responding to #call)"
       end
 
       # Auto-set permission_prompt_tool_name to "stdio" when can_use_tool or

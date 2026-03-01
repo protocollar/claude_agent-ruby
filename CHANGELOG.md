@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `AgentInfo` type with `name`, `description`, and `model` fields (TypeScript SDK v0.2.63 parity)
+- `supported_agents` control request on `ControlProtocol` and `Client` for querying available subagents (TypeScript SDK v0.2.63 parity)
+- `agents` field on `InitializationResult` returning `AgentInfo[]`
+- `fast_mode_state` field on `ResultMessage` (TypeScript SDK v0.2.63 parity)
+- `ElicitationCompleteMessage` for MCP elicitation completion events (TypeScript SDK v0.2.63 parity)
+- `LocalCommandOutputMessage` for local command output events (TypeScript SDK v0.2.63 parity)
+- `on_elicitation` option for handling MCP elicitation requests via callback (TypeScript SDK v0.2.63 parity)
+- `Elicitation` and `ElicitationResult` hook events with input types (TypeScript SDK v0.2.63 parity)
+- Elicitation control protocol handling with callback support and default decline behavior
+- `on_elicitation_complete` and `on_local_command_output` event handler methods
+- RBS signatures for all new types, fields, and methods
+
 ## [0.7.12] - 2026-02-27
 
 ### Added

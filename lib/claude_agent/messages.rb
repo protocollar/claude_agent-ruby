@@ -183,7 +183,8 @@ module ClaudeAgent
     :errors,             # Array<String> for error subtypes
     :permission_denials, # Array<SDKPermissionDenial>
     :model_usage,        # Hash with per-model usage breakdown
-    :stop_reason         # Why the model stopped generating (TypeScript SDK parity)
+    :stop_reason,        # Why the model stopped generating (TypeScript SDK parity)
+    :fast_mode_state     # Fast mode state (TypeScript SDK v0.2.63 parity)
   ) do
     def initialize(
       subtype:,
@@ -200,7 +201,8 @@ module ClaudeAgent
       errors: nil,
       permission_denials: nil,
       model_usage: nil,
-      stop_reason: nil
+      stop_reason: nil,
+      fast_mode_state: nil
     )
       super
     end
@@ -794,6 +796,49 @@ module ClaudeAgent
     end
   end
 
+  # Elicitation complete message (TypeScript SDK v0.2.63 parity)
+  #
+  # Sent when an MCP server elicitation request completes.
+  #
+  # @example
+  #   msg = ElicitationCompleteMessage.new(
+  #     uuid: "msg-123",
+  #     session_id: "session-abc",
+  #     mcp_server_name: "my-server",
+  #     elicitation_id: "elic-456"
+  #   )
+  #
+  ElicitationCompleteMessage = Data.define(:uuid, :session_id, :mcp_server_name, :elicitation_id) do
+    def initialize(uuid: "", session_id: "", mcp_server_name: "", elicitation_id: "")
+      super
+    end
+
+    def type
+      :elicitation_complete
+    end
+  end
+
+  # Local command output message (TypeScript SDK v0.2.63 parity)
+  #
+  # Contains output from a local command execution.
+  #
+  # @example
+  #   msg = LocalCommandOutputMessage.new(
+  #     uuid: "msg-123",
+  #     session_id: "session-abc",
+  #     content: "command output here"
+  #   )
+  #
+  LocalCommandOutputMessage = Data.define(:uuid, :session_id, :content) do
+    def initialize(uuid: "", session_id: "", content: "")
+      super
+    end
+
+    def type
+      :local_command_output
+    end
+  end
+
   # Generic message for unknown/future protocol types
   #
   # Wraps unrecognized top-level message types so they can be inspected
@@ -852,6 +897,8 @@ module ClaudeAgent
     TaskProgressMessage,
     RateLimitEvent,
     PromptSuggestionMessage,
+    ElicitationCompleteMessage,
+    LocalCommandOutputMessage,
     GenericMessage
   ].freeze
 end

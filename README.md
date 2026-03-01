@@ -501,6 +501,7 @@ result.error?          # Convenience method
 result.errors          # Array of error messages (if any)
 result.permission_denials  # Array of SDKPermissionDenial (if any)
 result.stop_reason     # Why the model stopped generating (e.g. "end_turn", "tool_use")
+result.fast_mode_state # Fast mode status (if applicable)
 ```
 
 ### UserMessageReplay
@@ -688,6 +689,27 @@ Suggested follow-up prompts (requires `prompt_suggestions: true`):
 
 ```ruby
 suggestion.suggestion  # The suggested prompt text
+```
+
+### ElicitationCompleteMessage
+
+MCP elicitation completion:
+
+```ruby
+elicitation.uuid             # Message UUID
+elicitation.session_id       # Session identifier
+elicitation.mcp_server_name  # MCP server that requested elicitation
+elicitation.elicitation_id   # Elicitation identifier
+```
+
+### LocalCommandOutputMessage
+
+Local command output:
+
+```ruby
+output.uuid        # Message UUID
+output.session_id  # Session identifier
+output.content     # Command output content
 ```
 
 ### GenericMessage
@@ -1084,6 +1106,27 @@ update = ClaudeAgent::PermissionUpdate.new(
 )
 ```
 
+## MCP Elicitation
+
+Handle MCP server elicitation requests (e.g. OAuth flows, form input):
+
+```ruby
+options = ClaudeAgent::Options.new(
+  on_elicitation: ->(request, signal:) {
+    # request contains: server_name, message, mode, url, elicitation_id, requested_schema
+    case request[:mode]
+    when "oauth"
+      # Handle OAuth flow
+      { action: "accept", content: { token: "..." } }
+    else
+      { action: "decline" }
+    end
+  }
+)
+```
+
+Without `on_elicitation`, all elicitation requests are declined by default.
+
 ## Error Handling
 
 The SDK provides specific error types:
@@ -1213,6 +1256,7 @@ client.cumulative_usage      # CumulativeUsage with totals across all turns
 # Query capabilities
 client.supported_commands.each { |cmd| puts "#{cmd.name}: #{cmd.description}" }
 client.supported_models.each { |model| puts "#{model.value}: #{model.display_name}" }
+client.supported_agents.each { |agent| puts "#{agent.name}: #{agent.description}" }
 client.mcp_server_status.each { |s| puts "#{s.name}: #{s.status}" }
 puts client.account_info.email
 
@@ -1391,7 +1435,7 @@ session = ClaudeAgent.unstable_v2_create_session(options)
 | Type                     | Purpose                                                                          |
 |--------------------------|----------------------------------------------------------------------------------|
 | `TurnResult`             | Complete agent turn with text, tools, usage, and status accessors                |
-| `ToolActivity`           | Tool use/result pair with turn index and timing (immutable, post-turn)            |
+| `ToolActivity`           | Tool use/result pair with turn index and timing (immutable, post-turn)           |
 | `LiveToolActivity`       | Mutable real-time tool status (running/done/error) with elapsed time             |
 | `ToolActivityTracker`    | Enumerable collection of `LiveToolActivity` with auto-wiring and `on_change`     |
 | `CumulativeUsage`        | Running totals of tokens, cost, turns, and duration                              |
@@ -1400,6 +1444,7 @@ session = ClaudeAgent.unstable_v2_create_session(options)
 | `EventHandler`           | Typed event callback registry                                                    |
 | `SlashCommand`           | Available slash commands (name, description, argument_hint)                      |
 | `ModelInfo`              | Available models (value, display_name, description)                              |
+| `AgentInfo`              | Available agents (name, description, model)                                      |
 | `McpServerStatus`        | MCP server status (name, status, server_info)                                    |
 | `AccountInfo`            | Account information (email, organization, subscription_type)                     |
 | `ModelUsage`             | Per-model usage stats (input_tokens, output_tokens, cost_usd)                    |

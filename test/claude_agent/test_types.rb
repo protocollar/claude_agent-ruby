@@ -390,6 +390,34 @@ class TestClaudeAgentTypes < ActiveSupport::TestCase
     assert_equal [], result.available_output_styles
     assert_equal [], result.models
     assert_nil result.account
+    assert_equal [], result.agents
+  end
+
+  test "initialization_result_with_agents" do
+    agents = [ ClaudeAgent::AgentInfo.new(name: "Explore", description: "Search agent") ]
+    result = ClaudeAgent::InitializationResult.new(agents: agents)
+    assert_equal agents, result.agents
+    assert_equal "Explore", result.agents.first.name
+  end
+
+  # --- AgentInfo ---
+
+  test "agent_info" do
+    agent = ClaudeAgent::AgentInfo.new(
+      name: "Explore",
+      description: "Search the codebase",
+      model: "haiku"
+    )
+    assert_equal "Explore", agent.name
+    assert_equal "Search the codebase", agent.description
+    assert_equal "haiku", agent.model
+  end
+
+  test "agent_info_defaults" do
+    agent = ClaudeAgent::AgentInfo.new(name: "Plan")
+    assert_equal "Plan", agent.name
+    assert_nil agent.description
+    assert_nil agent.model
   end
 
   # --- API Key Sources ---

@@ -78,6 +78,25 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     assert_equal callback, options.can_use_tool
   end
 
+  # --- on_elicitation ---
+
+  test "on_elicitation_accepts_callable" do
+    handler = ->(request, signal:) { { action: "approve" } }
+    options = ClaudeAgent::Options.new(on_elicitation: handler)
+    assert_equal handler, options.on_elicitation
+  end
+
+  test "on_elicitation_default_nil" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.on_elicitation
+  end
+
+  test "invalid_on_elicitation" do
+    assert_raises(ClaudeAgent::ConfigurationError) do
+      ClaudeAgent::Options.new(on_elicitation: "not callable")
+    end
+  end
+
   # --- can_use_tool auto-sets permission_prompt_tool_name ---
 
   test "can_use_tool auto sets permission_prompt_tool_name to stdio" do
