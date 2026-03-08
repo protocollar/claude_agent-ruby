@@ -366,7 +366,8 @@ module ClaudeAgent
           description: model["description"],
           supports_effort: model["supportsEffort"],
           supported_effort_levels: model["supportedEffortLevels"],
-          supports_adaptive_thinking: model["supportsAdaptiveThinking"]
+          supports_adaptive_thinking: model["supportsAdaptiveThinking"],
+          supports_fast_mode: model["supportsFastMode"]
         )
       end
 
@@ -410,7 +411,8 @@ module ClaudeAgent
           description: model["description"],
           supports_effort: model["supportsEffort"],
           supported_effort_levels: model["supportedEffortLevels"],
-          supports_adaptive_thinking: model["supportsAdaptiveThinking"]
+          supports_adaptive_thinking: model["supportsAdaptiveThinking"],
+          supports_fast_mode: model["supportsFastMode"]
         )
       end
     end
@@ -619,6 +621,7 @@ module ClaudeAgent
       request[:hooks] = hooks_config if hooks_config
       request[:promptSuggestions] = true if options.prompt_suggestions
       request[:sdkMcpServers] = sdk_mcp_server_names if options.has_sdk_mcp_servers?
+      request[:toolConfig] = options.tool_config if options.tool_config
 
       send_control_request(**request)
     end

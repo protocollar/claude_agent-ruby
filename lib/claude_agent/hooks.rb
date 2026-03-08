@@ -23,6 +23,7 @@ module ClaudeAgent
     ConfigChange
     WorktreeCreate
     WorktreeRemove
+    InstructionsLoaded
   ].freeze
 
   # Matcher configuration for hooks
@@ -73,14 +74,16 @@ module ClaudeAgent
   # hook_event_name/base field inheritance.
   #
   class BaseHookInput
-    attr_reader :hook_event_name, :session_id, :transcript_path, :cwd, :permission_mode
+    attr_reader :hook_event_name, :session_id, :transcript_path, :cwd, :permission_mode, :agent_id, :agent_type
 
-    def initialize(hook_event_name:, session_id: nil, transcript_path: nil, cwd: nil, permission_mode: nil, **kwargs)
+    def initialize(hook_event_name:, session_id: nil, transcript_path: nil, cwd: nil, permission_mode: nil, agent_id: nil, agent_type: nil, **kwargs)
       @hook_event_name = hook_event_name
       @session_id = session_id
       @transcript_path = transcript_path
       @cwd = cwd
       @permission_mode = permission_mode
+      @agent_id = agent_id
+      @agent_type = agent_type
     end
 
     # Define a hook input subclass declaratively
@@ -216,4 +219,12 @@ module ClaudeAgent
 
   BaseHookInput.define_input "WorktreeRemove",
     required: [ :worktree_path ]
+
+  BaseHookInput.define_input "InstructionsLoaded",
+    required: [ :file_path, :memory_type, :load_reason ],
+    optional: { globs: nil, trigger_file_path: nil, parent_file_path: nil },
+    constants: {
+      MEMORY_TYPES: %w[User Project Local Managed].freeze,
+      LOAD_REASONS: %w[session_start nested_traversal path_glob_match include].freeze
+    }
 end

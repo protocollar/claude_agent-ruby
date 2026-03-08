@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.63 (npm package)
-- Python SDK: v0.1.44 from GitHub (commit a58d3ab)
+- TypeScript SDK: v0.2.71 (npm package)
+- Python SDK: v0.1.48 from GitHub (commit d6f0352)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-03-01
+**Last Updated:** 2026-03-08
 
 ---
 
@@ -81,6 +81,7 @@ Configuration options for SDK queries and clients.
 | `promptSuggestions`               |     ✅      |   ❌    |  ✅   | Enable prompt suggestion after each turn (v0.2.47)           |
 | `debug`                           |     ✅      |   ❌    |  ✅   | Enable verbose debug logging                                 |
 | `debugFile`                       |     ✅      |   ❌    |  ✅   | Write debug logs to specific file path                       |
+| `toolConfig`                      |     ✅      |   ❌    |  ✅   | Tool behavior config (e.g., askUserQuestion preview format)  |
 | `onElicitation`                   |     ✅      |   ❌    |  ✅   | MCP elicitation request handler callback                     |
 
 ---
@@ -104,10 +105,10 @@ Messages exchanged between SDK and CLI.
 | `HookProgressMessage`        |     ✅      |   ❌    |  ✅   | Hook progress during execution     |
 | `HookResponseMessage`        |     ✅      |   ❌    |  ✅   | Hook execution output              |
 | `AuthStatusMessage`          |     ✅      |   ❌    |  ✅   | Authentication status              |
-| `TaskNotificationMessage`    |     ✅      |   ❌    |  ✅   | Background task completion         |
+| `TaskNotificationMessage`    |     ✅      |   ✅    |  ✅   | Background task completion         |
 | `ToolUseSummaryMessage`      |     ✅      |   ❌    |  ✅   | Summary of tool use (collapsed)    |
-| `TaskStartedMessage`         |     ✅      |   ❌    |  ✅   | Subagent task registered (v0.2.45) |
-| `TaskProgressMessage`        |     ✅      |   ❌    |  ✅   | Background task progress (v0.2.51) |
+| `TaskStartedMessage`         |     ✅      |   ✅    |  ✅   | Subagent task registered (v0.2.45) |
+| `TaskProgressMessage`        |     ✅      |   ✅    |  ✅   | Background task progress (v0.2.51) |
 | `RateLimitEvent`             |     ✅      |   ❌    |  ✅   | Rate limit status changes          |
 | `PromptSuggestionMessage`    |     ✅      |   ❌    |  ✅   | Suggested next prompt (v0.2.47)    |
 | `FilesPersistedEvent`        |     ✅      |   ❌    |  ✅   | File persistence confirmation      |
@@ -134,7 +135,7 @@ Messages exchanged between SDK and CLI.
 | `errors`             |     ✅      |   ❌    |  ✅   | Error messages           |
 | `uuid`               |     ✅      |   ❌    |  ✅   | Message UUID             |
 | `session_id`         |     ✅      |   ✅    |  ✅   | Session ID               |
-| `stop_reason`        |     ✅      |   ❌    |  ✅   | Why model stopped        |
+| `stop_reason`        |     ✅      |   ✅    |  ✅   | Why model stopped        |
 | `fast_mode_state`    |     ✅      |   ❌    |  ✅   | Fast mode status         |
 
 #### Result Subtypes
@@ -151,12 +152,12 @@ Messages exchanged between SDK and CLI.
 
 | Field         | TypeScript | Python | Ruby | Notes                       |
 |---------------|:----------:|:------:|:----:|-----------------------------|
-| `task_id`     |     ✅      |   ❌    |  ✅   | Task identifier             |
-| `tool_use_id` |     ✅      |   ❌    |  ✅   | Correlating tool call ID    |
-| `status`      |     ✅      |   ❌    |  ✅   | completed/failed/stopped    |
-| `output_file` |     ✅      |   ❌    |  ✅   | Path to task output         |
-| `summary`     |     ✅      |   ❌    |  ✅   | Task summary                |
-| `usage`       |     ✅      |   ❌    |  ✅   | Tokens/tool counts/duration |
+| `task_id`     |     ✅      |   ✅    |  ✅   | Task identifier             |
+| `tool_use_id` |     ✅      |   ✅    |  ✅   | Correlating tool call ID    |
+| `status`      |     ✅      |   ✅    |  ✅   | completed/failed/stopped    |
+| `output_file` |     ✅      |   ✅    |  ✅   | Path to task output         |
+| `summary`     |     ✅      |   ✅    |  ✅   | Task summary                |
+| `usage`       |     ✅      |   ✅    |  ✅   | Tokens/tool counts/duration |
 
 #### ToolProgressMessage
 
@@ -313,9 +314,9 @@ Bidirectional control protocol for SDK-CLI communication.
 | `mcp_message`             |     ✅      |   ✅    |  ✅   | Route MCP message                          |
 | `mcp_set_servers`         |     ✅      |   ❌    |  ✅   | Dynamically set MCP servers                |
 | `mcp_status`              |     ✅      |   ✅    |  ✅   | Get MCP server status                      |
-| `mcp_reconnect`           |     ✅      |   ❌    |  ✅   | Reconnect to MCP server                    |
-| `mcp_toggle`              |     ✅      |   ❌    |  ✅   | Enable/disable MCP server                  |
-| `stop_task`               |     ✅      |   ❌    |  ✅   | Stop a running background task             |
+| `mcp_reconnect`           |     ✅      |   ✅    |  ✅   | Reconnect to MCP server                    |
+| `mcp_toggle`              |     ✅      |   ✅    |  ✅   | Enable/disable MCP server                  |
+| `stop_task`               |     ✅      |   ✅    |  ✅   | Stop a running background task             |
 | `mcp_authenticate`        |     ✅      |   ❌    |  ✅   | Authenticate MCP server (v0.2.52)          |
 | `mcp_clear_auth`          |     ✅      |   ❌    |  ✅   | Clear MCP server auth (v0.2.52)            |
 | `supported_commands`      |     ✅      |   ❌    |  ✅   | Get available slash commands               |
@@ -339,14 +340,15 @@ Bidirectional control protocol for SDK-CLI communication.
 
 #### ModelInfo Fields
 
-| Field                      | TypeScript | Python | Ruby | Notes                           |
-|----------------------------|:----------:|:------:|:----:|---------------------------------|
-| `value`                    |     ✅      |   ❌    |  ✅   | Model identifier                |
-| `displayName`              |     ✅      |   ❌    |  ✅   | Human-readable name             |
-| `description`              |     ✅      |   ❌    |  ✅   | Model description               |
-| `supportsEffort`           |     ✅      |   ❌    |  ✅   | Whether model supports effort   |
-| `supportedEffortLevels`    |     ✅      |   ❌    |  ✅   | Available effort levels         |
-| `supportsAdaptiveThinking` |     ✅      |   ❌    |  ✅   | Whether adaptive thinking works |
+| Field                      | TypeScript | Python | Ruby | Notes                                      |
+|----------------------------|:----------:|:------:|:----:|--------------------------------------------|
+| `value`                    |     ✅      |   ❌    |  ✅   | Model identifier                           |
+| `displayName`              |     ✅      |   ❌    |  ✅   | Human-readable name                        |
+| `description`              |     ✅      |   ❌    |  ✅   | Model description                          |
+| `supportsEffort`           |     ✅      |   ❌    |  ✅   | Whether model supports effort              |
+| `supportedEffortLevels`    |     ✅      |   ❌    |  ✅   | Available effort levels                    |
+| `supportsAdaptiveThinking` |     ✅      |   ❌    |  ✅   | Whether adaptive thinking works            |
+| `supportsFastMode`         |     ✅      |   ❌    |  ✅   | Whether model supports fast mode (v0.2.69) |
 
 #### McpServerStatus Fields
 
@@ -354,11 +356,11 @@ Bidirectional control protocol for SDK-CLI communication.
 |--------------|:----------:|:------:|:----:|------------------------------------|
 | `name`       |     ✅      |   ✅    |  ✅   | Server name                        |
 | `status`     |     ✅      |   ✅    |  ✅   | Connection status                  |
-| `serverInfo` |     ✅      |   ❌    |  ✅   | Server name/version                |
-| `error`      |     ✅      |   ❌    |  ✅   | Error message (when failed)        |
-| `config`     |     ✅      |   ❌    |  ✅   | Server configuration               |
-| `scope`      |     ✅      |   ❌    |  ✅   | Config scope (project, user, etc.) |
-| `tools`      |     ✅      |   ❌    |  ✅   | Tools with annotations             |
+| `serverInfo` |     ✅      |   ✅    |  ✅   | Server name/version                |
+| `error`      |     ✅      |   ✅    |  ✅   | Error message (when failed)        |
+| `config`     |     ✅      |   ✅    |  ✅   | Server configuration               |
+| `scope`      |     ✅      |   ✅    |  ✅   | Config scope (project, user, etc.) |
+| `tools`      |     ✅      |   ✅    |  ✅   | Tools with annotations             |
 
 #### InitializationResult Fields
 
@@ -412,7 +414,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `PostToolUseFailure` |     ✅      |   ✅    |  ✅   | After tool failure (Py v0.1.26)   |
 | `Notification`       |     ✅      |   ✅    |  ✅   | System notifications (Py v0.1.29) |
 | `UserPromptSubmit`   |     ✅      |   ✅    |  ✅   | User message submitted            |
-| `SessionStart`       |     ✅      |   ❌    |  ✅   | Session starts                    |
+| `SessionStart`       |     ✅      |   ✅    |  ✅   | Session starts                    |
 | `SessionEnd`         |     ✅      |   ❌    |  ✅   | Session ends                      |
 | `Stop`               |     ✅      |   ✅    |  ✅   | Agent stops                       |
 | `SubagentStart`      |     ✅      |   ✅    |  ✅   | Subagent starts (Py v0.1.29)      |
@@ -427,6 +429,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `ConfigChange`       |     ✅      |   ❌    |  ✅   | Config file changed (v0.2.49)     |
 | `WorktreeCreate`     |     ✅      |   ❌    |  ✅   | Worktree creation (v0.2.50)       |
 | `WorktreeRemove`     |     ✅      |   ❌    |  ✅   | Worktree removal (v0.2.50)        |
+| `InstructionsLoaded` |     ✅      |   ❌    |  ✅   | CLAUDE.md file loaded (v0.2.69)   |
 
 ### Hook Input Types
 
@@ -452,6 +455,18 @@ Event hooks for intercepting and modifying SDK behavior.
 | `ConfigChangeHookInput`       |     ✅      |   ❌    |  ✅   |
 | `WorktreeCreateHookInput`     |     ✅      |   ❌    |  ✅   |
 | `WorktreeRemoveHookInput`     |     ✅      |   ❌    |  ✅   |
+| `InstructionsLoadedHookInput` |     ✅      |   ❌    |  ✅   |
+
+#### BaseHookInput Fields
+
+| Field             | TypeScript | Python | Ruby | Notes                                            |
+|-------------------|:----------:|:------:|:----:|--------------------------------------------------|
+| `session_id`      |     ✅      |   ✅    |  ✅   | Session identifier                               |
+| `transcript_path` |     ✅      |   ✅    |  ✅   | Path to session transcript                       |
+| `cwd`             |     ✅      |   ✅    |  ✅   | Working directory                                |
+| `permission_mode` |     ✅      |   ❌    |  ✅   | Current permission mode                          |
+| `agent_id`        |     ✅      |   ✅    |  ✅   | Subagent ID (when in subagent context) (v0.2.69) |
+| `agent_type`      |     ✅      |   ✅    |  ✅   | Agent type name (v0.2.69)                        |
 
 #### StopHookInput Fields
 
@@ -714,46 +729,46 @@ Session management and resumption.
 
 | Feature                | TypeScript | Python | Ruby | Notes                                            |
 |------------------------|:----------:|:------:|:----:|--------------------------------------------------|
-| `listSessions()`       |     ✅      |   ❌    |  ✅   | List past sessions with metadata (v0.2.53)       |
-| `getSessionMessages()` |     ✅      |   ❌    |  ✅   | Read session transcript messages (v0.2.59)       |
+| `listSessions()`       |     ✅      |   ✅    |  ✅   | List past sessions with metadata (v0.2.53)       |
+| `getSessionMessages()` |     ✅      |   ✅    |  ✅   | Read session transcript messages (v0.2.59)       |
 
 #### ListSessionsOptions
 
 | Field   | TypeScript | Python | Ruby | Notes                                     |
 |---------|:----------:|:------:|:----:|-------------------------------------------|
-| `dir`   |     ✅      |   ❌    |  ✅   | Project directory (includes worktrees)    |
-| `limit` |     ✅      |   ❌    |  ✅   | Maximum number of sessions to return      |
+| `dir`   |     ✅      |   ✅    |  ✅   | Project directory (includes worktrees)    |
+| `limit` |     ✅      |   ✅    |  ✅   | Maximum number of sessions to return      |
 
 #### GetSessionMessagesOptions
 
 | Field    | TypeScript | Python | Ruby | Notes                                        |
 |----------|:----------:|:------:|:----:|----------------------------------------------|
-| `dir`    |     ✅      |   ❌    |  ✅   | Project directory to find session in         |
-| `limit`  |     ✅      |   ❌    |  ✅   | Maximum number of messages to return         |
-| `offset` |     ✅      |   ❌    |  ✅   | Number of messages to skip from the start    |
+| `dir`    |     ✅      |   ✅    |  ✅   | Project directory to find session in         |
+| `limit`  |     ✅      |   ✅    |  ✅   | Maximum number of messages to return         |
+| `offset` |     ✅      |   ✅    |  ✅   | Number of messages to skip from the start    |
 
 #### SessionMessage Fields
 
 | Field                | TypeScript | Python | Ruby | Notes                            |
 |----------------------|:----------:|:------:|:----:|----------------------------------|
-| `type`               |     ✅      |   ❌    |  ✅   | 'user' or 'assistant'            |
-| `uuid`               |     ✅      |   ❌    |  ✅   | Message UUID                     |
-| `session_id`         |     ✅      |   ❌    |  ✅   | Session ID                       |
-| `message`            |     ✅      |   ❌    |  ✅   | Raw message content              |
-| `parent_tool_use_id` |     ✅      |   ❌    |  ✅   | Parent tool use ID (always null) |
+| `type`               |     ✅      |   ✅    |  ✅   | 'user' or 'assistant'            |
+| `uuid`               |     ✅      |   ✅    |  ✅   | Message UUID                     |
+| `session_id`         |     ✅      |   ✅    |  ✅   | Session ID                       |
+| `message`            |     ✅      |   ✅    |  ✅   | Raw message content              |
+| `parent_tool_use_id` |     ✅      |   ✅    |  ✅   | Parent tool use ID (always null) |
 
 #### SDKSessionInfo Fields
 
 | Field          | TypeScript | Python | Ruby | Notes                               |
 |----------------|:----------:|:------:|:----:|-------------------------------------|
-| `sessionId`    |     ✅      |   ❌    |  ✅   | Session UUID                        |
-| `summary`      |     ✅      |   ❌    |  ✅   | Display title/summary               |
-| `lastModified` |     ✅      |   ❌    |  ✅   | Last modified time (ms since epoch) |
-| `fileSize`     |     ✅      |   ❌    |  ✅   | Session file size in bytes          |
-| `customTitle`  |     ✅      |   ❌    |  ✅   | User-set title via /rename          |
-| `firstPrompt`  |     ✅      |   ❌    |  ✅   | First meaningful user prompt        |
-| `gitBranch`    |     ✅      |   ❌    |  ✅   | Git branch at end of session        |
-| `cwd`          |     ✅      |   ❌    |  ✅   | Working directory for session       |
+| `sessionId`    |     ✅      |   ✅    |  ✅   | Session UUID                        |
+| `summary`      |     ✅      |   ✅    |  ✅   | Display title/summary               |
+| `lastModified` |     ✅      |   ✅    |  ✅   | Last modified time (ms since epoch) |
+| `fileSize`     |     ✅      |   ✅    |  ✅   | Session file size in bytes          |
+| `customTitle`  |     ✅      |   ✅    |  ✅   | User-set title via /rename          |
+| `firstPrompt`  |     ✅      |   ✅    |  ✅   | First meaningful user prompt        |
+| `gitBranch`    |     ✅      |   ✅    |  ✅   | Git branch at end of session        |
+| `cwd`          |     ✅      |   ✅    |  ✅   | Working directory for session       |
 
 ### V2 Session API (Unstable)
 
@@ -865,8 +880,8 @@ Public API surface for SDK clients.
 
 | Feature                | TypeScript | Python | Ruby | Notes                                      |
 |------------------------|:----------:|:------:|:----:|--------------------------------------------|
-| `listSessions()`       |     ✅      |   ❌    |  ✅   | List past sessions with metadata (v0.2.53) |
-| `getSessionMessages()` |     ✅      |   ❌    |  ✅   | Read session transcript (v0.2.59)          |
+| `listSessions()`       |     ✅      |   ✅    |  ✅   | List past sessions with metadata (v0.2.53) |
+| `getSessionMessages()` |     ✅      |   ✅    |  ✅   | Read session transcript (v0.2.59)          |
 
 ### Query Interface
 
@@ -889,9 +904,9 @@ Public API surface for SDK clients.
 | `accountInfo()`          |     ✅      |   ❌    |  ✅   | Get account info                             |
 | `rewindFiles()`          |     ✅      |   ✅    |  ✅   | Rewind file changes                          |
 | `setMcpServers()`        |     ✅      |   ❌    |  ✅   | Dynamic MCP servers                          |
-| `reconnectMcpServer()`   |     ✅      |   ❌    |  ✅   | Reconnect MCP server                         |
-| `toggleMcpServer()`      |     ✅      |   ❌    |  ✅   | Enable/disable MCP                           |
-| `stopTask()`             |     ✅      |   ❌    |  ✅   | Stop running task                            |
+| `reconnectMcpServer()`   |     ✅      |   ✅    |  ✅   | Reconnect MCP server                         |
+| `toggleMcpServer()`      |     ✅      |   ✅    |  ✅   | Enable/disable MCP                           |
+| `stopTask()`             |     ✅      |   ✅    |  ✅   | Stop running task                            |
 | `streamInput()`          |     ✅      |   ✅    |  ✅   | Stream user input                            |
 | `initializationResult()` |     ✅      |   ✅    |  ✅   | Full init response (Py: `get_server_info()`) |
 | `close()`                |     ✅      |   ✅    |  ✅   | Close query/session                          |
@@ -899,16 +914,16 @@ Public API surface for SDK clients.
 
 ### Client Class
 
-| Feature              | TypeScript |       Python        |          Ruby           | Notes                                                                               |
-|----------------------|:----------:|:-------------------:|:-----------------------:|-------------------------------------------------------------------------------------|
-| Multi-turn client    |     ❌      | ✅ `ClaudeSDKClient` | ✅ `ClaudeAgent::Client` | Interactive sessions                                                                |
-| `connect()`          |    N/A     |          ✅          |            ✅            | Start session                                                                       |
-| `disconnect()`       |    N/A     |          ✅          |            ✅            | End session                                                                         |
-| `send_message()`     |    N/A     |          ✅          |            ✅            | Send user message                                                                   |
-| `receive_response()` |    N/A     |          ✅          |            ✅            | Receive until result                                                                |
-| `stream_input()`     |    N/A     |          ❌          |            ✅            | Stream input messages                                                               |
-| `abort!()`           |    N/A     |          ❌          |            ✅            | Abort operations                                                                    |
-| Control methods      |    N/A     |       Partial       |            ✅            | interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus (Python); all (Ruby) |
+| Feature              | TypeScript |       Python        |          Ruby           | Notes                                                                                                                |
+|----------------------|:----------:|:-------------------:|:-----------------------:|----------------------------------------------------------------------------------------------------------------------|
+| Multi-turn client    |     ❌      | ✅ `ClaudeSDKClient` | ✅ `ClaudeAgent::Client` | Interactive sessions                                                                                                 |
+| `connect()`          |    N/A     |          ✅          |            ✅            | Start session                                                                                                        |
+| `disconnect()`       |    N/A     |          ✅          |            ✅            | End session                                                                                                          |
+| `send_message()`     |    N/A     |          ✅          |            ✅            | Send user message                                                                                                    |
+| `receive_response()` |    N/A     |          ✅          |            ✅            | Receive until result                                                                                                 |
+| `stream_input()`     |    N/A     |          ❌          |            ✅            | Stream input messages                                                                                                |
+| `abort!()`           |    N/A     |          ❌          |            ✅            | Abort operations                                                                                                     |
+| Control methods      |    N/A     |       Partial       |            ✅            | Python: interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus, reconnectMcp, toggleMcp, stopTask; Ruby: all |
 
 ### Transport
 
@@ -949,23 +964,31 @@ Public API surface for SDK clients.
 - v0.2.59: Added `getSessionMessages()` for reading session transcript history with pagination (limit/offset)
 - v0.2.61 – v0.2.62: CLI parity updates (no new SDK-facing features)
 - v0.2.63: Added `supportedAgents()` method on Query, fixed `pathToClaudeCodeExecutable` PATH resolution
+- v0.2.64 – v0.2.68: CLI parity updates (no new SDK-facing features)
+- v0.2.69: Added `toolConfig` option (askUserQuestion preview format), `supportsFastMode` in ModelInfo, `agent_id`/`agent_type` on BaseHookInput, `InstructionsLoaded` hook event
+- v0.2.70: Made `AgentToolInput.subagent_type` optional (defaults to general-purpose), fixed HTTP MCP servers
+- v0.2.71: CLI parity update
 - Includes `Elicitation`/`ElicitationResult` hook events, `onElicitation` option, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState` (undocumented in changelog, present in types)
 
 ### Python SDK
 - Full source available with `Transport` abstract class
-- Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus
+- Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus, reconnectMcpServer, toggleMcpServer, stopTask
 - Has `CLINotFoundError`, `CLIConnectionError`, `ProcessError`, `CLIJSONDecodeError`, `MessageParseError` error types
-- Missing hooks: SessionStart, SessionEnd, Setup, TeammateIdle, TaskCompleted, Elicitation, ElicitationResult, ConfigChange, WorktreeCreate, WorktreeRemove
+- Has `TaskStartedMessage`, `TaskProgressMessage`, `TaskNotificationMessage` typed message classes (v0.1.45+)
+- Has `stop_reason` field on ResultMessage (v0.1.45+)
+- Has `SDKSessionInfo`, `SessionMessage` types with `list_sessions()`/`get_session_messages()` functions (v0.1.45+)
+- Has `McpServerStatus` with all fields (name, status, serverInfo, error, config, scope, tools) (v0.1.45+)
+- Has `agent_id`/`agent_type` on tool-lifecycle hook inputs (v0.1.46+)
+- Missing hooks: SessionEnd, Setup, TeammateIdle, TaskCompleted, Elicitation, ElicitationResult, ConfigChange, WorktreeCreate, WorktreeRemove, InstructionsLoaded
 - Missing permission modes: `dontAsk`
-- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`, `onElicitation`
+- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`, `onElicitation`, `toolConfig`
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
-- Has `agent_type` field in `SubagentStopHookInput`
 - Has SDK MCP server support with `tool()` helper and annotations
 - Added `thinking` config and `effort` option in v0.1.36
 - Handles `rate_limit_event` and unknown message types gracefully (v0.1.40)
 - Client has `get_server_info()` for accessing the initialization result (v0.1.31+)
-- v0.1.42 – v0.1.44: CLI parity updates (no new SDK-facing features; latest commit bumps bundled CLI to v2.1.63)
-- Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`
+- v0.1.45 – v0.1.48: Major catch-up with TypeScript SDK (task messages, session APIs, MCP control methods, stop_reason)
+- Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`, `InstructionsLoaded` hook
 
 ### Ruby SDK (This Repository)
 - Feature parity with TypeScript SDK v0.2.63
@@ -974,3 +997,4 @@ Public API surface for SDK clients.
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)
 - Has `settings`, `init`/`initOnly`/`maintenance`, `user` options (not typed in TS SDK)
+- Full v0.2.71 parity: `toolConfig`, `supportsFastMode`, `agent_id`/`agent_type` on BaseHookInput, `InstructionsLoaded` hook

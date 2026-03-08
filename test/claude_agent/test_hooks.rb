@@ -18,6 +18,7 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert_includes ClaudeAgent::HOOK_EVENTS, "SubagentStop"
     assert_includes ClaudeAgent::HOOK_EVENTS, "PreCompact"
     assert_includes ClaudeAgent::HOOK_EVENTS, "PermissionRequest"
+    assert_includes ClaudeAgent::HOOK_EVENTS, "InstructionsLoaded"
   end
 
   # --- HookMatcher ---
@@ -674,5 +675,102 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert_equal "/path", input.transcript_path
     assert_equal "/home", input.cwd
     assert_equal "default", input.permission_mode
+  end
+
+  # --- BaseHookInput agent_id and agent_type ---
+
+  test "base_hook_input_agent_id_and_agent_type" do
+    input = ClaudeAgent::BaseHookInput.new(
+      hook_event_name: "TestEvent",
+      agent_id: "agent-abc",
+      agent_type: "Explore"
+    )
+    assert_equal "agent-abc", input.agent_id
+    assert_equal "Explore", input.agent_type
+  end
+
+  test "base_hook_input_agent_id_and_agent_type_default_nil" do
+    input = ClaudeAgent::BaseHookInput.new(hook_event_name: "TestEvent")
+    assert_nil input.agent_id
+    assert_nil input.agent_type
+  end
+
+  test "subclass_inherits_agent_id_and_agent_type" do
+    input = ClaudeAgent::PreToolUseInput.new(
+      tool_name: "Bash",
+      tool_input: { command: "ls" },
+      agent_id: "agent-xyz",
+      agent_type: "Plan"
+    )
+    assert_equal "agent-xyz", input.agent_id
+    assert_equal "Plan", input.agent_type
+  end
+
+  # --- InstructionsLoadedInput ---
+
+  test "instructions_loaded_event_in_hook_events" do
+    assert_includes ClaudeAgent::HOOK_EVENTS, "InstructionsLoaded"
+  end
+
+  test "instructions_loaded_input" do
+    input = ClaudeAgent::InstructionsLoadedInput.new(
+      file_path: "/home/user/.claude/CLAUDE.md",
+      memory_type: "User",
+      load_reason: "session_start",
+      globs: [ "*.rb" ],
+      trigger_file_path: "/home/user/project/src/app.rb",
+      parent_file_path: "/home/user/.claude/CLAUDE.md",
+      session_id: "sess-123"
+    )
+    assert_equal "InstructionsLoaded", input.hook_event_name
+    assert_equal "/home/user/.claude/CLAUDE.md", input.file_path
+    assert_equal "User", input.memory_type
+    assert_equal "session_start", input.load_reason
+    assert_equal [ "*.rb" ], input.globs
+    assert_equal "/home/user/project/src/app.rb", input.trigger_file_path
+    assert_equal "/home/user/.claude/CLAUDE.md", input.parent_file_path
+    assert_equal "sess-123", input.session_id
+  end
+
+  test "instructions_loaded_input_with_required_fields_only" do
+    input = ClaudeAgent::InstructionsLoadedInput.new(
+      file_path: "/path/to/rules.md",
+      memory_type: "Project",
+      load_reason: "nested_traversal"
+    )
+    assert_equal "InstructionsLoaded", input.hook_event_name
+    assert_equal "/path/to/rules.md", input.file_path
+    assert_equal "Project", input.memory_type
+    assert_equal "nested_traversal", input.load_reason
+    assert_nil input.globs
+    assert_nil input.trigger_file_path
+    assert_nil input.parent_file_path
+  end
+
+  test "instructions_loaded_input_memory_types_constant" do
+    assert_equal %w[User Project Local Managed], ClaudeAgent::InstructionsLoadedInput::MEMORY_TYPES
+  end
+
+  test "instructions_loaded_input_load_reasons_constant" do
+    assert_equal %w[session_start nested_traversal path_glob_match include],
+      ClaudeAgent::InstructionsLoadedInput::LOAD_REASONS
+  end
+
+  test "instructions_loaded_input_inherits_base_fields" do
+    input = ClaudeAgent::InstructionsLoadedInput.new(
+      file_path: "/path/to/file.md",
+      memory_type: "Local",
+      load_reason: "path_glob_match",
+      transcript_path: "/path/to/transcript",
+      cwd: "/home/user",
+      permission_mode: "default",
+      agent_id: "agent-abc",
+      agent_type: "Explore"
+    )
+    assert_equal "/path/to/transcript", input.transcript_path
+    assert_equal "/home/user", input.cwd
+    assert_equal "default", input.permission_mode
+    assert_equal "agent-abc", input.agent_id
+    assert_equal "Explore", input.agent_type
   end
 end

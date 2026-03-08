@@ -52,8 +52,8 @@ module ClaudeAgent
   #   model.value        # => "claude-3-opus"
   #   model.display_name # => "Claude 3 Opus"
   #
-  ModelInfo = Data.define(:value, :display_name, :description, :supports_effort, :supported_effort_levels, :supports_adaptive_thinking) do
-    def initialize(value:, display_name: nil, description: nil, supports_effort: nil, supported_effort_levels: nil, supports_adaptive_thinking: nil)
+  ModelInfo = Data.define(:value, :display_name, :description, :supports_effort, :supported_effort_levels, :supports_adaptive_thinking, :supports_fast_mode) do
+    def initialize(value:, display_name: nil, description: nil, supports_effort: nil, supported_effort_levels: nil, supports_adaptive_thinking: nil, supports_fast_mode: nil)
       super
     end
   end
