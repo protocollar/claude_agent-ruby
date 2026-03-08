@@ -81,7 +81,7 @@ Configuration options for SDK queries and clients.
 | `promptSuggestions`               |     ✅      |   ❌    |  ✅   | Enable prompt suggestion after each turn (v0.2.47)           |
 | `debug`                           |     ✅      |   ❌    |  ✅   | Enable verbose debug logging                                 |
 | `debugFile`                       |     ✅      |   ❌    |  ✅   | Write debug logs to specific file path                       |
-| `toolConfig`                      |     ✅      |   ❌    |  ❌   | Tool behavior config (e.g., askUserQuestion preview format)  |
+| `toolConfig`                      |     ✅      |   ❌    |  ✅   | Tool behavior config (e.g., askUserQuestion preview format)  |
 | `onElicitation`                   |     ✅      |   ❌    |  ✅   | MCP elicitation request handler callback                     |
 
 ---
@@ -348,7 +348,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `supportsEffort`           |     ✅      |   ❌    |  ✅   | Whether model supports effort              |
 | `supportedEffortLevels`    |     ✅      |   ❌    |  ✅   | Available effort levels                    |
 | `supportsAdaptiveThinking` |     ✅      |   ❌    |  ✅   | Whether adaptive thinking works            |
-| `supportsFastMode`         |     ✅      |   ❌    |  ❌   | Whether model supports fast mode (v0.2.69) |
+| `supportsFastMode`         |     ✅      |   ❌    |  ✅   | Whether model supports fast mode (v0.2.69) |
 
 #### McpServerStatus Fields
 
@@ -429,7 +429,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `ConfigChange`       |     ✅      |   ❌    |  ✅   | Config file changed (v0.2.49)     |
 | `WorktreeCreate`     |     ✅      |   ❌    |  ✅   | Worktree creation (v0.2.50)       |
 | `WorktreeRemove`     |     ✅      |   ❌    |  ✅   | Worktree removal (v0.2.50)        |
-| `InstructionsLoaded` |     ✅      |   ❌    |  ❌   | CLAUDE.md file loaded (v0.2.69)   |
+| `InstructionsLoaded` |     ✅      |   ❌    |  ✅   | CLAUDE.md file loaded (v0.2.69)   |
 
 ### Hook Input Types
 
@@ -455,7 +455,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `ConfigChangeHookInput`       |     ✅      |   ❌    |  ✅   |
 | `WorktreeCreateHookInput`     |     ✅      |   ❌    |  ✅   |
 | `WorktreeRemoveHookInput`     |     ✅      |   ❌    |  ✅   |
-| `InstructionsLoadedHookInput` |     ✅      |   ❌    |  ❌   |
+| `InstructionsLoadedHookInput` |     ✅      |   ❌    |  ✅   |
 
 #### BaseHookInput Fields
 
@@ -465,8 +465,8 @@ Event hooks for intercepting and modifying SDK behavior.
 | `transcript_path` |     ✅      |   ✅    |  ✅   | Path to session transcript                       |
 | `cwd`             |     ✅      |   ✅    |  ✅   | Working directory                                |
 | `permission_mode` |     ✅      |   ❌    |  ✅   | Current permission mode                          |
-| `agent_id`        |     ✅      |   ✅    |  ❌   | Subagent ID (when in subagent context) (v0.2.69) |
-| `agent_type`      |     ✅      |   ✅    |  ❌   | Agent type name (v0.2.69)                        |
+| `agent_id`        |     ✅      |   ✅    |  ✅   | Subagent ID (when in subagent context) (v0.2.69) |
+| `agent_type`      |     ✅      |   ✅    |  ✅   | Agent type name (v0.2.69)                        |
 
 #### StopHookInput Fields
 
@@ -997,4 +997,4 @@ Public API surface for SDK clients.
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)
 - Has `settings`, `init`/`initOnly`/`maintenance`, `user` options (not typed in TS SDK)
-- Missing: `toolConfig` option, `supportsFastMode` in ModelInfo, `agent_id`/`agent_type` on BaseHookInput, `InstructionsLoaded` hook event (all from v0.2.69+)
+- Full v0.2.71 parity: `toolConfig`, `supportsFastMode`, `agent_id`/`agent_type` on BaseHookInput, `InstructionsLoaded` hook

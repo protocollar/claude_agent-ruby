@@ -131,8 +131,9 @@ module ClaudeAgent
     attr_reader supports_effort: bool?
     attr_reader supported_effort_levels: Array[String]?
     attr_reader supports_adaptive_thinking: bool?
+    attr_reader supports_fast_mode: bool?
 
-    def initialize: (value: String, ?display_name: String?, ?description: String?, ?supports_effort: bool?, ?supported_effort_levels: Array[String]?, ?supports_adaptive_thinking: bool?) -> void
+    def initialize: (value: String, ?display_name: String?, ?description: String?, ?supports_effort: bool?, ?supported_effort_levels: Array[String]?, ?supports_adaptive_thinking: bool?, ?supports_fast_mode: bool?) -> void
   end
 
   class McpServerStatus
@@ -416,6 +417,7 @@ module ClaudeAgent
     attr_accessor stderr_callback: (^(String) -> void)?
     attr_accessor debug: bool
     attr_accessor debug_file: String?
+    attr_accessor tool_config: Hash[Symbol, untyped]?
 
     # Logging
     attr_accessor logger: Logger?
@@ -885,8 +887,10 @@ module ClaudeAgent
     attr_reader transcript_path: String?
     attr_reader cwd: String?
     attr_reader permission_mode: String?
+    attr_reader agent_id: String?
+    attr_reader agent_type: String?
 
-    def initialize: (hook_event_name: String, ?session_id: String?, ?transcript_path: String?, ?cwd: String?, ?permission_mode: String?, **untyped) -> void
+    def initialize: (hook_event_name: String, ?session_id: String?, ?transcript_path: String?, ?cwd: String?, ?permission_mode: String?, ?agent_id: String?, ?agent_type: String?, **untyped) -> void
 
     def self.define_input: (String event_name, ?required: Array[Symbol], ?optional: Hash[Symbol, untyped], ?constants: Hash[Symbol, untyped]) -> Class
                          | (String event_name, ?required: Array[Symbol], ?optional: Hash[Symbol, untyped], ?constants: Hash[Symbol, untyped]) { () -> void } -> Class
@@ -1051,6 +1055,20 @@ module ClaudeAgent
     attr_reader worktree_path: String
 
     def initialize: (worktree_path: String, **untyped) -> void
+  end
+
+  class InstructionsLoadedInput < BaseHookInput
+    attr_reader file_path: String
+    attr_reader memory_type: String
+    attr_reader load_reason: String
+    attr_reader globs: Array[String]?
+    attr_reader trigger_file_path: String?
+    attr_reader parent_file_path: String?
+
+    MEMORY_TYPES: Array[String]
+    LOAD_REASONS: Array[String]
+
+    def initialize: (file_path: String, memory_type: String, load_reason: String, ?globs: Array[String]?, ?trigger_file_path: String?, ?parent_file_path: String?, **untyped) -> void
   end
 
   # Permission types

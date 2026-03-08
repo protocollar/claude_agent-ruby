@@ -63,6 +63,7 @@ module ClaudeAgent
       persist_session prompt_suggestions betas max_buffer_size stderr_callback
       abort_controller spawn_claude_code_process
       debug debug_file
+      tool_config
       logger
     ].freeze
 

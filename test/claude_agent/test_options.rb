@@ -703,4 +703,17 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     args = options.to_cli_args
     refute_includes args, "--prompt-suggestions"
   end
+
+  # --- Tool Config ---
+
+  test "tool_config_default_nil" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.tool_config
+  end
+
+  test "tool_config_with_value" do
+    config = { timeout: 30, max_retries: 3 }
+    options = ClaudeAgent::Options.new(tool_config: config)
+    assert_equal config, options.tool_config
+  end
 end
