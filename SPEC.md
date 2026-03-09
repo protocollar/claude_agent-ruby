@@ -69,7 +69,7 @@ Configuration options for SDK queries and clients.
 | `env`                             |     ✅      |   ✅    |  ✅   | Environment variables                                        |
 | `sandbox`                         |     ✅      |   ✅    |  ✅   | Sandbox settings                                             |
 | `settingSources`                  |     ✅      |   ✅    |  ✅   | Which settings to load                                       |
-| `settings`                        |     ✅      |   ✅    |  ❌   | Additional settings (path or object)                         |
+| `settings`                        |     ✅      |   ✅    |  ✅   | Additional settings (path or object)                         |
 | `plugins`                         |     ✅      |   ✅    |  ✅   | Plugin configurations                                        |
 | `betas`                           |     ✅      |   ✅    |  ✅   | Beta features (e.g., context-1m-2025-08-07)                  |
 | `abortController`                 |     ✅      |   ❌    |  ✅   | Cancellation controller                                      |
@@ -739,7 +739,7 @@ Session management and resumption.
 |--------------------|:----------:|:------:|:----:|-----------------------------------------------|
 | `dir`              |     ✅      |   ✅    |  ✅   | Project directory (includes worktrees)        |
 | `limit`            |     ✅      |   ✅    |  ✅   | Maximum number of sessions to return          |
-| `includeWorktrees` |     ✅      |   ✅    |  ❌   | Include git worktree sessions (default: true) |
+| `includeWorktrees` |     ✅      |   ✅    |  ✅   | Include git worktree sessions (default: true) |
 
 #### GetSessionMessagesOptions
 
@@ -818,7 +818,7 @@ Sandbox configuration for command execution isolation.
 | `network`                        |     ✅      |   ✅    |  ✅   |
 | `ignoreViolations`               |     ✅      |   ✅    |  ✅   |
 | `enableWeakerNestedSandbox`      |     ✅      |   ✅    |  ✅   |
-| `enableWeakerNetworkIsolation`   |     ✅      |   ❌    |  ❌   |
+| `enableWeakerNetworkIsolation`   |     ✅      |   ❌    |  ✅   |
 | `ripgrep`                        |     ✅      |   ❌    |  ✅   |
 | `filesystem`                     |     ✅      |   ❌    |  ✅   |
 

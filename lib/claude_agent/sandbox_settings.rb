@@ -135,6 +135,7 @@ module ClaudeAgent
     :network,
     :ignore_violations,
     :enable_weaker_nested_sandbox,
+    :enable_weaker_network_isolation,
     :ripgrep,
     :filesystem
   ) do
@@ -146,6 +147,7 @@ module ClaudeAgent
       network: nil,
       ignore_violations: nil,
       enable_weaker_nested_sandbox: false,
+      enable_weaker_network_isolation: false,
       ripgrep: nil,
       filesystem: nil
     )
@@ -160,6 +162,7 @@ module ClaudeAgent
       result[:network] = network.to_h if network && !network.to_h.empty?
       result[:ignoreViolations] = ignore_violations.to_h if ignore_violations && !ignore_violations.to_h.empty?
       result[:enableWeakerNestedSandbox] = enable_weaker_nested_sandbox if enable_weaker_nested_sandbox
+      result[:enableWeakerNetworkIsolation] = enable_weaker_network_isolation if enable_weaker_network_isolation
       result[:ripgrep] = ripgrep.to_h if ripgrep
       result[:filesystem] = filesystem.to_h if filesystem && !filesystem.to_h.empty?
       result

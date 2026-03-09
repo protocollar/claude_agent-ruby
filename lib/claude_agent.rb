@@ -56,9 +56,11 @@ module ClaudeAgent
     # @param dir [String, nil] Directory to scope sessions to (includes git worktrees).
     #   When nil, returns sessions from all projects.
     # @param limit [Integer, nil] Maximum number of sessions to return.
+    # @param include_worktrees [Boolean] When dir is in a git repo, include sessions
+    #   from all git worktree paths. Defaults to true.
     # @return [Array<SessionInfo>]
-    def list_sessions(dir: nil, limit: nil)
-      ListSessions.call(dir: dir, limit: limit)
+    def list_sessions(dir: nil, limit: nil, include_worktrees: true)
+      ListSessions.call(dir: dir, limit: limit, include_worktrees: include_worktrees)
     end
 
     # Read messages from a past session's transcript

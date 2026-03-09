@@ -31,10 +31,12 @@ module ClaudeAgent
       # @param dir [String, nil] Directory to scope sessions to (with worktree support).
       #   When nil, returns sessions from all projects.
       # @param limit [Integer, nil] Maximum number of sessions to return.
+      # @param include_worktrees [Boolean] When dir is in a git repo, include sessions
+      #   from all git worktree paths. Defaults to true.
       # @return [Array<SessionInfo>] Sessions sorted by last_modified descending.
-      def call(dir: nil, limit: nil)
+      def call(dir: nil, limit: nil, include_worktrees: true)
         if dir
-          list_for_directory(dir, limit)
+          list_for_directory(dir, limit, include_worktrees: include_worktrees)
         else
           list_all(limit)
         end
@@ -288,17 +290,18 @@ module ClaudeAgent
 
       # --- Listing Modes ---
 
-      # List sessions for a specific directory, including worktree siblings.
+      # List sessions for a specific directory, optionally including worktree siblings.
       # Matches TypeScript's bM function.
       #
       # @param dir [String]
       # @param limit [Integer, nil]
+      # @param include_worktrees [Boolean] Whether to include worktree sessions
       # @return [Array<SessionInfo>]
-      def list_for_directory(dir, limit)
+      def list_for_directory(dir, limit, include_worktrees: true)
         resolved = SessionPaths.realpath(dir)
-        worktrees = SessionPaths.git_worktrees(resolved)
+        worktrees = include_worktrees ? SessionPaths.git_worktrees(resolved) : []
 
-        # Simple case: not in a worktree (or single worktree)
+        # Simple case: not in a worktree (or single worktree) or worktrees disabled
         if worktrees.length <= 1
           project_dir = SessionPaths.find_project_dir(resolved)
           return [] unless project_dir

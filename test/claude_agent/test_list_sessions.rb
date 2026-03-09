@@ -227,6 +227,26 @@ class TestClaudeAgentListSessions < ActiveSupport::TestCase
     assert_equal [], sessions
   end
 
+  # --- include_worktrees ---
+
+  test "list_sessions include_worktrees defaults to true" do
+    project_dir = create_project_dir("/Users/dev/myapp")
+    create_session_file(project_dir, SESSION_UUID_1, [
+      { type: "user", message: { role: "user", content: "hello" }, uuid: "u1", session_id: SESSION_UUID_1 }
+    ])
+    sessions = ClaudeAgent.list_sessions(dir: "/Users/dev/myapp")
+    assert_equal 1, sessions.length
+  end
+
+  test "list_sessions include_worktrees false scopes to exact directory" do
+    project_dir = create_project_dir("/Users/dev/myapp")
+    create_session_file(project_dir, SESSION_UUID_1, [
+      { type: "user", message: { role: "user", content: "hello" }, uuid: "u1", session_id: SESSION_UUID_1 }
+    ])
+    sessions = ClaudeAgent.list_sessions(dir: "/Users/dev/myapp", include_worktrees: false)
+    assert_equal 1, sessions.length
+  end
+
   # --- Sidechain Filtering ---
 
   test "list_sessions filters out sidechain sessions" do
@@ -483,7 +503,7 @@ class TestClaudeAgentListSessions < ActiveSupport::TestCase
   # --- Module Method ---
 
   test "ClaudeAgent.list_sessions delegates to ListSessions.call" do
-    ClaudeAgent::ListSessions.expects(:call).with(dir: "/tmp", limit: 5).returns([])
+    ClaudeAgent::ListSessions.expects(:call).with(dir: "/tmp", limit: 5, include_worktrees: true).returns([])
     result = ClaudeAgent.list_sessions(dir: "/tmp", limit: 5)
     assert_equal [], result
   end

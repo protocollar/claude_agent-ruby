@@ -162,6 +162,7 @@ class TestClaudeAgentSandboxSettings < ActiveSupport::TestCase
     assert_nil sandbox.network
     assert_nil sandbox.ignore_violations
     refute sandbox.enable_weaker_nested_sandbox
+    refute sandbox.enable_weaker_network_isolation
     assert_nil sandbox.ripgrep
   end
 
@@ -207,6 +208,29 @@ class TestClaudeAgentSandboxSettings < ActiveSupport::TestCase
       enable_weaker_nested_sandbox: true
     )
     assert sandbox.enable_weaker_nested_sandbox
+  end
+
+  test "sandbox_settings_with_weaker_network_isolation" do
+    sandbox = ClaudeAgent::SandboxSettings.new(
+      enabled: true,
+      enable_weaker_network_isolation: true
+    )
+    assert sandbox.enable_weaker_network_isolation
+  end
+
+  test "sandbox_settings_to_h_with_weaker_network_isolation" do
+    sandbox = ClaudeAgent::SandboxSettings.new(
+      enabled: true,
+      enable_weaker_network_isolation: true
+    )
+    h = sandbox.to_h
+    assert h[:enableWeakerNetworkIsolation]
+  end
+
+  test "sandbox_settings_to_h_skips_false_weaker_network_isolation" do
+    sandbox = ClaudeAgent::SandboxSettings.new(enabled: true)
+    h = sandbox.to_h
+    refute h.key?(:enableWeakerNetworkIsolation)
   end
 
   test "sandbox_settings_to_h_basic" do
