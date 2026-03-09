@@ -58,7 +58,7 @@ module ClaudeAgent
       max_turns max_budget_usd thinking effort max_thinking_tokens
       strict_mcp_config mcp_servers hooks
       sandbox cwd add_dirs env agent
-      cli_path extra_args agents setting_sources plugins
+      cli_path extra_args agents setting_sources settings plugins
       include_partial_messages output_format enable_file_checkpointing
       persist_session prompt_suggestions betas max_buffer_size stderr_callback
       abort_controller spawn_claude_code_process
@@ -242,6 +242,12 @@ module ClaudeAgent
         args.push("--agent", agent) if agent
         add_dirs.each { |dir| args.push("--add-dir", dir.to_s) }
         args.push("--setting-sources", setting_sources.join(",")) if setting_sources&.any?
+        if settings
+          case settings
+          when String then args.push("--settings", settings)
+          when Hash then args.push("--settings", JSON.generate(settings))
+          end
+        end
         plugins.each do |plugin|
           dir = plugin.is_a?(Hash) ? plugin[:dir] : plugin
           args.push("--plugin-dir", dir.to_s)

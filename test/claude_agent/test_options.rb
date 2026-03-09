@@ -418,6 +418,30 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     assert_equal "my-user", args[idx + 1]
   end
 
+  # --- Settings ---
+
+  test "settings_option_default_nil" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.settings
+  end
+
+  test "settings_option_string_path" do
+    options = ClaudeAgent::Options.new(settings: "/path/to/settings.json")
+    args = options.to_cli_args
+    idx = args.index("--settings")
+    assert idx, "expected --settings flag"
+    assert_equal "/path/to/settings.json", args[idx + 1]
+  end
+
+  test "settings_option_hash" do
+    settings = { "model" => "claude-sonnet-4-6", "permissions" => { "allow" => [ "Bash(*)" ] } }
+    options = ClaudeAgent::Options.new(settings: settings)
+    args = options.to_cli_args
+    idx = args.index("--settings")
+    assert idx, "expected --settings flag"
+    assert_equal JSON.generate(settings), args[idx + 1]
+  end
+
   # --- Session ID ---
 
   test "session_id_option_default_nil" do

@@ -69,6 +69,7 @@ Configuration options for SDK queries and clients.
 | `env`                             |     ✅      |   ✅    |  ✅   | Environment variables                                        |
 | `sandbox`                         |     ✅      |   ✅    |  ✅   | Sandbox settings                                             |
 | `settingSources`                  |     ✅      |   ✅    |  ✅   | Which settings to load                                       |
+| `settings`                        |     ✅      |   ✅    |  ✅   | Additional settings (path or object)                         |
 | `plugins`                         |     ✅      |   ✅    |  ✅   | Plugin configurations                                        |
 | `betas`                           |     ✅      |   ✅    |  ✅   | Beta features (e.g., context-1m-2025-08-07)                  |
 | `abortController`                 |     ✅      |   ❌    |  ✅   | Cancellation controller                                      |
@@ -640,15 +641,15 @@ Permission handling and updates.
 
 ### ToolPermissionContext
 
-| Field            | TypeScript | Python | Ruby | Notes                           |
-|------------------|:----------:|:------:|:----:|---------------------------------|
-| `signal`         |     ✅      |   ✅    |  ✅   | Abort signal                    |
-| `suggestions`    |     ✅      |   ✅    |  ✅   | Permission suggestions          |
-| `blockedPath`    |     ✅      |   ❌    |  ✅   | Blocked file path               |
-| `decisionReason` |     ✅      |   ❌    |  ✅   | Why permission triggered        |
-| `toolUseID`      |     ✅      |   ❌    |  ✅   | Tool call ID                    |
-| `agentID`        |     ✅      |   ❌    |  ✅   | Subagent ID if applicable       |
-| `description`    |     ✅      |   ❌    |  ✅   | Human-readable tool description |
+| Field            | TypeScript | Python | Ruby | Notes                                            |
+|------------------|:----------:|:------:|:----:|--------------------------------------------------|
+| `signal`         |     ✅      |   ✅    |  ✅   | Abort signal                                     |
+| `suggestions`    |     ✅      |   ✅    |  ✅   | Permission suggestions                           |
+| `blockedPath`    |     ✅      |   ❌    |  ✅   | Blocked file path                                |
+| `decisionReason` |     ✅      |   ❌    |  ✅   | Why permission triggered                         |
+| `toolUseID`      |     ✅      |   ❌    |  ✅   | Tool call ID                                     |
+| `agentID`        |     ✅      |   ❌    |  ✅   | Subagent ID if applicable                        |
+| `description`    |     ❌      |   ❌    |  ✅   | Human-readable tool description (Ruby-specific)  |
 
 ---
 
@@ -734,10 +735,11 @@ Session management and resumption.
 
 #### ListSessionsOptions
 
-| Field   | TypeScript | Python | Ruby | Notes                                     |
-|---------|:----------:|:------:|:----:|-------------------------------------------|
-| `dir`   |     ✅      |   ✅    |  ✅   | Project directory (includes worktrees)    |
-| `limit` |     ✅      |   ✅    |  ✅   | Maximum number of sessions to return      |
+| Field              | TypeScript | Python | Ruby | Notes                                         |
+|--------------------|:----------:|:------:|:----:|-----------------------------------------------|
+| `dir`              |     ✅      |   ✅    |  ✅   | Project directory (includes worktrees)        |
+| `limit`            |     ✅      |   ✅    |  ✅   | Maximum number of sessions to return          |
+| `includeWorktrees` |     ✅      |   ✅    |  ✅   | Include git worktree sessions (default: true) |
 
 #### GetSessionMessagesOptions
 
@@ -807,17 +809,18 @@ Sandbox configuration for command execution isolation.
 
 ### SandboxSettings
 
-| Field                       | TypeScript | Python | Ruby |
-|-----------------------------|:----------:|:------:|:----:|
-| `enabled`                   |     ✅      |   ✅    |  ✅   |
-| `autoAllowBashIfSandboxed`  |     ✅      |   ✅    |  ✅   |
-| `excludedCommands`          |     ✅      |   ✅    |  ✅   |
-| `allowUnsandboxedCommands`  |     ✅      |   ✅    |  ✅   |
-| `network`                   |     ✅      |   ✅    |  ✅   |
-| `ignoreViolations`          |     ✅      |   ✅    |  ✅   |
-| `enableWeakerNestedSandbox` |     ✅      |   ✅    |  ✅   |
-| `ripgrep`                   |     ✅      |   ❌    |  ✅   |
-| `filesystem`                |     ✅      |   ❌    |  ✅   |
+| Field                            | TypeScript | Python | Ruby |
+|----------------------------------|:----------:|:------:|:----:|
+| `enabled`                        |     ✅      |   ✅    |  ✅   |
+| `autoAllowBashIfSandboxed`       |     ✅      |   ✅    |  ✅   |
+| `excludedCommands`               |     ✅      |   ✅    |  ✅   |
+| `allowUnsandboxedCommands`       |     ✅      |   ✅    |  ✅   |
+| `network`                        |     ✅      |   ✅    |  ✅   |
+| `ignoreViolations`               |     ✅      |   ✅    |  ✅   |
+| `enableWeakerNestedSandbox`      |     ✅      |   ✅    |  ✅   |
+| `enableWeakerNetworkIsolation`   |     ✅      |   ❌    |  ✅   |
+| `ripgrep`                        |     ✅      |   ❌    |  ✅   |
+| `filesystem`                     |     ✅      |   ❌    |  ✅   |
 
 ### SandboxFilesystemConfig
 
@@ -951,7 +954,7 @@ Public API surface for SDK clients.
 - Source is bundled/minified, but `sdk.d.ts` provides complete type definitions
 - Includes unstable V2 session API
 - `executable`/`executableArgs` are JS-specific (`node`/`bun`/`deno`)
-- Does NOT have `settings`, `user`, `init`/`initOnly`/`maintenance` as typed Options (use `extraArgs` or `settingSources`)
+- Does NOT have `user`, `init`/`initOnly`/`maintenance` as typed Options (use `extraArgs` or `settingSources`)
 - `ApiKeySource` includes `'oauth'`
 - v0.2.45: Added `TaskStartedMessage`, `RateLimitEvent` message types
 - v0.2.47: Added `promptSuggestions` option and `PromptSuggestionMessage`
@@ -967,18 +970,20 @@ Public API surface for SDK clients.
 - v0.2.64 – v0.2.68: CLI parity updates (no new SDK-facing features)
 - v0.2.69: Added `toolConfig` option (askUserQuestion preview format), `supportsFastMode` in ModelInfo, `agent_id`/`agent_type` on BaseHookInput, `InstructionsLoaded` hook event
 - v0.2.70: Made `AgentToolInput.subagent_type` optional (defaults to general-purpose), fixed HTTP MCP servers
-- v0.2.71: CLI parity update
+- v0.2.71: CLI parity update; `settings` now a typed Option (string path or `Settings` object)
 - Includes `Elicitation`/`ElicitationResult` hook events, `onElicitation` option, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState` (undocumented in changelog, present in types)
 
 ### Python SDK
 - Full source available with `Transport` abstract class
 - Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus, reconnectMcpServer, toggleMcpServer, stopTask
 - Has `CLINotFoundError`, `CLIConnectionError`, `ProcessError`, `CLIJSONDecodeError`, `MessageParseError` error types
-- Has `TaskStartedMessage`, `TaskProgressMessage`, `TaskNotificationMessage` typed message classes (v0.1.45+)
-- Has `stop_reason` field on ResultMessage (v0.1.45+)
-- Has `SDKSessionInfo`, `SessionMessage` types with `list_sessions()`/`get_session_messages()` functions (v0.1.45+)
-- Has `McpServerStatus` with all fields (name, status, serverInfo, error, config, scope, tools) (v0.1.45+)
+- Has `TaskStartedMessage`, `TaskProgressMessage`, `TaskNotificationMessage` typed message classes (v0.1.46+)
+- Has `stop_reason` field on ResultMessage (v0.1.46+)
+- Has `SDKSessionInfo`, `SessionMessage` types with `list_sessions()`/`get_session_messages()` functions (v0.1.46+)
+- Has `McpServerStatus` with all fields (name, status, serverInfo, error, config, scope, tools) (v0.1.46+)
 - Has `agent_id`/`agent_type` on tool-lifecycle hook inputs (v0.1.46+)
+- Has `add_mcp_server()`/`remove_mcp_server()` client methods for runtime MCP management (v0.1.46+)
+- Has `include_worktrees` parameter on `list_sessions()` (v0.1.46+)
 - Missing hooks: SessionEnd, Setup, TeammateIdle, TaskCompleted, Elicitation, ElicitationResult, ConfigChange, WorktreeCreate, WorktreeRemove, InstructionsLoaded
 - Missing permission modes: `dontAsk`
 - Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`, `onElicitation`, `toolConfig`
@@ -988,13 +993,14 @@ Public API surface for SDK clients.
 - Handles `rate_limit_event` and unknown message types gracefully (v0.1.40)
 - Client has `get_server_info()` for accessing the initialization result (v0.1.31+)
 - v0.1.45 – v0.1.48: Major catch-up with TypeScript SDK (task messages, session APIs, MCP control methods, stop_reason)
+- v0.1.48: Fixed fine-grained tool streaming regression
 - Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`, `InstructionsLoaded` hook
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.63
+- Feature parity with TypeScript SDK v0.2.71
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)
-- Has `settings`, `init`/`initOnly`/`maintenance`, `user` options (not typed in TS SDK)
+- Missing: `settings` option (use `extra_args`), `enableWeakerNetworkIsolation` sandbox field, `includeWorktrees` on `list_sessions`
 - Full v0.2.71 parity: `toolConfig`, `supportsFastMode`, `agent_id`/`agent_type` on BaseHookInput, `InstructionsLoaded` hook

@@ -312,10 +312,11 @@ module ClaudeAgent
     attr_reader network: SandboxNetworkConfig?
     attr_reader ignore_violations: SandboxIgnoreViolations?
     attr_reader enable_weaker_nested_sandbox: bool
+    attr_reader enable_weaker_network_isolation: bool
     attr_reader ripgrep: SandboxRipgrepConfig?
     attr_reader filesystem: SandboxFilesystemConfig?
 
-    def initialize: (?enabled: bool, ?auto_allow_bash_if_sandboxed: bool, ?excluded_commands: Array[String], ?allow_unsandboxed_commands: bool, ?network: SandboxNetworkConfig?, ?ignore_violations: SandboxIgnoreViolations?, ?enable_weaker_nested_sandbox: bool, ?ripgrep: SandboxRipgrepConfig?, ?filesystem: SandboxFilesystemConfig?) -> void
+    def initialize: (?enabled: bool, ?auto_allow_bash_if_sandboxed: bool, ?excluded_commands: Array[String], ?allow_unsandboxed_commands: bool, ?network: SandboxNetworkConfig?, ?ignore_violations: SandboxIgnoreViolations?, ?enable_weaker_nested_sandbox: bool, ?enable_weaker_network_isolation: bool, ?ripgrep: SandboxRipgrepConfig?, ?filesystem: SandboxFilesystemConfig?) -> void
     def to_h: () -> Hash[Symbol, untyped]
   end
 
@@ -399,6 +400,7 @@ module ClaudeAgent
     # Advanced features
     attr_accessor agents: Hash[String, untyped]?
     attr_accessor setting_sources: Array[String]?
+    attr_accessor settings: (String | Hash[String, untyped])?
     attr_accessor plugins: Array[String | Hash[Symbol, String]]
 
     # Output & streaming
@@ -1365,7 +1367,7 @@ module ClaudeAgent
   end
 
   # Session discovery
-  def self.list_sessions: (?dir: String?, ?limit: Integer?) -> Array[SessionInfo]
+  def self.list_sessions: (?dir: String?, ?limit: Integer?, ?include_worktrees: bool) -> Array[SessionInfo]
   def self.get_session_messages: (String session_id, ?dir: String?, ?limit: Integer?, ?offset: Integer?) -> Array[SessionMessage]
 
   # Shared session path infrastructure
