@@ -413,6 +413,12 @@ class TestClaudeAgentTypes < ActiveSupport::TestCase
     assert_equal [], result.models
     assert_nil result.account
     assert_equal [], result.agents
+    assert_nil result.fast_mode_state
+  end
+
+  test "initialization_result_with_fast_mode_state" do
+    result = ClaudeAgent::InitializationResult.new(fast_mode_state: "on")
+    assert_equal "on", result.fast_mode_state
   end
 
   test "initialization_result_with_agents" do

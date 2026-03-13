@@ -182,8 +182,9 @@ module ClaudeAgent
     attr_reader models: Array[ModelInfo]
     attr_reader account: AccountInfo?
     attr_reader agents: Array[AgentInfo]
+    attr_reader fast_mode_state: String?
 
-    def initialize: (?commands: Array[SlashCommand], ?output_style: String?, ?available_output_styles: Array[String], ?models: Array[ModelInfo], ?account: AccountInfo?, ?agents: Array[AgentInfo]) -> void
+    def initialize: (?commands: Array[SlashCommand], ?output_style: String?, ?available_output_styles: Array[String], ?models: Array[ModelInfo], ?account: AccountInfo?, ?agents: Array[AgentInfo], ?fast_mode_state: String?) -> void
   end
 
   class ModelUsage
@@ -812,7 +813,7 @@ module ClaudeAgent
     def type: () -> :files_persisted
   end
 
-  # Task started message (TypeScript SDK v0.2.45 parity)
+  # Task started message (TypeScript SDK v0.2.75 parity)
   class TaskStartedMessage
     attr_reader uuid: String
     attr_reader session_id: String
@@ -820,12 +821,13 @@ module ClaudeAgent
     attr_reader tool_use_id: String?
     attr_reader description: String?
     attr_reader task_type: String?
+    attr_reader prompt: String?
 
-    def initialize: (uuid: String, session_id: String, task_id: String, ?tool_use_id: String?, ?description: String?, ?task_type: String?) -> void
+    def initialize: (uuid: String, session_id: String, task_id: String, ?tool_use_id: String?, ?description: String?, ?task_type: String?, ?prompt: String?) -> void
     def type: () -> :task_started
   end
 
-  # Task progress message (TypeScript SDK v0.2.51 parity)
+  # Task progress message (TypeScript SDK v0.2.75 parity)
   class TaskProgressMessage
     attr_reader uuid: String
     attr_reader session_id: String
@@ -834,8 +836,9 @@ module ClaudeAgent
     attr_reader description: String
     attr_reader usage: Hash[String, untyped]?
     attr_reader last_tool_name: String?
+    attr_reader summary: String?
 
-    def initialize: (uuid: String, session_id: String, task_id: String, description: String, ?usage: Hash[String, untyped]?, ?tool_use_id: String?, ?last_tool_name: String?) -> void
+    def initialize: (uuid: String, session_id: String, task_id: String, description: String, ?usage: Hash[String, untyped]?, ?tool_use_id: String?, ?last_tool_name: String?, ?summary: String?) -> void
     def type: () -> :task_progress
   end
 

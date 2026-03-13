@@ -117,8 +117,8 @@ module ClaudeAgent
   #     agents: [AgentInfo.new(name: "Explore")]
   #   )
   #
-  InitializationResult = Data.define(:commands, :output_style, :available_output_styles, :models, :account, :agents) do
-    def initialize(commands: [], output_style: nil, available_output_styles: [], models: [], account: nil, agents: [])
+  InitializationResult = Data.define(:commands, :output_style, :available_output_styles, :models, :account, :agents, :fast_mode_state) do
+    def initialize(commands: [], output_style: nil, available_output_styles: [], models: [], account: nil, agents: [], fast_mode_state: nil)
       super
     end
   end

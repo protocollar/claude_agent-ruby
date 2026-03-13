@@ -689,7 +689,8 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
       task_id: "task-456",
       tool_use_id: "tool-789",
       description: "Running tests",
-      task_type: "bash"
+      task_type: "bash",
+      prompt: "Run the test suite"
     )
     assert_equal "msg-123", msg.uuid
     assert_equal "session-abc", msg.session_id
@@ -697,6 +698,7 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     assert_equal "tool-789", msg.tool_use_id
     assert_equal "Running tests", msg.description
     assert_equal "bash", msg.task_type
+    assert_equal "Run the test suite", msg.prompt
     assert_equal :task_started, msg.type
   end
 
@@ -709,6 +711,7 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     assert_nil msg.tool_use_id
     assert_nil msg.description
     assert_nil msg.task_type
+    assert_nil msg.prompt
   end
 
   test "task_started_message_in_types_constant" do
@@ -726,7 +729,8 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
       tool_use_id: "tool-789",
       description: "Searching codebase",
       usage: usage,
-      last_tool_name: "Grep"
+      last_tool_name: "Grep",
+      summary: "Analyzing authentication module"
     )
     assert_equal "msg-123", msg.uuid
     assert_equal "session-abc", msg.session_id
@@ -735,6 +739,7 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     assert_equal "Searching codebase", msg.description
     assert_equal usage, msg.usage
     assert_equal "Grep", msg.last_tool_name
+    assert_equal "Analyzing authentication module", msg.summary
     assert_equal :task_progress, msg.type
   end
 
@@ -748,6 +753,7 @@ class TestClaudeAgentMessages < ActiveSupport::TestCase
     assert_nil msg.tool_use_id
     assert_nil msg.usage
     assert_nil msg.last_tool_name
+    assert_nil msg.summary
   end
 
   test "task_progress_message_in_types_constant" do

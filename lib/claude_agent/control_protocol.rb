@@ -397,7 +397,8 @@ module ClaudeAgent
         available_output_styles: response["available_output_styles"] || [],
         models: models,
         account: account,
-        agents: agents
+        agents: agents,
+        fast_mode_state: response["fast_mode_state"]
       )
     end
 

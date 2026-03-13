@@ -650,7 +650,8 @@ module ClaudeAgent
     :task_id,
     :tool_use_id,
     :description,
-    :task_type
+    :task_type,
+    :prompt
   ) do
     def initialize(
       uuid:,
@@ -658,7 +659,8 @@ module ClaudeAgent
       task_id:,
       tool_use_id: nil,
       description: nil,
-      task_type: nil
+      task_type: nil,
+      prompt: nil
     )
       super
     end
@@ -684,7 +686,7 @@ module ClaudeAgent
   #
   TaskProgressMessage = Data.define(
     :uuid, :session_id, :task_id, :tool_use_id,
-    :description, :usage, :last_tool_name
+    :description, :usage, :last_tool_name, :summary
   ) do
     def initialize(
       uuid:,
@@ -693,7 +695,8 @@ module ClaudeAgent
       description:,
       usage: nil,
       tool_use_id: nil,
-      last_tool_name: nil
+      last_tool_name: nil,
+      summary: nil
     )
       super
     end

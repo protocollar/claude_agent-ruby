@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tag_session(session_id, tag)` for tagging sessions with Unicode sanitization (TypeScript SDK v0.2.75 parity)
 - `get_session_info(session_id)` for single-session lookup by UUID (TypeScript SDK v0.2.75 parity)
 - `agent_progress_summaries` option for periodic AI-generated progress summaries (TypeScript SDK v0.2.72 parity)
+- `prompt` field on `TaskStartedMessage` (TypeScript SDK v0.2.75 parity)
+- `summary` field on `TaskProgressMessage` for AI-generated progress summaries (TypeScript SDK v0.2.72 parity)
+- `fast_mode_state` field on `InitializationResult` (TypeScript SDK v0.2.75 parity)
 - RBS signatures for all new types, fields, and methods
 
 ### Removed
