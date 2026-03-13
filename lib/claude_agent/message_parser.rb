@@ -371,7 +371,8 @@ module ClaudeAgent
         task_id: raw[:task_id] || "",
         tool_use_id: raw[:tool_use_id],
         description: raw[:description],
-        task_type: raw[:task_type]
+        task_type: raw[:task_type],
+        prompt: raw[:prompt]
       )
     end
 
@@ -383,7 +384,8 @@ module ClaudeAgent
         tool_use_id: raw[:tool_use_id],
         description: raw[:description] || "",
         usage: raw[:usage],
-        last_tool_name: raw[:last_tool_name]
+        last_tool_name: raw[:last_tool_name],
+        summary: raw[:summary]
       )
     end
 

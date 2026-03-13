@@ -214,7 +214,7 @@ Messages exchanged between SDK and CLI.
 | `tool_use_id` |     ✅      |   ✅    |  ✅   | Correlating tool use ID |
 | `description` |     ✅      |   ✅    |  ✅   | Task description        |
 | `task_type`   |     ✅      |   ✅    |  ✅   | Task type (e.g., bash)  |
-| `prompt`      |     ✅      |   ❌    |  ❌   | Task prompt (v0.2.75)   |
+| `prompt`      |     ✅      |   ❌    |  ✅   | Task prompt (v0.2.75)   |
 
 #### TaskProgressMessage
 
@@ -225,7 +225,7 @@ Messages exchanged between SDK and CLI.
 | `description`    |     ✅      |   ✅    |  ✅   | Current progress description                      |
 | `usage`          |     ✅      |   ✅    |  ✅   | Cumulative {total_tokens, tool_uses, duration_ms} |
 | `last_tool_name` |     ✅      |   ✅    |  ✅   | Last tool executed                                |
-| `summary`        |     ✅      |   ❌    |  ❌   | AI-generated progress summary (v0.2.72)           |
+| `summary`        |     ✅      |   ❌    |  ✅   | AI-generated progress summary (v0.2.72)           |
 
 #### AuthStatusMessage
 
@@ -377,7 +377,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `models`                  |     ✅      |   ❌    |  ✅   | Available models (ModelInfo[])    |
 | `account`                 |     ✅      |   ❌    |  ✅   | Account information (AccountInfo) |
 | `agents`                  |     ✅      |   ❌    |  ✅   | Available agents (AgentInfo[])    |
-| `fast_mode_state`         |     ✅      |   ❌    |  ❌   | Fast mode status (v0.2.75)        |
+| `fast_mode_state`         |     ✅      |   ❌    |  ✅   | Fast mode status (v0.2.75)        |
 
 #### RewindFilesResult Fields
 

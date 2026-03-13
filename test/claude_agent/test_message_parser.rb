@@ -1108,7 +1108,8 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
       "task_id" => "task-456",
       "tool_use_id" => "tool-789",
       "description" => "Running tests",
-      "task_type" => "bash"
+      "task_type" => "bash",
+      "prompt" => "Run the test suite"
     }
     msg = @parser.parse(raw)
 
@@ -1119,6 +1120,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal "tool-789", msg.tool_use_id
     assert_equal "Running tests", msg.description
     assert_equal "bash", msg.task_type
+    assert_equal "Run the test suite", msg.prompt
     assert_equal :task_started, msg.type
   end
 
@@ -1154,6 +1156,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_nil msg.tool_use_id
     assert_nil msg.description
     assert_nil msg.task_type
+    assert_nil msg.prompt
   end
 
   # --- TaskProgressMessage parsing ---
@@ -1168,7 +1171,8 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
       "tool_use_id" => "tool-789",
       "description" => "Searching codebase",
       "usage" => { "total_tokens" => 5000, "tool_uses" => 3, "duration_ms" => 2500 },
-      "last_tool_name" => "Grep"
+      "last_tool_name" => "Grep",
+      "summary" => "Analyzing authentication module"
     }
     msg = @parser.parse(raw)
 
@@ -1181,6 +1185,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal 5000, msg.usage[:total_tokens]
     assert_equal 3, msg.usage[:tool_uses]
     assert_equal "Grep", msg.last_tool_name
+    assert_equal "Analyzing authentication module", msg.summary
     assert_equal :task_progress, msg.type
   end
 
@@ -1219,6 +1224,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_nil msg.tool_use_id
     assert_nil msg.usage
     assert_nil msg.last_tool_name
+    assert_nil msg.summary
   end
 
   # --- ElicitationCompleteMessage parsing ---
