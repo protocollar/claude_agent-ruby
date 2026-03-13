@@ -84,7 +84,7 @@ Configuration options for SDK queries and clients.
 | `debugFile`                       |     ✅      |   ❌    |  ✅   | Write debug logs to specific file path                       |
 | `toolConfig`                      |     ✅      |   ❌    |  ✅   | Tool behavior config (e.g., askUserQuestion preview format)  |
 | `onElicitation`                   |     ✅      |   ❌    |  ✅   | MCP elicitation request handler callback                     |
-| `agentProgressSummaries`          |     ✅      |   ❌    |  ❌   | Progress summaries for subagents (v0.2.72)                   |
+| `agentProgressSummaries`          |     ✅      |   ❌    |  ✅   | Progress summaries for subagents (v0.2.72)                   |
 
 ---
 
@@ -210,20 +210,22 @@ Messages exchanged between SDK and CLI.
 
 | Field         | TypeScript | Python | Ruby | Notes                   |
 |---------------|:----------:|:------:|:----:|-------------------------|
-| `task_id`     |     ✅      |   ❌    |  ✅   | Task identifier         |
-| `tool_use_id` |     ✅      |   ❌    |  ✅   | Correlating tool use ID |
-| `description` |     ✅      |   ❌    |  ✅   | Task description        |
-| `task_type`   |     ✅      |   ❌    |  ✅   | Task type (e.g., bash)  |
+| `task_id`     |     ✅      |   ✅    |  ✅   | Task identifier         |
+| `tool_use_id` |     ✅      |   ✅    |  ✅   | Correlating tool use ID |
+| `description` |     ✅      |   ✅    |  ✅   | Task description        |
+| `task_type`   |     ✅      |   ✅    |  ✅   | Task type (e.g., bash)  |
+| `prompt`      |     ✅      |   ❌    |  ❌   | Task prompt (v0.2.75)   |
 
 #### TaskProgressMessage
 
 | Field            | TypeScript | Python | Ruby | Notes                                             |
 |------------------|:----------:|:------:|:----:|---------------------------------------------------|
-| `task_id`        |     ✅      |   ❌    |  ✅   | Task identifier                                   |
-| `tool_use_id`    |     ✅      |   ❌    |  ✅   | Correlating tool use ID                           |
-| `description`    |     ✅      |   ❌    |  ✅   | Current progress description                      |
-| `usage`          |     ✅      |   ❌    |  ✅   | Cumulative {total_tokens, tool_uses, duration_ms} |
-| `last_tool_name` |     ✅      |   ❌    |  ✅   | Last tool executed                                |
+| `task_id`        |     ✅      |   ✅    |  ✅   | Task identifier                                   |
+| `tool_use_id`    |     ✅      |   ✅    |  ✅   | Correlating tool use ID                           |
+| `description`    |     ✅      |   ✅    |  ✅   | Current progress description                      |
+| `usage`          |     ✅      |   ✅    |  ✅   | Cumulative {total_tokens, tool_uses, duration_ms} |
+| `last_tool_name` |     ✅      |   ✅    |  ✅   | Last tool executed                                |
+| `summary`        |     ✅      |   ❌    |  ❌   | AI-generated progress summary (v0.2.72)           |
 
 #### AuthStatusMessage
 
@@ -244,7 +246,7 @@ Messages exchanged between SDK and CLI.
 
 | Field             | TypeScript | Python | Ruby | Notes                           |
 |-------------------|:----------:|:------:|:----:|---------------------------------|
-| `rate_limit_info` |     ✅      |   ❌    |  ✅   | Rate limit details object       |
+| `rate_limit_info` |     ✅      |   ✅    |  ✅   | Rate limit details object       |
 
 Rate limit info contains: `status`, `resetsAt`, `rateLimitType`, `utilization`, `isUsingOverage`, `overageStatus`, `overageResetsAt`, `overageDisabledReason` (v0.2.49+), `surpassedThreshold`.
 
@@ -351,7 +353,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `supportedEffortLevels`    |     ✅      |   ❌    |  ✅   | Available effort levels                    |
 | `supportsAdaptiveThinking` |     ✅      |   ❌    |  ✅   | Whether adaptive thinking works            |
 | `supportsFastMode`         |     ✅      |   ❌    |  ✅   | Whether model supports fast mode (v0.2.69) |
-| `supportsAutoMode`         |     ✅      |   ❌    |  ❌   | Whether model supports auto mode (v0.2.75) |
+| `supportsAutoMode`         |     ✅      |   ❌    |  ✅   | Whether model supports auto mode (v0.2.75) |
 
 #### McpServerStatus Fields
 
@@ -375,6 +377,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `models`                  |     ✅      |   ❌    |  ✅   | Available models (ModelInfo[])    |
 | `account`                 |     ✅      |   ❌    |  ✅   | Account information (AccountInfo) |
 | `agents`                  |     ✅      |   ❌    |  ✅   | Available agents (AgentInfo[])    |
+| `fast_mode_state`         |     ✅      |   ❌    |  ❌   | Fast mode status (v0.2.75)        |
 
 #### RewindFilesResult Fields
 
@@ -651,7 +654,7 @@ Permission handling and updates.
 | `decisionReason` |     ✅      |   ❌    |  ✅   | Why permission triggered                         |
 | `toolUseID`      |     ✅      |   ❌    |  ✅   | Tool call ID                                     |
 | `agentID`        |     ✅      |   ❌    |  ✅   | Subagent ID if applicable                        |
-| `description`    |     ❌      |   ❌    |  ✅   | Human-readable tool description (Ruby-specific)  |
+| `description`    |     ✅      |   ❌    |  ✅   | Human-readable tool description (v0.2.75)        |
 
 ---
 
@@ -734,9 +737,9 @@ Session management and resumption.
 |------------------------|:----------:|:------:|:----:|--------------------------------------------------|
 | `listSessions()`       |     ✅      |   ✅    |  ✅   | List past sessions with metadata (v0.2.53)       |
 | `getSessionMessages()` |     ✅      |   ✅    |  ✅   | Read session transcript messages (v0.2.59)       |
-| `getSessionInfo()`     |     ✅      |   ❌    |  ❌   | Get single session metadata (v0.2.75)            |
-| `renameSession()`      |     ✅      |   ✅    |  ❌   | Rename a session (v0.2.74)                       |
-| `tagSession()`         |     ✅      |   ✅    |  ❌   | Tag a session (v0.2.75)                          |
+| `getSessionInfo()`     |     ✅      |   ❌    |  ✅   | Get single session metadata (v0.2.75)            |
+| `renameSession()`      |     ✅      |   ✅    |  ✅   | Rename a session (v0.2.74)                       |
+| `tagSession()`         |     ✅      |   ✅    |  ✅   | Tag a session (v0.2.75)                          |
 
 #### ListSessionsOptions
 
@@ -745,7 +748,7 @@ Session management and resumption.
 | `dir`              |     ✅      |   ✅    |  ✅   | Project directory (includes worktrees)        |
 | `limit`            |     ✅      |   ✅    |  ✅   | Maximum number of sessions to return          |
 | `includeWorktrees` |     ✅      |   ✅    |  ✅   | Include git worktree sessions (default: true) |
-| `offset`           |     ✅      |   ❌    |  ❌   | Pagination offset (v0.2.75)                   |
+| `offset`           |     ✅      |   ❌    |  ✅   | Pagination offset (v0.2.75)                   |
 
 #### GetSessionMessagesOptions
 
@@ -777,8 +780,8 @@ Session management and resumption.
 | `firstPrompt`  |     ✅      |   ✅    |  ✅   | First meaningful user prompt        |
 | `gitBranch`    |     ✅      |   ✅    |  ✅   | Git branch at end of session        |
 | `cwd`          |     ✅      |   ✅    |  ✅   | Working directory for session       |
-| `tag`          |     ✅      |   ❌    |  ❌   | User-set tag (v0.2.75)              |
-| `createdAt`    |     ✅      |   ❌    |  ❌   | Creation time in ms (v0.2.75)       |
+| `tag`          |     ✅      |   ❌    |  ✅   | User-set tag (v0.2.75)              |
+| `createdAt`    |     ✅      |   ❌    |  ✅   | Creation time in ms (v0.2.75)       |
 
 ### V2 Session API (Unstable)
 
@@ -893,9 +896,9 @@ Public API surface for SDK clients.
 |------------------------|:----------:|:------:|:----:|--------------------------------------------|
 | `listSessions()`       |     ✅      |   ✅    |  ✅   | List past sessions with metadata (v0.2.53) |
 | `getSessionMessages()` |     ✅      |   ✅    |  ✅   | Read session transcript (v0.2.59)          |
-| `getSessionInfo()`     |     ✅      |   ❌    |  ❌   | Get single session metadata (v0.2.75)      |
-| `renameSession()`      |     ✅      |   ✅    |  ❌   | Rename a session (v0.2.74)                 |
-| `tagSession()`         |     ✅      |   ✅    |  ❌   | Tag a session (v0.2.75)                    |
+| `getSessionInfo()`     |     ✅      |   ❌    |  ✅   | Get single session metadata (v0.2.75)      |
+| `renameSession()`      |     ✅      |   ✅    |  ✅   | Rename a session (v0.2.74)                 |
+| `tagSession()`         |     ✅      |   ✅    |  ✅   | Tag a session (v0.2.75)                    |
 
 ### Query Interface
 
@@ -985,7 +988,7 @@ Public API surface for SDK clients.
 - v0.2.72: Added `agentProgressSummaries` option for periodic AI-generated progress summaries
 - v0.2.73: Fixed `options.env` being overridden by `~/.claude/settings.json`
 - v0.2.74: Added `renameSession()` for renaming session files
-- v0.2.75: Added `tag`/`createdAt` fields on `SDKSessionInfo`; `getSessionInfo()` for single-session lookup; `offset` on `listSessions` for pagination; `tagSession()` for tagging sessions; `supportsAutoMode` in `ModelInfo`
+- v0.2.75: Added `tag`/`createdAt` fields on `SDKSessionInfo`; `getSessionInfo()` for single-session lookup; `offset` on `listSessions` for pagination; `tagSession()` for tagging sessions; `supportsAutoMode` in `ModelInfo`; `description` on `SDKControlPermissionRequest`; `prompt` on `SDKTaskStartedMessage`; `fast_mode_state` on `SDKControlInitializeResponse`; `queued_to_running` status on `AgentToolOutput`
 - Includes `Elicitation`/`ElicitationResult` hook events, `onElicitation` option, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState` (undocumented in changelog, present in types)
 
 ### Python SDK
@@ -1001,9 +1004,12 @@ Public API surface for SDK clients.
 - Has `include_worktrees` parameter on `list_sessions()` (v0.1.46+)
 - Missing hooks: SessionEnd, Setup, TeammateIdle, TaskCompleted, Elicitation, ElicitationResult, ConfigChange, WorktreeCreate, WorktreeRemove, InstructionsLoaded
 - Missing permission modes: `dontAsk`
-- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`, `onElicitation`, `toolConfig`
+- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`, `onElicitation`, `toolConfig`, `agentProgressSummaries`, `agent` (main thread agent)
 - `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
+- Has `rename_session()`/`tag_session()` for session mutation
+- Has `RateLimitEvent`/`RateLimitInfo` types with full field coverage
 - Has SDK MCP server support with `tool()` helper and annotations
+- Missing `getSessionInfo()`, `offset` on `list_sessions`, `tag`/`createdAt` on `SDKSessionInfo`
 - Added `thinking` config and `effort` option in v0.1.36
 - Handles `rate_limit_event` and unknown message types gracefully (v0.1.40)
 - Client has `get_server_info()` for accessing the initialization result (v0.1.31+)
