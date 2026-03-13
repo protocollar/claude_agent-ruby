@@ -86,6 +86,19 @@ class TestClaudeAgentTypes < ActiveSupport::TestCase
     assert_equal true, model.supports_fast_mode
   end
 
+  test "model_info_with_supports_auto_mode" do
+    model = ClaudeAgent::ModelInfo.new(
+      value: "claude-sonnet",
+      supports_auto_mode: true
+    )
+    assert_equal true, model.supports_auto_mode
+  end
+
+  test "model_info_supports_auto_mode_defaults_to_nil" do
+    model = ClaudeAgent::ModelInfo.new(value: "claude-sonnet")
+    assert_nil model.supports_auto_mode
+  end
+
   test "model_info_with_effort_fields" do
     model = ClaudeAgent::ModelInfo.new(
       value: "claude-sonnet",

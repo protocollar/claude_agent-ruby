@@ -740,4 +740,16 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     options = ClaudeAgent::Options.new(tool_config: config)
     assert_equal config, options.tool_config
   end
+
+  # --- Agent Progress Summaries ---
+
+  test "agent_progress_summaries_default_nil" do
+    options = ClaudeAgent::Options.new
+    assert_nil options.agent_progress_summaries
+  end
+
+  test "agent_progress_summaries_explicit_true" do
+    options = ClaudeAgent::Options.new(agent_progress_summaries: true)
+    assert_equal true, options.agent_progress_summaries
+  end
 end

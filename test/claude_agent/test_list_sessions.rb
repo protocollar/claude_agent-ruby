@@ -64,6 +64,8 @@ class TestClaudeAgentListSessions < ActiveSupport::TestCase
     assert_nil info.first_prompt
     assert_nil info.git_branch
     assert_nil info.cwd
+    assert_nil info.tag
+    assert_nil info.created_at
   end
 
   test "session_info is frozen" do
@@ -500,10 +502,94 @@ class TestClaudeAgentListSessions < ActiveSupport::TestCase
     assert_equal "value", result
   end
 
+  # --- Offset Parameter ---
+
+  test "list_sessions respects offset parameter" do
+    project_dir = create_project_dir("/Users/dev/myapp")
+    create_session_file(project_dir, SESSION_UUID_1, [ user_message("One") ])
+    sleep 0.05
+    create_session_file(project_dir, SESSION_UUID_2, [ user_message("Two") ])
+    sleep 0.05
+    create_session_file(project_dir, SESSION_UUID_3, [ user_message("Three") ])
+
+    sessions = ClaudeAgent.list_sessions(offset: 1)
+    assert_equal 2, sessions.length
+    # Should skip the most recent and return the rest
+    assert_equal SESSION_UUID_2, sessions[0].session_id
+    assert_equal SESSION_UUID_1, sessions[1].session_id
+  end
+
+  test "list_sessions with offset and limit" do
+    project_dir = create_project_dir("/Users/dev/myapp")
+    create_session_file(project_dir, SESSION_UUID_1, [ user_message("One") ])
+    sleep 0.05
+    create_session_file(project_dir, SESSION_UUID_2, [ user_message("Two") ])
+    sleep 0.05
+    create_session_file(project_dir, SESSION_UUID_3, [ user_message("Three") ])
+
+    sessions = ClaudeAgent.list_sessions(offset: 1, limit: 1)
+    assert_equal 1, sessions.length
+    assert_equal SESSION_UUID_2, sessions[0].session_id
+  end
+
+  test "list_sessions with offset beyond total returns empty" do
+    project_dir = create_project_dir("/Users/dev/myapp")
+    create_session_file(project_dir, SESSION_UUID_1, [ user_message("One") ])
+
+    sessions = ClaudeAgent.list_sessions(offset: 10)
+    assert_equal [], sessions
+  end
+
+  # --- Tag Extraction ---
+
+  test "list_sessions extracts tag from tail" do
+    project_dir = create_project_dir("/Users/dev/myapp")
+    create_session_file(project_dir, SESSION_UUID_1, [
+      user_message("Hello"),
+      { type: "tag", tag: "important", sessionId: SESSION_UUID_1 }
+    ])
+
+    sessions = ClaudeAgent.list_sessions
+    assert_equal "important", sessions.first.tag
+  end
+
+  test "list_sessions tag defaults to nil" do
+    project_dir = create_project_dir("/Users/dev/myapp")
+    create_session_file(project_dir, SESSION_UUID_1, [
+      user_message("Hello")
+    ])
+
+    sessions = ClaudeAgent.list_sessions
+    assert_nil sessions.first.tag
+  end
+
+  # --- Created At Extraction ---
+
+  test "list_sessions extracts created_at from timestamp in head" do
+    project_dir = create_project_dir("/Users/dev/myapp")
+    create_session_file(project_dir, SESSION_UUID_1, [
+      { type: "system", message: { content: "init" }, timestamp: "1706000000000" },
+      user_message("Hello")
+    ])
+
+    sessions = ClaudeAgent.list_sessions
+    assert_equal 1706000000000, sessions.first.created_at
+  end
+
+  test "list_sessions created_at defaults to nil" do
+    project_dir = create_project_dir("/Users/dev/myapp")
+    create_session_file(project_dir, SESSION_UUID_1, [
+      user_message("Hello")
+    ])
+
+    sessions = ClaudeAgent.list_sessions
+    assert_nil sessions.first.created_at
+  end
+
   # --- Module Method ---
 
   test "ClaudeAgent.list_sessions delegates to ListSessions.call" do
-    ClaudeAgent::ListSessions.expects(:call).with(dir: "/tmp", limit: 5, include_worktrees: true).returns([])
+    ClaudeAgent::ListSessions.expects(:call).with(dir: "/tmp", limit: 5, offset: nil, include_worktrees: true).returns([])
     result = ClaudeAgent.list_sessions(dir: "/tmp", limit: 5)
     assert_equal [], result
   end

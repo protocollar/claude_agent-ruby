@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.71 (npm package)
-- Python SDK: v0.1.48 from GitHub (commit d6f0352)
+- TypeScript SDK: v0.2.75 (npm package)
+- Python SDK: from GitHub (commit 9880677)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-03-08
+**Last Updated:** 2026-03-13
 
 ---
 
@@ -84,6 +84,7 @@ Configuration options for SDK queries and clients.
 | `debugFile`                       |     ✅      |   ❌    |  ✅   | Write debug logs to specific file path                       |
 | `toolConfig`                      |     ✅      |   ❌    |  ✅   | Tool behavior config (e.g., askUserQuestion preview format)  |
 | `onElicitation`                   |     ✅      |   ❌    |  ✅   | MCP elicitation request handler callback                     |
+| `agentProgressSummaries`          |     ✅      |   ❌    |  ❌   | Progress summaries for subagents (v0.2.72)                   |
 
 ---
 
@@ -110,7 +111,7 @@ Messages exchanged between SDK and CLI.
 | `ToolUseSummaryMessage`      |     ✅      |   ❌    |  ✅   | Summary of tool use (collapsed)    |
 | `TaskStartedMessage`         |     ✅      |   ✅    |  ✅   | Subagent task registered (v0.2.45) |
 | `TaskProgressMessage`        |     ✅      |   ✅    |  ✅   | Background task progress (v0.2.51) |
-| `RateLimitEvent`             |     ✅      |   ❌    |  ✅   | Rate limit status changes          |
+| `RateLimitEvent`             |     ✅      |   ✅    |  ✅   | Rate limit status changes          |
 | `PromptSuggestionMessage`    |     ✅      |   ❌    |  ✅   | Suggested next prompt (v0.2.47)    |
 | `FilesPersistedEvent`        |     ✅      |   ❌    |  ✅   | File persistence confirmation      |
 | `ElicitationCompleteMessage` |     ✅      |   ❌    |  ✅   | MCP elicitation completed          |
@@ -350,6 +351,7 @@ Bidirectional control protocol for SDK-CLI communication.
 | `supportedEffortLevels`    |     ✅      |   ❌    |  ✅   | Available effort levels                    |
 | `supportsAdaptiveThinking` |     ✅      |   ❌    |  ✅   | Whether adaptive thinking works            |
 | `supportsFastMode`         |     ✅      |   ❌    |  ✅   | Whether model supports fast mode (v0.2.69) |
+| `supportsAutoMode`         |     ✅      |   ❌    |  ❌   | Whether model supports auto mode (v0.2.75) |
 
 #### McpServerStatus Fields
 
@@ -732,6 +734,9 @@ Session management and resumption.
 |------------------------|:----------:|:------:|:----:|--------------------------------------------------|
 | `listSessions()`       |     ✅      |   ✅    |  ✅   | List past sessions with metadata (v0.2.53)       |
 | `getSessionMessages()` |     ✅      |   ✅    |  ✅   | Read session transcript messages (v0.2.59)       |
+| `getSessionInfo()`     |     ✅      |   ❌    |  ❌   | Get single session metadata (v0.2.75)            |
+| `renameSession()`      |     ✅      |   ✅    |  ❌   | Rename a session (v0.2.74)                       |
+| `tagSession()`         |     ✅      |   ✅    |  ❌   | Tag a session (v0.2.75)                          |
 
 #### ListSessionsOptions
 
@@ -740,6 +745,7 @@ Session management and resumption.
 | `dir`              |     ✅      |   ✅    |  ✅   | Project directory (includes worktrees)        |
 | `limit`            |     ✅      |   ✅    |  ✅   | Maximum number of sessions to return          |
 | `includeWorktrees` |     ✅      |   ✅    |  ✅   | Include git worktree sessions (default: true) |
+| `offset`           |     ✅      |   ❌    |  ❌   | Pagination offset (v0.2.75)                   |
 
 #### GetSessionMessagesOptions
 
@@ -771,6 +777,8 @@ Session management and resumption.
 | `firstPrompt`  |     ✅      |   ✅    |  ✅   | First meaningful user prompt        |
 | `gitBranch`    |     ✅      |   ✅    |  ✅   | Git branch at end of session        |
 | `cwd`          |     ✅      |   ✅    |  ✅   | Working directory for session       |
+| `tag`          |     ✅      |   ❌    |  ❌   | User-set tag (v0.2.75)              |
+| `createdAt`    |     ✅      |   ❌    |  ❌   | Creation time in ms (v0.2.75)       |
 
 ### V2 Session API (Unstable)
 
@@ -885,6 +893,9 @@ Public API surface for SDK clients.
 |------------------------|:----------:|:------:|:----:|--------------------------------------------|
 | `listSessions()`       |     ✅      |   ✅    |  ✅   | List past sessions with metadata (v0.2.53) |
 | `getSessionMessages()` |     ✅      |   ✅    |  ✅   | Read session transcript (v0.2.59)          |
+| `getSessionInfo()`     |     ✅      |   ❌    |  ❌   | Get single session metadata (v0.2.75)      |
+| `renameSession()`      |     ✅      |   ✅    |  ❌   | Rename a session (v0.2.74)                 |
+| `tagSession()`         |     ✅      |   ✅    |  ❌   | Tag a session (v0.2.75)                    |
 
 ### Query Interface
 
@@ -971,6 +982,10 @@ Public API surface for SDK clients.
 - v0.2.69: Added `toolConfig` option (askUserQuestion preview format), `supportsFastMode` in ModelInfo, `agent_id`/`agent_type` on BaseHookInput, `InstructionsLoaded` hook event
 - v0.2.70: Made `AgentToolInput.subagent_type` optional (defaults to general-purpose), fixed HTTP MCP servers
 - v0.2.71: CLI parity update; `settings` now a typed Option (string path or `Settings` object)
+- v0.2.72: Added `agentProgressSummaries` option for periodic AI-generated progress summaries
+- v0.2.73: Fixed `options.env` being overridden by `~/.claude/settings.json`
+- v0.2.74: Added `renameSession()` for renaming session files
+- v0.2.75: Added `tag`/`createdAt` fields on `SDKSessionInfo`; `getSessionInfo()` for single-session lookup; `offset` on `listSessions` for pagination; `tagSession()` for tagging sessions; `supportsAutoMode` in `ModelInfo`
 - Includes `Elicitation`/`ElicitationResult` hook events, `onElicitation` option, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState` (undocumented in changelog, present in types)
 
 ### Python SDK
@@ -994,13 +1009,14 @@ Public API surface for SDK clients.
 - Client has `get_server_info()` for accessing the initialization result (v0.1.31+)
 - v0.1.45 – v0.1.48: Major catch-up with TypeScript SDK (task messages, session APIs, MCP control methods, stop_reason)
 - v0.1.48: Fixed fine-grained tool streaming regression
-- Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`, `InstructionsLoaded` hook
+- Added `RateLimitEvent` message type with `RateLimitInfo`
+- Added `rename_session()` and `tag_session()` session management functions
+- Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`, `InstructionsLoaded` hook, `agentProgressSummaries`, `getSessionInfo()`
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.71
+- Feature parity with TypeScript SDK v0.2.75
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)
-- Missing: `settings` option (use `extra_args`), `enableWeakerNetworkIsolation` sandbox field, `includeWorktrees` on `list_sessions`
-- Full v0.2.71 parity: `toolConfig`, `supportsFastMode`, `agent_id`/`agent_type` on BaseHookInput, `InstructionsLoaded` hook
+- Full v0.2.75 parity: `agentProgressSummaries`, `getSessionInfo()`, `renameSession()`, `tagSession()`, `offset` on `listSessions`, `tag`/`createdAt` on `SessionInfo`, `supportsAutoMode` on `ModelInfo`

@@ -18,7 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Elicitation` and `ElicitationResult` hook events with input types (TypeScript SDK v0.2.63 parity)
 - Elicitation control protocol handling with callback support and default decline behavior
 - `on_elicitation_complete` and `on_local_command_output` event handler methods
+- `tag` and `created_at` fields on `SessionInfo` (TypeScript SDK v0.2.75 parity)
+- `supports_auto_mode` field on `ModelInfo` (TypeScript SDK v0.2.75 parity)
+- `offset` parameter on `list_sessions` for pagination (TypeScript SDK v0.2.75 parity)
+- `rename_session(session_id, title)` for renaming session files (TypeScript SDK v0.2.74 parity)
+- `tag_session(session_id, tag)` for tagging sessions with Unicode sanitization (TypeScript SDK v0.2.75 parity)
+- `get_session_info(session_id)` for single-session lookup by UUID (TypeScript SDK v0.2.75 parity)
+- `agent_progress_summaries` option for periodic AI-generated progress summaries (TypeScript SDK v0.2.72 parity)
 - RBS signatures for all new types, fields, and methods
+
+### Removed
+- `get_settings` from SPEC.md — not in TypeScript SDK public API (`sdk.d.ts`)
 
 ## [0.7.12] - 2026-02-27
 

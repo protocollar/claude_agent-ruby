@@ -132,8 +132,9 @@ module ClaudeAgent
     attr_reader supported_effort_levels: Array[String]?
     attr_reader supports_adaptive_thinking: bool?
     attr_reader supports_fast_mode: bool?
+    attr_reader supports_auto_mode: bool?
 
-    def initialize: (value: String, ?display_name: String?, ?description: String?, ?supports_effort: bool?, ?supported_effort_levels: Array[String]?, ?supports_adaptive_thinking: bool?, ?supports_fast_mode: bool?) -> void
+    def initialize: (value: String, ?display_name: String?, ?description: String?, ?supports_effort: bool?, ?supported_effort_levels: Array[String]?, ?supports_adaptive_thinking: bool?, ?supports_fast_mode: bool?, ?supports_auto_mode: bool?) -> void
   end
 
   class McpServerStatus
@@ -236,8 +237,10 @@ module ClaudeAgent
     attr_reader first_prompt: String?
     attr_reader git_branch: String?
     attr_reader cwd: String?
+    attr_reader tag: String?
+    attr_reader created_at: Integer?
 
-    def initialize: (session_id: String, summary: String, last_modified: Integer, file_size: Integer, ?custom_title: String?, ?first_prompt: String?, ?git_branch: String?, ?cwd: String?) -> void
+    def initialize: (session_id: String, summary: String, last_modified: Integer, file_size: Integer, ?custom_title: String?, ?first_prompt: String?, ?git_branch: String?, ?cwd: String?, ?tag: String?, ?created_at: Integer?) -> void
   end
 
   # Session transcript message returned by get_session_messages (TypeScript SDK v0.2.59 parity)
@@ -420,6 +423,7 @@ module ClaudeAgent
     attr_accessor debug: bool
     attr_accessor debug_file: String?
     attr_accessor tool_config: Hash[Symbol, untyped]?
+    attr_accessor agent_progress_summaries: bool?
 
     # Logging
     attr_accessor logger: Logger?
@@ -1367,8 +1371,11 @@ module ClaudeAgent
   end
 
   # Session discovery
-  def self.list_sessions: (?dir: String?, ?limit: Integer?, ?include_worktrees: bool) -> Array[SessionInfo]
+  def self.list_sessions: (?dir: String?, ?limit: Integer?, ?offset: Integer?, ?include_worktrees: bool) -> Array[SessionInfo]
   def self.get_session_messages: (String session_id, ?dir: String?, ?limit: Integer?, ?offset: Integer?) -> Array[SessionMessage]
+  def self.rename_session: (String session_id, String title, ?dir: String?) -> void
+  def self.tag_session: (String session_id, String? tag, ?dir: String?) -> void
+  def self.get_session_info: (String session_id, ?dir: String?) -> SessionInfo?
 
   # Shared session path infrastructure
   module SessionPaths
@@ -1389,7 +1396,7 @@ module ClaudeAgent
   module ListSessions
     BUFFER_SIZE: Integer
 
-    def self.call: (?dir: String?, ?limit: Integer?) -> Array[SessionInfo]
+    def self.call: (?dir: String?, ?limit: Integer?, ?offset: Integer?) -> Array[SessionInfo]
   end
 
   # GetSessionMessages module (TypeScript SDK v0.2.59 parity)
@@ -1397,6 +1404,19 @@ module ClaudeAgent
     PARSEABLE_TYPES: Array[String]
 
     def self.call: (String session_id, ?dir: String?, ?limit: Integer?, ?offset: Integer?) -> Array[SessionMessage]
+  end
+
+  # Session mutations module (TypeScript SDK v0.2.75 parity)
+  module SessionMutations
+    UNICODE_SANITIZE_PATTERN: Regexp
+
+    def self.rename_session: (String session_id, String title, ?dir: String?) -> void
+    def self.tag_session: (String session_id, String? tag, ?dir: String?) -> void
+  end
+
+  # Single session lookup (TypeScript SDK v0.2.75 parity)
+  module GetSessionInfo
+    def self.call: (String session_id, ?dir: String?) -> SessionInfo?
   end
 
   # Convenience methods

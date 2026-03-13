@@ -34,11 +34,11 @@ module ClaudeAgent
       # @param include_worktrees [Boolean] When dir is in a git repo, include sessions
       #   from all git worktree paths. Defaults to true.
       # @return [Array<SessionInfo>] Sessions sorted by last_modified descending.
-      def call(dir: nil, limit: nil, include_worktrees: true)
+      def call(dir: nil, limit: nil, offset: nil, include_worktrees: true)
         if dir
-          list_for_directory(dir, limit, include_worktrees: include_worktrees)
+          list_for_directory(dir, limit, offset: offset, include_worktrees: include_worktrees)
         else
-          list_all(limit)
+          list_all(limit, offset: offset)
         end
       end
 
@@ -245,6 +245,9 @@ module ClaudeAgent
         first_prompt = extract_first_prompt(head)
         git_branch = extract_last(tail, "gitBranch") || extract_first(head, "gitBranch")
         cwd = extract_first(head, "cwd")
+        tag = extract_last(tail, "tag")
+        timestamp_str = extract_first(head, "timestamp")
+        created_at = timestamp_str&.to_i
 
         # Build summary: customTitle > last summary > firstPrompt > "(session)"
         summary_from_file = extract_last(tail, "summary")
@@ -258,7 +261,9 @@ module ClaudeAgent
           custom_title: custom_title,
           first_prompt: first_prompt,
           git_branch: git_branch,
-          cwd: cwd
+          cwd: cwd,
+          tag: tag,
+          created_at: created_at
         )
       end
 
@@ -297,7 +302,7 @@ module ClaudeAgent
       # @param limit [Integer, nil]
       # @param include_worktrees [Boolean] Whether to include worktree sessions
       # @return [Array<SessionInfo>]
-      def list_for_directory(dir, limit, include_worktrees: true)
+      def list_for_directory(dir, limit, offset: nil, include_worktrees: true)
         resolved = SessionPaths.realpath(dir)
         worktrees = include_worktrees ? SessionPaths.git_worktrees(resolved) : []
 
@@ -305,7 +310,7 @@ module ClaudeAgent
         if worktrees.length <= 1
           project_dir = SessionPaths.find_project_dir(resolved)
           return [] unless project_dir
-          return sort_and_limit(scan_project_dir(project_dir), limit)
+          return sort_and_limit(scan_project_dir(project_dir), limit, offset: offset)
         end
 
         # Complex case: multiple worktrees - scan all related project directories
@@ -344,7 +349,7 @@ module ClaudeAgent
           end
         end
 
-        sort_and_limit(deduplicate(all_sessions), limit)
+        sort_and_limit(deduplicate(all_sessions), limit, offset: offset)
       end
 
       # List sessions from all project directories.
@@ -352,7 +357,7 @@ module ClaudeAgent
       #
       # @param limit [Integer, nil]
       # @return [Array<SessionInfo>]
-      def list_all(limit)
+      def list_all(limit, offset: nil)
         base = SessionPaths.projects_dir
         return [] unless File.directory?(base)
 
@@ -365,7 +370,7 @@ module ClaudeAgent
           all_sessions.concat(scan_project_dir(dir_path))
         end
 
-        sort_and_limit(deduplicate(all_sessions), limit)
+        sort_and_limit(deduplicate(all_sessions), limit, offset: offset)
       end
 
       # --- Helpers ---
@@ -392,8 +397,9 @@ module ClaudeAgent
       # @param sessions [Array<SessionInfo>]
       # @param limit [Integer, nil]
       # @return [Array<SessionInfo>]
-      def sort_and_limit(sessions, limit)
+      def sort_and_limit(sessions, limit, offset: nil)
         sorted = sessions.sort_by { |s| -s.last_modified }
+        sorted = sorted.drop(offset) if offset
         limit ? sorted.first(limit) : sorted
       end
     end
