@@ -36,7 +36,9 @@ require_relative "claude_agent/session_paths"        # Shared session path infra
 require_relative "claude_agent/list_sessions"       # Session discovery (TypeScript SDK v0.2.53 parity)
 require_relative "claude_agent/get_session_messages"    # Session transcript reading (TypeScript SDK v0.2.59 parity)
 require_relative "claude_agent/session_message_relation" # Chainable message query object
-require_relative "claude_agent/session"                  # Session finder + V2 Session API (unstable)
+require_relative "claude_agent/session_mutations"          # Session rename/tag mutations
+require_relative "claude_agent/get_session_info"           # Single session lookup
+require_relative "claude_agent/session"                    # Session finder + V2 Session API (unstable)
 
 module ClaudeAgent
   class << self
@@ -59,8 +61,8 @@ module ClaudeAgent
     # @param include_worktrees [Boolean] When dir is in a git repo, include sessions
     #   from all git worktree paths. Defaults to true.
     # @return [Array<SessionInfo>]
-    def list_sessions(dir: nil, limit: nil, include_worktrees: true)
-      ListSessions.call(dir: dir, limit: limit, include_worktrees: include_worktrees)
+    def list_sessions(dir: nil, limit: nil, offset: nil, include_worktrees: true)
+      ListSessions.call(dir: dir, limit: limit, offset: offset, include_worktrees: include_worktrees)
     end
 
     # Read messages from a past session's transcript
@@ -76,6 +78,35 @@ module ClaudeAgent
     # @return [Array<SessionMessage>]
     def get_session_messages(session_id, dir: nil, limit: nil, offset: nil)
       GetSessionMessages.call(session_id, dir: dir, limit: limit, offset: offset)
+    end
+
+    # Rename a session by appending a custom-title entry to its file.
+    #
+    # @param session_id [String] UUID of the session to rename
+    # @param title [String] New title
+    # @param dir [String, nil] Project directory to scope the search
+    # @return [void]
+    def rename_session(session_id, title, dir: nil)
+      SessionMutations.rename_session(session_id, title, dir: dir)
+    end
+
+    # Tag a session by appending a tag entry to its file.
+    #
+    # @param session_id [String] UUID of the session to tag
+    # @param tag [String, nil] Tag value. Pass nil to clear.
+    # @param dir [String, nil] Project directory to scope the search
+    # @return [void]
+    def tag_session(session_id, tag, dir: nil)
+      SessionMutations.tag_session(session_id, tag, dir: dir)
+    end
+
+    # Look up a single session by ID.
+    #
+    # @param session_id [String] UUID of the session
+    # @param dir [String, nil] Project directory to scope the search
+    # @return [SessionInfo, nil]
+    def get_session_info(session_id, dir: nil)
+      GetSessionInfo.call(session_id, dir: dir)
     end
 
     # Resume a previous Conversation by session ID

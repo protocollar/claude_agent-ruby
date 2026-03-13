@@ -52,8 +52,8 @@ module ClaudeAgent
   #   model.value        # => "claude-3-opus"
   #   model.display_name # => "Claude 3 Opus"
   #
-  ModelInfo = Data.define(:value, :display_name, :description, :supports_effort, :supported_effort_levels, :supports_adaptive_thinking, :supports_fast_mode) do
-    def initialize(value:, display_name: nil, description: nil, supports_effort: nil, supported_effort_levels: nil, supports_adaptive_thinking: nil, supports_fast_mode: nil)
+  ModelInfo = Data.define(:value, :display_name, :description, :supports_effort, :supported_effort_levels, :supports_adaptive_thinking, :supports_fast_mode, :supports_auto_mode) do
+    def initialize(value:, display_name: nil, description: nil, supports_effort: nil, supported_effort_levels: nil, supports_adaptive_thinking: nil, supports_fast_mode: nil, supports_auto_mode: nil)
       super
     end
   end
@@ -231,9 +231,11 @@ module ClaudeAgent
     :custom_title,
     :first_prompt,
     :git_branch,
-    :cwd
+    :cwd,
+    :tag,
+    :created_at
   ) do
-    def initialize(session_id:, summary:, last_modified:, file_size:, custom_title: nil, first_prompt: nil, git_branch: nil, cwd: nil)
+    def initialize(session_id:, summary:, last_modified:, file_size:, custom_title: nil, first_prompt: nil, git_branch: nil, cwd: nil, tag: nil, created_at: nil)
       super
     end
   end

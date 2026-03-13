@@ -64,6 +64,7 @@ module ClaudeAgent
       abort_controller spawn_claude_code_process
       debug debug_file
       tool_config
+      agent_progress_summaries
       logger
     ].freeze
 
