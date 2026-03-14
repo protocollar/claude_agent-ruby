@@ -7,12 +7,14 @@ SDK-specific testing guidance. For general patterns (base classes, mocking, stru
 ```bash
 bundle exec rake test                                    # Unit tests only
 bundle exec rake test_integration                        # Integration tests (requires CLI v2.0.0+)
+bundle exec rake test_smoke                              # Smoke tests against local LLM (e.g. Ollama)
 bundle exec rake test_all                                # All tests
 bundle exec ruby -Itest test/claude_agent/test_foo.rb   # Single file
 
 # Binstubs
 bin/test                                                 # Unit tests only
 bin/test-integration                                     # Integration tests
+bin/test-smoke                                           # Smoke tests (Ollama)
 bin/test-all                                             # All tests
 ```
 
@@ -22,6 +24,7 @@ bin/test-all                                             # All tests
 test/
 ├── test_helper.rb              # Central setup, requires, base class
 ├── integration_helper.rb       # Base class for integration tests
+├── smoke_helper.rb             # Base class for smoke tests (Ollama)
 ├── support/                    # Shared mocks, test transports, helpers
 │   └── mock_transport.rb
 ├── claude_agent/               # Unit tests (mirrors lib/claude_agent/)
@@ -29,10 +32,15 @@ test/
 │   ├── test_options.rb
 │   └── mcp/
 │       └── test_tool.rb
-├── integration/                # Integration tests (require Claude CLI)
-│   ├── test_query.rb
-│   ├── test_client.rb
-│   └── ...
+├── integration/                # Scenario tests (require Claude CLI)
+│   ├── test_query_scenarios.rb
+│   ├── test_client_scenarios.rb
+│   ├── test_conversation_scenarios.rb
+│   ├── test_session_scenarios.rb
+│   ├── test_permissions_and_tools_scenarios.rb
+│   └── test_transport.rb
+├── smoke/                      # Smoke tests (local LLM via Ollama)
+│   └── test_basic.rb
 └── fixtures/                   # JSON fixtures for parser tests
     ├── assistant_message.json
     └── tool_use_response.json
@@ -225,19 +233,27 @@ end
 
 ## Integration Tests
 
+Integration tests are **scenario tests** that consolidate multiple assertions per CLI process spawn. Each test exercises a complete workflow rather than testing a single field.
+
 Integration tests live in `test/integration/` and inherit from `IntegrationTestCase`:
 
 ```ruby
-# test/integration/test_query.rb
+# test/integration/test_query_scenarios.rb
 require_relative "../integration_helper"
 
-class TestIntegrationQuery < IntegrationTestCase
-  test "real query returns result" do
-    messages = ClaudeAgent.query(prompt: "Say hello", options: test_options).to_a
-    result = messages.find { |m| m.is_a?(ClaudeAgent::ResultMessage) }
+class TestIntegrationQueryScenarios < IntegrationTestCase
+  test "query lifecycle: messages, fields, and content" do
+    messages = ClaudeAgent.query(prompt: "Reply with exactly: HELLO", options: test_options).to_a
 
+    # Assert system, assistant, and result messages in one spawn
+    system_msg = messages.find { |m| m.is_a?(ClaudeAgent::SystemMessage) }
+    assert_not_nil system_msg
+    assert_equal "init", system_msg.subtype
+
+    result = messages.find { |m| m.is_a?(ClaudeAgent::ResultMessage) }
     assert_not_nil result
-    assert result.success?
+    assert_equal false, result.is_error
+    assert_not_nil result.session_id
   end
 end
 ```
@@ -246,6 +262,31 @@ The `IntegrationTestCase` base class:
 - Skips tests unless `INTEGRATION=true` is set (automatic with `rake test_integration`)
 - Skips if Claude CLI is not installed
 - Provides `test_options` helper with sensible defaults
+
+## Smoke Tests
+
+Smoke tests run the same core paths against a local LLM (e.g. Ollama) for fast feedback without Anthropic API costs.
+
+Smoke tests live in `test/smoke/` and inherit from `SmokeTestCase`:
+
+```ruby
+# test/smoke/test_basic.rb
+require_relative "../smoke_helper"
+
+class TestSmokeBasic < SmokeTestCase
+  test "basic query returns result" do
+    messages = ClaudeAgent.query(prompt: "Reply with exactly: PING", options: test_options).to_a
+    result = messages.find { |m| m.is_a?(ClaudeAgent::ResultMessage) }
+    assert_not_nil result
+  end
+end
+```
+
+The `SmokeTestCase` base class:
+- Extends `IntegrationTestCase` (requires CLI + INTEGRATION=true)
+- Skips unless `SMOKE=true` is set (automatic with `rake test_smoke`)
+- Checks Ollama availability before running
+- `rake test_smoke` auto-sets `ANTHROPIC_BASE_URL`, `ANTHROPIC_API_KEY`, and `ANTHROPIC_AUTH_TOKEN`
 
 ## What to Test
 

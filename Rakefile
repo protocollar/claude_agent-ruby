@@ -35,6 +35,23 @@ task :test_integration do
   Rake::Task[:_integration].invoke
 end
 
+# Internal task for running smoke tests
+Minitest::TestTask.create(:_smoke) do |t|
+  t.test_globs = [ "test/smoke/**/test_*.rb" ]
+  t.warning = false
+end
+
+# Smoke tests - wrapper that sets INTEGRATION + SMOKE + Ollama defaults
+desc "Run smoke tests against local LLM (e.g. Ollama)"
+task :test_smoke do
+  ENV["INTEGRATION"] = "true"
+  ENV["SMOKE"] = "true"
+  ENV["ANTHROPIC_BASE_URL"] ||= "http://localhost:11434"
+  ENV["ANTHROPIC_API_KEY"] ||= "ollama"
+  ENV["ANTHROPIC_AUTH_TOKEN"] ||= "ollama"
+  Rake::Task[:_smoke].invoke
+end
+
 require "rubocop/rake_task"
 
 RuboCop::RakeTask.new

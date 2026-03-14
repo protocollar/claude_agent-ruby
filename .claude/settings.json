@@ -30,6 +30,7 @@
       "Bash(bin/setup:*)",
       "Bash(bin/test:*)",
       "Bash(bin/test-integration:*)",
+      "Bash(bin/test-smoke:*)",
       "Bash(bin/test-all:*)",
       "Bash(bin/update-reference-sdks:*)",
       "WebFetch(domain:docs.anthropic.com)",

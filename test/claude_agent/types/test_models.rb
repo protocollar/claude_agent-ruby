@@ -1,0 +1,317 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+class TestClaudeAgentTypesModels < ActiveSupport::TestCase
+  # --- ModelInfo ---
+
+  test "model_info" do
+    model = ClaudeAgent::ModelInfo.new(
+      value: "claude-3-opus",
+      display_name: "Claude 3 Opus",
+      description: "Most capable"
+    )
+    assert_equal "claude-3-opus", model.value
+    assert_equal "Claude 3 Opus", model.display_name
+    assert_equal "Most capable", model.description
+  end
+
+  test "model_info_defaults" do
+    model = ClaudeAgent::ModelInfo.new(value: "claude-sonnet")
+    assert_nil model.display_name
+    assert_nil model.description
+    assert_nil model.supports_effort
+    assert_nil model.supported_effort_levels
+    assert_nil model.supports_adaptive_thinking
+    assert_nil model.supports_fast_mode
+  end
+
+  test "model_info_with_supports_fast_mode" do
+    model = ClaudeAgent::ModelInfo.new(
+      value: "claude-sonnet",
+      supports_fast_mode: true
+    )
+    assert_equal true, model.supports_fast_mode
+  end
+
+  test "model_info_with_supports_auto_mode" do
+    model = ClaudeAgent::ModelInfo.new(
+      value: "claude-sonnet",
+      supports_auto_mode: true
+    )
+    assert_equal true, model.supports_auto_mode
+  end
+
+  test "model_info_supports_auto_mode_defaults_to_nil" do
+    model = ClaudeAgent::ModelInfo.new(value: "claude-sonnet")
+    assert_nil model.supports_auto_mode
+  end
+
+  test "model_info_with_effort_fields" do
+    model = ClaudeAgent::ModelInfo.new(
+      value: "claude-sonnet",
+      supports_effort: true,
+      supported_effort_levels: [ "low", "medium", "high" ],
+      supports_adaptive_thinking: false
+    )
+    assert_equal true, model.supports_effort
+    assert_equal [ "low", "medium", "high" ], model.supported_effort_levels
+    assert_equal false, model.supports_adaptive_thinking
+  end
+
+  # --- ModelUsage ---
+
+  test "model_usage" do
+    usage = ClaudeAgent::ModelUsage.new(
+      input_tokens: 100,
+      output_tokens: 50,
+      cache_read_input_tokens: 10,
+      cache_creation_input_tokens: 5,
+      web_search_requests: 2,
+      cost_usd: 0.01,
+      context_window: 128000
+    )
+    assert_equal 100, usage.input_tokens
+    assert_equal 50, usage.output_tokens
+    assert_equal 10, usage.cache_read_input_tokens
+    assert_equal 5, usage.cache_creation_input_tokens
+    assert_equal 2, usage.web_search_requests
+    assert_equal 0.01, usage.cost_usd
+    assert_equal 128000, usage.context_window
+  end
+
+  test "model_usage_defaults" do
+    usage = ClaudeAgent::ModelUsage.new
+    assert_equal 0, usage.input_tokens
+    assert_equal 0, usage.output_tokens
+    assert_equal 0.0, usage.cost_usd
+    assert_nil usage.context_window
+    assert_nil usage.max_output_tokens
+  end
+
+  test "model_usage_with_max_output_tokens" do
+    usage = ClaudeAgent::ModelUsage.new(
+      input_tokens: 100,
+      output_tokens: 50,
+      max_output_tokens: 4096
+    )
+    assert_equal 4096, usage.max_output_tokens
+  end
+
+  # --- AccountInfo ---
+
+  test "account_info" do
+    info = ClaudeAgent::AccountInfo.new(
+      email: "user@example.com",
+      organization: "Acme Corp",
+      subscription_type: "pro",
+      token_source: "oauth",
+      api_key_source: "user"
+    )
+    assert_equal "user@example.com", info.email
+    assert_equal "Acme Corp", info.organization
+    assert_equal "pro", info.subscription_type
+    assert_equal "oauth", info.token_source
+    assert_equal "user", info.api_key_source
+  end
+
+  test "account_info_defaults" do
+    info = ClaudeAgent::AccountInfo.new
+    assert_nil info.email
+    assert_nil info.organization
+    assert_nil info.subscription_type
+  end
+
+  # --- AgentInfo ---
+
+  test "agent_info" do
+    agent = ClaudeAgent::AgentInfo.new(
+      name: "Explore",
+      description: "Search the codebase",
+      model: "haiku"
+    )
+    assert_equal "Explore", agent.name
+    assert_equal "Search the codebase", agent.description
+    assert_equal "haiku", agent.model
+  end
+
+  test "agent_info_defaults" do
+    agent = ClaudeAgent::AgentInfo.new(name: "Plan")
+    assert_equal "Plan", agent.name
+    assert_nil agent.description
+    assert_nil agent.model
+  end
+
+  # --- AgentDefinition ---
+
+  test "agent_definition" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Runs tests and reports results",
+      prompt: "You are a test runner...",
+      tools: [ "Read", "Grep", "Glob", "Bash" ],
+      disallowed_tools: [ "Write" ],
+      model: "haiku",
+      mcp_servers: { "test-server" => { type: "stdio", command: "node" } },
+      critical_system_reminder: "Always run tests safely"
+    )
+    assert_equal "Runs tests and reports results", agent.description
+    assert_equal "You are a test runner...", agent.prompt
+    assert_equal [ "Read", "Grep", "Glob", "Bash" ], agent.tools
+    assert_equal [ "Write" ], agent.disallowed_tools
+    assert_equal "haiku", agent.model
+    assert_equal({ "test-server" => { type: "stdio", command: "node" } }, agent.mcp_servers)
+    assert_equal "Always run tests safely", agent.critical_system_reminder
+  end
+
+  test "agent_definition_minimal" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Simple agent",
+      prompt: "You help with tasks"
+    )
+    assert_equal "Simple agent", agent.description
+    assert_equal "You help with tasks", agent.prompt
+    assert_nil agent.tools
+    assert_nil agent.disallowed_tools
+    assert_nil agent.model
+    assert_nil agent.mcp_servers
+    assert_nil agent.critical_system_reminder
+  end
+
+  test "agent_definition_to_h" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Test runner",
+      prompt: "Run tests",
+      tools: [ "Bash" ],
+      disallowed_tools: [ "Write" ],
+      model: "haiku",
+      mcp_servers: { "srv" => {} },
+      critical_system_reminder: "Be careful"
+    )
+    h = agent.to_h
+    assert_equal "Test runner", h[:description]
+    assert_equal "Run tests", h[:prompt]
+    assert_equal [ "Bash" ], h[:tools]
+    assert_equal [ "Write" ], h[:disallowedTools]
+    assert_equal "haiku", h[:model]
+    assert_equal({ "srv" => {} }, h[:mcpServers])
+    assert_equal "Be careful", h[:criticalSystemReminder_EXPERIMENTAL]
+  end
+
+  test "agent_definition_to_h_minimal" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Simple agent",
+      prompt: "You help"
+    )
+    h = agent.to_h
+    assert_equal({ description: "Simple agent", prompt: "You help" }, h)
+    refute h.key?(:tools)
+    refute h.key?(:disallowedTools)
+    refute h.key?(:model)
+    refute h.key?(:mcpServers)
+    refute h.key?(:criticalSystemReminder_EXPERIMENTAL)
+  end
+
+  test "agent_definition_with_skills_and_max_turns" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Research agent",
+      prompt: "You are a research expert...",
+      skills: [ "web-search", "summarization" ],
+      max_turns: 10
+    )
+    assert_equal [ "web-search", "summarization" ], agent.skills
+    assert_equal 10, agent.max_turns
+  end
+
+  test "agent_definition_skills_and_max_turns_defaults" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Simple agent",
+      prompt: "You help"
+    )
+    assert_nil agent.skills
+    assert_nil agent.max_turns
+  end
+
+  test "agent_definition_to_h_with_skills_and_max_turns" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Research agent",
+      prompt: "Research things",
+      skills: [ "web-search" ],
+      max_turns: 5
+    )
+    h = agent.to_h
+    assert_equal [ "web-search" ], h[:skills]
+    assert_equal 5, h[:maxTurns]
+  end
+
+  test "agent_definition_to_h_omits_nil_skills_and_max_turns" do
+    agent = ClaudeAgent::AgentDefinition.new(
+      description: "Simple agent",
+      prompt: "You help"
+    )
+    h = agent.to_h
+    refute h.key?(:skills)
+    refute h.key?(:maxTurns)
+  end
+
+  # --- InitializationResult ---
+
+  test "initialization_result" do
+    commands = [ ClaudeAgent::SlashCommand.new(name: "commit", description: "Create a commit") ]
+    models = [ ClaudeAgent::ModelInfo.new(value: "claude-sonnet", display_name: "Claude Sonnet") ]
+    account = ClaudeAgent::AccountInfo.new(email: "user@example.com")
+
+    result = ClaudeAgent::InitializationResult.new(
+      commands: commands,
+      output_style: "default",
+      available_output_styles: [ "default", "concise" ],
+      models: models,
+      account: account
+    )
+    assert_equal commands, result.commands
+    assert_equal "default", result.output_style
+    assert_equal [ "default", "concise" ], result.available_output_styles
+    assert_equal models, result.models
+    assert_equal account, result.account
+  end
+
+  test "initialization_result_defaults" do
+    result = ClaudeAgent::InitializationResult.new
+    assert_equal [], result.commands
+    assert_nil result.output_style
+    assert_equal [], result.available_output_styles
+    assert_equal [], result.models
+    assert_nil result.account
+    assert_equal [], result.agents
+    assert_nil result.fast_mode_state
+  end
+
+  test "initialization_result_with_fast_mode_state" do
+    result = ClaudeAgent::InitializationResult.new(fast_mode_state: "on")
+    assert_equal "on", result.fast_mode_state
+  end
+
+  test "initialization_result_with_agents" do
+    agents = [ ClaudeAgent::AgentInfo.new(name: "Explore", description: "Search agent") ]
+    result = ClaudeAgent::InitializationResult.new(agents: agents)
+    assert_equal agents, result.agents
+    assert_equal "Explore", result.agents.first.name
+  end
+
+  # --- API Key Sources ---
+
+  test "api_key_sources_constant" do
+    assert_includes ClaudeAgent::API_KEY_SOURCES, "user"
+    assert_includes ClaudeAgent::API_KEY_SOURCES, "project"
+    assert_includes ClaudeAgent::API_KEY_SOURCES, "org"
+    assert_includes ClaudeAgent::API_KEY_SOURCES, "temporary"
+    assert_includes ClaudeAgent::API_KEY_SOURCES, "oauth"
+  end
+
+  # --- Assistant Message Error Types ---
+
+  test "assistant_message_error_types_constant" do
+    assert_includes ClaudeAgent::ASSISTANT_MESSAGE_ERROR_TYPES, "authentication_failed"
+    assert_includes ClaudeAgent::ASSISTANT_MESSAGE_ERROR_TYPES, "rate_limit"
+    assert_includes ClaudeAgent::ASSISTANT_MESSAGE_ERROR_TYPES, "server_error"
+  end
+end

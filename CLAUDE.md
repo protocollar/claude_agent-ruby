@@ -17,6 +17,7 @@ bin/setup                          # Install dependencies
 bundle exec rake                   # Run unit tests + rbs + rubocop (default)
 bundle exec rake test              # Unit tests only
 bundle exec rake test_integration  # Integration tests (requires CLI v2.0.0+)
+bundle exec rake test_smoke        # Smoke tests against local LLM (e.g. Ollama)
 bundle exec rake test_all          # All tests (requires CLI v2.0.0+)
 bundle exec rake rbs               # Validate RBS signatures
 bundle exec rake rbs:parse         # RBS syntax check only (faster)
@@ -28,6 +29,7 @@ bin/console                        # IRB with gem loaded
 bin/test                           # Unit tests only
 bin/test-integration               # Integration tests
 bin/test-all                       # All tests
+bin/test-smoke                     # Smoke tests (Ollama)
 bin/rbs-validate                   # Validate RBS signatures
 bin/release VERSION                # Release gem (e.g., bin/release 1.2.0)
 ```
