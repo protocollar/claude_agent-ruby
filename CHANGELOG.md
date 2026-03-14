@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.13] - 2026-03-14
+
 ### Added
 - Ollama smoke test profile (`rake test_smoke`, `bin/test-smoke`) for fast local testing against local LLMs
 - `SmokeTestCase` base class with Ollama availability check and configurable `SMOKE_MODEL` env var
