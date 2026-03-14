@@ -1514,6 +1514,28 @@ module ClaudeAgent
     REQUEST_ID_PREFIX: String
     HOOK_RESPONSE_KEYS: Hash[Symbol, String]
 
+    # Mixin modules that compose the protocol's behavior
+    module Primitives
+    end
+
+    module Lifecycle
+    end
+
+    module Messaging
+    end
+
+    module Commands
+    end
+
+    module RequestHandling
+    end
+
+    include Primitives
+    include Lifecycle
+    include Messaging
+    include Commands
+    include RequestHandling
+
     attr_reader transport: Transport::Base
     attr_reader options: Options
     attr_reader server_info: Hash[String, untyped]?

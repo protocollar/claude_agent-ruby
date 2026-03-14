@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Split `content_blocks.rb` (352 lines) into `content_blocks/` directory with 8 focused files + barrel file
+- Split `types.rb` (300 lines) into `types/` directory with 5 domain-grouped files + barrel file
+- Split `messages.rb` (908 lines) into `messages/` directory with 8 semantic-domain files + barrel file
+- Extracted `control_protocol.rb` (1,010 lines) into 5 mixin modules (`Primitives`, `Lifecycle`, `Messaging`, `Commands`, `RequestHandling`) + shell class
+- Added RBS module declarations for all 5 `ControlProtocol` mixins
+
 ### Added
 - `AgentInfo` type with `name`, `description`, and `model` fields (TypeScript SDK v0.2.63 parity)
 - `supported_agents` control request on `ControlProtocol` and `Client` for querying available subagents (TypeScript SDK v0.2.63 parity)
