@@ -38,7 +38,8 @@ require_relative "claude_agent/get_session_messages"    # Session transcript rea
 require_relative "claude_agent/session_message_relation" # Chainable message query object
 require_relative "claude_agent/session_mutations"          # Session rename/tag mutations
 require_relative "claude_agent/get_session_info"           # Single session lookup
-require_relative "claude_agent/session"                    # Session finder + V2 Session API (unstable)
+require_relative "claude_agent/v2_session"                  # V2 Session API (unstable)
+require_relative "claude_agent/session"                    # Session finder
 
 module ClaudeAgent
   class << self

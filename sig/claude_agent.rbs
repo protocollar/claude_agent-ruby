@@ -338,6 +338,11 @@ module ClaudeAgent
 
   # Options for configuring Claude Code CLI
   class Options
+    module Serializer
+    end
+
+    include Serializer
+
     # Constants
     DEFAULTS: Hash[Symbol, untyped]
     ATTRIBUTES: Array[Symbol]
@@ -1428,6 +1433,11 @@ module ClaudeAgent
 
   # Client
   class Client
+    module Commands
+    end
+
+    include Commands
+
     attr_reader options: Options
     attr_reader transport: Transport::Base
     attr_reader server_info: Hash[String, untyped]?

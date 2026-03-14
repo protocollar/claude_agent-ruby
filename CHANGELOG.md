@@ -12,7 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Split `types.rb` (300 lines) into `types/` directory with 5 domain-grouped files + barrel file
 - Split `messages.rb` (908 lines) into `messages/` directory with 8 semantic-domain files + barrel file
 - Extracted `control_protocol.rb` (1,010 lines) into 5 mixin modules (`Primitives`, `Lifecycle`, `Messaging`, `Commands`, `RequestHandling`) + shell class
-- Added RBS module declarations for all 5 `ControlProtocol` mixins
+- Extracted `Client::Commands` mixin from `client.rb` (545 lines) for CLI command delegations
+- Extracted `Options::Serializer` mixin from `options.rb` (344 lines) for CLI arg/env serialization
+- Split `session.rb` into `v2_session.rb` (V2 Session API) and `session.rb` (historical finder)
+- Split monolithic test files to mirror lib/ directory structure (`test/claude_agent/{messages,content_blocks,types,control_protocol}/`)
+- Added RBS module declarations for `ControlProtocol`, `Client`, and `Options` mixins
 
 ### Added
 - `AgentInfo` type with `name`, `description`, and `model` fields (TypeScript SDK v0.2.63 parity)
