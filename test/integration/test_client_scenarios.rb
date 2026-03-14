@@ -2,44 +2,32 @@
 
 require_relative "../integration_helper"
 
-class TestIntegrationClient < IntegrationTestCase
-  test "client streaming mode" do
-    client = ClaudeAgent::Client.new(options: test_options)
-
-    client.connect
-    assert client.connected?, "Client should be connected"
-
-    client.query("Reply with: TEST")
-
-    messages = []
-    client.receive_response.each do |msg|
-      messages << msg
-      break if msg.is_a?(ClaudeAgent::ResultMessage)
-    end
-
-    assert messages.any? { |m| m.is_a?(ClaudeAgent::AssistantMessage) }
-    assert messages.any? { |m| m.is_a?(ClaudeAgent::ResultMessage) }
-
-    client.disconnect
-    assert !client.connected?, "Client should be disconnected"
-  end
-
-  test "client block syntax" do
+class TestIntegrationClientScenarios < IntegrationTestCase
+  test "client streaming lifecycle" do
     result_message = nil
+    assistant_message = nil
 
     ClaudeAgent::Client.open(options: test_options) do |client|
-      client.query("Reply with: BLOCK")
+      assert client.connected?, "Client should be connected after open"
+
+      client.query("Reply with: TEST")
+
       client.receive_response.each do |msg|
+        assistant_message = msg if msg.is_a?(ClaudeAgent::AssistantMessage)
         result_message = msg if msg.is_a?(ClaudeAgent::ResultMessage)
         break if result_message
       end
     end
 
-    assert_not_nil result_message
+    # AssistantMessage received
+    assert_not_nil assistant_message, "Expected AssistantMessage"
+
+    # ResultMessage received with success
+    assert_not_nil result_message, "Expected ResultMessage"
     assert_equal false, result_message.is_error
   end
 
-  test "multi-turn conversation" do
+  test "client multi-turn preserves context" do
     ClaudeAgent::Client.open(options: test_options) do |client|
       # First query
       client.query("Remember the number 42")

@@ -741,6 +741,46 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     assert_equal config, options.tool_config
   end
 
+  # --- Resume Session At ---
+
+  test "resume_session_at_field" do
+    options = ClaudeAgent::Options.new(resume_session_at: "msg_uuid_123")
+
+    assert_equal "msg_uuid_123", options.resume_session_at
+    args = options.to_cli_args
+    assert_includes args, "--resume-session-at"
+    assert_includes args, "msg_uuid_123"
+  end
+
+  # --- Strict MCP Config ---
+
+  test "strict_mcp_config_field" do
+    options = ClaudeAgent::Options.new(strict_mcp_config: true)
+
+    assert_equal true, options.strict_mcp_config
+    args = options.to_cli_args
+    assert_includes args, "--strict-mcp-config"
+  end
+
+  # --- System Prompt Preset Format ---
+
+  test "system_prompt_preset_format" do
+    options = ClaudeAgent::Options.new(
+      system_prompt: {
+        type: "preset",
+        preset: "claude_code",
+        append: "Additional instructions"
+      }
+    )
+
+    args = options.to_cli_args
+    assert_includes args, "--system-prompt"
+    idx = args.index("--system-prompt")
+    prompt_value = args[idx + 1]
+    assert prompt_value.include?("preset")
+    assert prompt_value.include?("claude_code")
+  end
+
   # --- Agent Progress Summaries ---
 
   test "agent_progress_summaries_default_nil" do

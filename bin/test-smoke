@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run smoke tests against local LLM (e.g. Ollama on localhost:11434)
+bundle exec rake test_smoke

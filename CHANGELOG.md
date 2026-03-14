@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Ollama smoke test profile (`rake test_smoke`, `bin/test-smoke`) for fast local testing against local LLMs
+- `SmokeTestCase` base class with Ollama availability check and configurable `SMOKE_MODEL` env var
+
 ### Changed
+- Restructured integration test suite: removed 92 misplaced unit tests, consolidated 52 CLI tests into 16 scenario tests across 5 files
+- Integration tests now use scenario-based structure (`test_*_scenarios.rb`) that exercises multiple assertions per CLI process spawn
 - Split `content_blocks.rb` (352 lines) into `content_blocks/` directory with 8 focused files + barrel file
 - Split `types.rb` (300 lines) into `types/` directory with 5 domain-grouped files + barrel file
 - Split `messages.rb` (908 lines) into `messages/` directory with 8 semantic-domain files + barrel file
