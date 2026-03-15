@@ -350,6 +350,54 @@ class TestClaudeAgentTurnResult < ActiveSupport::TestCase
     assert_instance_of ClaudeAgent::TextBlock, blocks[2]
   end
 
+  # --- Streaming Text Fallback ---
+
+  test "text falls back to streamed deltas when no assistant messages" do
+    @turn << ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "text_delta", text: "Hello " } }
+    )
+    @turn << ClaudeAgent::StreamEvent.new(
+      uuid: "e2", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "text_delta", text: "world" } }
+    )
+
+    assert_equal "Hello world", @turn.text
+  end
+
+  test "text prefers assistant messages over streamed deltas" do
+    @turn << ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "text_delta", text: "Hello" } }
+    )
+    @turn << make_assistant("Hello")
+    @turn << make_result
+
+    assert_equal "Hello", @turn.text
+  end
+
+  test "text ignores non-text stream events" do
+    @turn << ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "thinking_delta", thinking: "hmm" } }
+    )
+    @turn << ClaudeAgent::StreamEvent.new(
+      uuid: "e2", session_id: "s1",
+      event: { type: "content_block_start", content_block: { type: "text" } }
+    )
+
+    assert_equal "", @turn.text
+  end
+
+  test "streamed text returns frozen string" do
+    @turn << ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "text_delta", text: "Hi" } }
+    )
+
+    assert @turn.text.frozen?
+  end
+
   # --- Inspect ---
 
   test "inspect for incomplete turn" do

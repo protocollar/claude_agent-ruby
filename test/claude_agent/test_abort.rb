@@ -68,6 +68,49 @@ class TestClaudeAgentAbortController < ActiveSupport::TestCase
     assert_equal "First", controller.signal.reason
   end
 
+  test "reset_clears_abort_state" do
+    controller = ClaudeAgent::AbortController.new
+    controller.abort("First")
+
+    assert controller.signal.aborted?
+
+    controller.reset!
+
+    refute controller.signal.aborted?
+    assert_nil controller.signal.reason
+  end
+
+  test "reset_allows_reuse" do
+    controller = ClaudeAgent::AbortController.new
+    controller.abort("First")
+    controller.reset!
+
+    assert_nothing_raised { controller.signal.check! }
+
+    controller.abort("Second")
+    assert controller.signal.aborted?
+    assert_equal "Second", controller.signal.reason
+  end
+
+  test "reset_is_noop_when_not_aborted" do
+    controller = ClaudeAgent::AbortController.new
+
+    assert_nothing_raised { controller.reset! }
+    refute controller.signal.aborted?
+  end
+
+  test "reset_preserves_new_callbacks" do
+    controller = ClaudeAgent::AbortController.new
+    controller.abort("First")
+    controller.reset!
+
+    callback_reason = nil
+    controller.signal.on_abort { |reason| callback_reason = reason }
+    controller.abort("Second")
+
+    assert_equal "Second", callback_reason
+  end
+
   test "signal_wait_with_timeout" do
     controller = ClaudeAgent::AbortController.new
 
@@ -108,6 +151,25 @@ class TestClaudeAgentAbortError < ActiveSupport::TestCase
   test "abort_error_default_message" do
     error = ClaudeAgent::AbortError.new
     assert_equal "Operation was aborted", error.message
+  end
+
+  test "abort_error_carries_partial_turn" do
+    turn = ClaudeAgent::TurnResult.new
+    turn << ClaudeAgent::AssistantMessage.new(
+      content: [ ClaudeAgent::TextBlock.new(text: "partial") ],
+      model: "claude"
+    )
+
+    error = ClaudeAgent::AbortError.new("cancelled", partial_turn: turn)
+
+    assert_equal "cancelled", error.message
+    assert_equal turn, error.partial_turn
+    assert_equal "partial", error.partial_turn.text
+  end
+
+  test "abort_error_partial_turn_defaults_to_nil" do
+    error = ClaudeAgent::AbortError.new
+    assert_nil error.partial_turn
   end
 end
 

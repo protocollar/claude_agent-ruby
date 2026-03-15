@@ -100,12 +100,21 @@ module ClaudeAgent
     # Send a message and receive the complete turn result.
     #
     # Auto-connects on first call. Appends to conversation history.
+    # Resets the tool tracker and abort signal at the start of each turn
+    # so they are fresh for the new operation.
+    #
+    # On abort, raises {AbortError} with the partial {TurnResult} attached.
+    # The tool tracker retains its state from the aborted turn until the
+    # next call to {#say}.
     #
     # @param prompt [String, Array] The message content
     # @yield [Message] Each message as it streams in (optional)
     # @return [TurnResult] The completed turn
+    # @raise [AbortError] If abort signal is triggered (with partial_turn attached)
     def say(prompt, &block)
       ensure_connected!
+      @tool_tracker&.reset!
+      @options.abort_signal&.reset!
 
       logger.debug("conversation") { "Turn #{@turns.size}: sending message" }
 
@@ -116,7 +125,6 @@ module ClaudeAgent
 
       @turns << turn
       build_tool_activities(turn, @turns.size - 1)
-      @tool_tracker&.reset!
 
       logger.info("conversation") { "Turn #{@turns.size - 1} complete (#{turn.tool_uses.size} tools, cost=$#{total_cost})" }
 

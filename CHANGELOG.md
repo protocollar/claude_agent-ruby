@@ -8,11 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `AbortError#partial_turn` carries the in-progress `TurnResult` when a turn is aborted, eliminating the need for separate extraction paths on cancellation
+- `StreamEvent` typed accessors: `delta_text`, `delta_type`, `thinking_text`, `content_index` for convenient access without hash-digging into raw event data
+- `PermissionRequest#display_label` and `#summary` delegate to `ToolUseBlock` formatting, removing the need to construct dummy blocks for display
+- `AbortController#reset!` and `AbortSignal#reset!` allow reuse across turns; `Conversation#say` auto-resets at turn start
 - `PostCompact` hook event with `PostCompactInput` type (`trigger` and `compact_summary` fields) (TypeScript SDK v0.2.76 parity)
 - `cancel_async_message` control request to drop queued user messages by UUID (TypeScript SDK v0.2.76 parity)
 - `get_settings` control request to read effective merged settings (TypeScript SDK v0.2.76 parity)
 - `fork_session` standalone function to branch a session from a specific point with UUID remapping (TypeScript SDK v0.2.76 parity)
 - `ForkSessionResult` data type returned by `fork_session`
+
+### Changed
+- `TurnResult#text` now falls back to accumulated streaming deltas when no `AssistantMessage` text is available (e.g., on abort mid-stream)
+- `Conversation#say` resets the tool tracker at the **start** of each turn instead of the end, so tracker data survives abort and remains accessible until the next `say()` call
+- `Client#receive_turn` catches `AbortError` and re-raises with the partial `TurnResult` attached
 
 ## [0.7.14] - 2026-03-14
 

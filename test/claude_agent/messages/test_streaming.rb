@@ -75,4 +75,102 @@ class TestClaudeAgentMessagesStreaming < ActiveSupport::TestCase
   test "prompt_suggestion_message_in_types_constant" do
     assert_includes ClaudeAgent::MESSAGE_TYPES, ClaudeAgent::PromptSuggestionMessage
   end
+
+  # --- StreamEvent typed accessors ---
+
+  test "delta_text returns text from text_delta" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "text_delta", text: "Hello" } }
+    )
+    assert_equal "Hello", event.delta_text
+  end
+
+  test "delta_text returns nil for thinking_delta" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "thinking_delta", thinking: "hmm" } }
+    )
+    assert_nil event.delta_text
+  end
+
+  test "delta_text returns nil for non-delta events" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_start", content_block: { type: "text" } }
+    )
+    assert_nil event.delta_text
+  end
+
+  test "delta_text with string keys" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", "delta" => { "type" => "text_delta", "text" => "Hi" } }
+    )
+    assert_equal "Hi", event.delta_text
+  end
+
+  test "delta_type returns delta type string" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "text_delta", text: "Hi" } }
+    )
+    assert_equal "text_delta", event.delta_type
+  end
+
+  test "delta_type returns nil for non-delta events" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "message_start" }
+    )
+    assert_nil event.delta_type
+  end
+
+  test "thinking_text returns thinking from thinking_delta" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "thinking_delta", thinking: "Let me consider..." } }
+    )
+    assert_equal "Let me consider...", event.thinking_text
+  end
+
+  test "thinking_text returns nil for text_delta" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "text_delta", text: "Hello" } }
+    )
+    assert_nil event.thinking_text
+  end
+
+  test "thinking_text with string keys" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", "delta" => { "type" => "thinking_delta", "thinking" => "hmm" } }
+    )
+    assert_equal "hmm", event.thinking_text
+  end
+
+  test "content_index returns index" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", index: 2, delta: { type: "text_delta", text: "Hi" } }
+    )
+    assert_equal 2, event.content_index
+  end
+
+  test "content_index with string key" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", "index" => 0, delta: { type: "text_delta", text: "Hi" } }
+    )
+    assert_equal 0, event.content_index
+  end
+
+  test "content_index returns nil when absent" do
+    event = ClaudeAgent::StreamEvent.new(
+      uuid: "e1", session_id: "s1",
+      event: { type: "content_block_delta", delta: { type: "text_delta", text: "Hi" } }
+    )
+    assert_nil event.content_index
+  end
 end
