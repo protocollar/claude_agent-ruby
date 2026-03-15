@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.14] - 2026-03-14
+
 ### Fixed
 - Replace busy-wait polling (`Queue#pop(true)` + `sleep 0.01`) in `ControlProtocol::Messaging#each_message` with blocking `Queue#pop` and `:done` sentinel, eliminating CPU waste and up-to-10ms per-message latency
 - Fix `Conversation#partition_kwargs` misrouting `on_elicitation` (and any future `on_*` Options attributes) as event callbacks instead of forwarding to Options; now uses explicit allowlist derived from `EventHandler::EVENTS`
