@@ -93,4 +93,50 @@ class TestIntegrationConversationScenarios < IntegrationTestCase
   ensure
     conversation&.close
   end
+
+  test "chat: block form, config merge, multi-turn, Session resource" do
+    original_config = ClaudeAgent.config
+    ClaudeAgent.reset_config!
+    ClaudeAgent.max_turns = 1
+
+    session_id = nil
+    conversation_ref = nil
+
+    # --- chat block form with global config ---
+    ClaudeAgent.chat do |c|
+      conversation_ref = c
+      turn = c.say("Remember the word: MANGO. Reply with exactly: REMEMBERED")
+      assert turn.success?
+      assert_includes turn.text, "REMEMBERED"
+
+      turn2 = c.say("What word did I say? Reply with just the word.")
+      assert turn2.success?
+      assert turn2.text.downcase.include?("mango")
+
+      session_id = c.session_id
+      assert_not_nil session_id
+
+      assert_equal 2, c.turns.size
+      assert c.total_cost >= 0
+    end
+
+    # --- auto-closed ---
+    assert conversation_ref.closed?
+
+    # --- Session resource: find, retrieve, rename, reload ---
+    skip "No session_id returned" unless session_id
+
+    session = ClaudeAgent::Session.find(session_id)
+    assert_not_nil session, "Session.find should return the session"
+    assert_equal session_id, session.session_id
+
+    retrieved = ClaudeAgent::Session.retrieve(session_id)
+    assert_equal session_id, retrieved.session_id
+
+    session.rename("Chat Integration Test")
+    session.reload
+    assert_equal "Chat Integration Test", session.custom_title
+  ensure
+    ClaudeAgent.instance_variable_set(:@config, original_config)
+  end
 end

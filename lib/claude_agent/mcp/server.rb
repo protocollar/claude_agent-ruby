@@ -35,11 +35,33 @@ module ClaudeAgent
       # @param name [String] Server name
       # @param tools [Array<Tool>] Tools to expose
       # @param logger [Logger, nil] Optional logger instance
+      # @yield [self] Optional block for DSL-style tool definition
+      #
+      # @example Block DSL
+      #   server = ClaudeAgent::MCP::Server.new(name: "calc") do |s|
+      #     s.tool("add", "Add numbers", { a: :number, b: :number }) { |args| args[:a] + args[:b] }
+      #   end
+      #
       def initialize(name:, tools: [], logger: nil)
         @name = name.to_s
         @tools = {}
         @logger = logger
         tools.each { |tool| add_tool(tool) }
+        yield self if block_given?
+      end
+
+      # Define and add a tool in one step (DSL convenience)
+      #
+      # @param name [String] Tool name
+      # @param description [String] Tool description
+      # @param schema [Hash] Input schema
+      # @param annotations [Hash, nil] MCP tool annotations
+      # @yield [Hash] Tool arguments
+      # @return [Tool] The created tool
+      def tool(name, description, schema = {}, annotations: nil, &handler)
+        new_tool = Tool.new(name: name, description: description, schema: schema, annotations: annotations, &handler)
+        add_tool(new_tool)
+        new_tool
       end
 
       # Add a tool to the server

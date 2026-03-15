@@ -226,13 +226,38 @@ module ClaudeAgent
       [ callbacks, conversation_kwargs, options_kwargs ]
     end
 
+    # Symbol → CLI permission mode mapping
+    SYMBOL_PERMISSION_MODES = {
+      default: "default",
+      accept_edits: "acceptEdits",
+      plan: "plan",
+      bypass_permissions: "bypassPermissions",
+      dont_ask: "dontAsk"
+    }.freeze
+
     def build_options(options_kwargs, conversation_kwargs)
       permission = conversation_kwargs[:on_permission]
 
-      if permission.respond_to?(:call)
-        options_kwargs[:can_use_tool] = permission
-      elsif permission == :queue || permission.nil?
+      case permission
+      when PermissionPolicy
+        options_kwargs[:can_use_tool] = permission.to_can_use_tool
+      when Symbol
+        if (mode = SYMBOL_PERMISSION_MODES[permission])
+          options_kwargs[:permission_mode] = mode
+        elsif permission == :queue
+          options_kwargs[:permission_queue] = true unless options_kwargs.key?(:can_use_tool)
+        end
+      when nil
         options_kwargs[:permission_queue] = true unless options_kwargs.key?(:can_use_tool)
+      else
+        if permission.respond_to?(:call)
+          options_kwargs[:can_use_tool] = permission
+        end
+      end
+
+      # Handle HookRegistry in hooks option
+      if options_kwargs[:hooks].is_a?(HookRegistry)
+        options_kwargs[:hooks] = options_kwargs[:hooks].to_hooks_hash
       end
 
       Options.new(**options_kwargs)
