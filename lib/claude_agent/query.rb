@@ -41,8 +41,6 @@ module ClaudeAgent
       transport ||= Transport::Subprocess.new(options: options)
 
       Enumerator.new do |yielder|
-        # Set entrypoint environment variable
-        ENV["CLAUDE_CODE_ENTRYPOINT"] = "sdk-rb"
         query_logger = options.effective_logger
         query_logger.info("query") { "Starting query" }
         query_start = Process.clock_gettime(Process::CLOCK_MONOTONIC)

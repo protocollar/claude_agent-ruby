@@ -77,8 +77,6 @@ module ClaudeAgent
     def connect(prompt: nil)
       raise CLIConnectionError, "Already connected" if @connected
 
-      ENV["CLAUDE_CODE_ENTRYPOINT"] = "sdk-rb-client"
-
       logger.info("client") { "Connecting" }
       @protocol = ControlProtocol.new(transport: @transport, options: @options)
       @protocol.permission_queue = @permission_queue

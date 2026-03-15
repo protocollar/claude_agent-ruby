@@ -387,8 +387,8 @@ module ClaudeAgent
           @stderr.each_line do |line|
             # Call callback if provided, otherwise just drain
             @options.stderr_callback&.call(line.chomp)
-          rescue
-            # Ignore callback errors
+          rescue => e
+            logger.debug("transport") { "stderr callback error: #{e.message}" }
           end
         rescue IOError
           # Stream closed, exit thread

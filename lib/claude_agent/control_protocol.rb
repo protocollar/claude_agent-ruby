@@ -25,6 +25,28 @@ module ClaudeAgent
   #   protocol.start
   #   protocol.each_message { |msg| process(msg) }
   #
+  # State ownership across modules:
+  #
+  # Owned by Lifecycle:
+  #   @running, @reader_thread
+  #
+  # Owned by RequestHandling:
+  #   @hook_callbacks
+  #
+  # Owned by Primitives:
+  #   write_message, read helpers (stateless)
+  #
+  # Owned by Commands:
+  #   interrupt, rewind (stateless, uses @transport)
+  #
+  # Shared (initialized here, used by multiple modules):
+  #   @transport, @options, @parser, @server_info
+  #   @request_counter, @pending_requests, @pending_results (Primitives + RequestHandling)
+  #   @mutex, @condition (Primitives + Lifecycle + RequestHandling)
+  #   @message_queue (Lifecycle + Messaging)
+  #   @abort_signal (Lifecycle + Messaging)
+  #   @permission_queue (RequestHandling, set externally by Client)
+  #
   class ControlProtocol
     DEFAULT_TIMEOUT = 60
     REQUEST_ID_PREFIX = "req"
@@ -78,6 +100,7 @@ module ClaudeAgent
 
       # Abort signal from options
       @abort_signal = options&.abort_signal
+      @abort_signal&.on_abort { @message_queue.push(:done) }
     end
 
     private

@@ -193,6 +193,13 @@ module ClaudeAgent
 
     private
 
+    # Callback keys derived from EventHandler events + aliases + on_permission
+    CALLBACK_KEYS = (
+      EventHandler::EVENTS.map { |e| :"on_#{e}" } +
+      CALLBACK_ALIASES.keys +
+      [ :on_permission ]
+    ).freeze
+
     def partition_kwargs(kwargs)
       callbacks = {}
       conversation_kwargs = {}
@@ -201,7 +208,7 @@ module ClaudeAgent
       kwargs.each do |key, value|
         if CONVERSATION_KEYS.include?(key)
           conversation_kwargs[key] = value
-        elsif key.to_s.start_with?("on_")
+        elsif CALLBACK_KEYS.include?(key)
           callbacks[key] = value
         else
           options_kwargs[key] = value
