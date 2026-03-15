@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.15] - 2026-03-15
+
 ### Added
 - `AbortError#partial_turn` carries the in-progress `TurnResult` when a turn is aborted, eliminating the need for separate extraction paths on cancellation
 - `StreamEvent` typed accessors: `delta_text`, `delta_type`, `thinking_text`, `content_index` for convenient access without hash-digging into raw event data
