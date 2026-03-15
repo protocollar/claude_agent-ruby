@@ -26,19 +26,16 @@ module ClaudeAgent
       def each_message
         return enum_for(:each_message) unless block_given?
 
-        while @running || !@message_queue.empty?
-          # Check abort signal
+        loop do
           @abort_signal&.check!
 
+          raw = @message_queue.pop  # blocks until data available
+          break if raw == :done     # sentinel from reader_loop
+
           begin
-            raw = @message_queue.pop(true)
             message = @parser.parse(raw)
             yield message
-          rescue ThreadError
-            # Queue empty, wait a bit
-            sleep 0.01
           rescue AbortError
-            # Re-raise abort errors
             raise
           rescue => e
             logger.warn("protocol") { "Message parse error: #{e.message}" }

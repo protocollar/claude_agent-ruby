@@ -72,7 +72,8 @@ module ClaudeAgent
           @condition.broadcast
         end
 
-        # Terminate the transport
+        # Unblock the consumer and terminate the transport
+        @message_queue.push(:done)
         @transport.terminate if @transport.respond_to?(:terminate)
       end
 
@@ -107,6 +108,8 @@ module ClaudeAgent
       rescue AbortError
         logger.debug("protocol") { "Reader thread exiting: abort signal" }
         @running = false
+      ensure
+        @message_queue.push(:done)
       end
     end
   end
