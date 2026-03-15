@@ -189,17 +189,23 @@ module ClaudeAgent
     # Receive messages until a ResultMessage, accumulating into a TurnResult
     #
     # Dispatches events to registered handlers (see {#on}).
+    # On abort, raises {AbortError} with the partial {TurnResult} attached.
     #
     # @yield [Message] Each message as it arrives (optional)
     # @return [TurnResult] The completed turn
+    # @raise [AbortError] If abort signal is triggered (with partial_turn attached)
     def receive_turn
       require_connection!
 
       turn = TurnResult.new
-      receive_response do |message|
-        turn << message
-        @event_handler.handle(message)
-        yield message if block_given?
+      begin
+        receive_response do |message|
+          turn << message
+          @event_handler.handle(message)
+          yield message if block_given?
+        end
+      rescue AbortError => e
+        raise AbortError.new(e.message, partial_turn: turn)
       end
       @event_handler.reset!
       turn

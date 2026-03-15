@@ -34,6 +34,17 @@ module ClaudeAgent
     def abort(reason = nil)
       @signal.abort!(reason)
     end
+
+    # Reset the controller so it can be reused for another turn.
+    #
+    # After calling {#abort}, the controller is in an aborted state
+    # and cannot be reused without resetting. Call this before the
+    # next operation, or use {Conversation} which auto-resets.
+    #
+    # @return [void]
+    def reset!
+      @signal.reset!
+    end
   end
 
   # Signal object that tracks abort state (TypeScript SDK parity)
@@ -91,6 +102,19 @@ module ClaudeAgent
     # @raise [AbortError] If signal has been aborted
     def check!
       raise AbortError, reason if aborted?
+    end
+
+    # Reset the signal so the controller can be reused.
+    #
+    # No-op if the signal has not been aborted.
+    #
+    # @return [void]
+    def reset!
+      @mutex.synchronize do
+        return unless @aborted
+        @aborted = false
+        @reason = nil
+      end
     end
 
     # @api private

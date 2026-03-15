@@ -91,7 +91,9 @@ module ClaudeAgent
   end
 
   class AbortError < Error
-    def initialize: (?String message) -> void
+    attr_reader partial_turn: TurnResult?
+
+    def initialize: (?String message, ?partial_turn: TurnResult?) -> void
   end
 
   # Abort controller for cancelling operations (TypeScript SDK parity)
@@ -100,6 +102,7 @@ module ClaudeAgent
 
     def initialize: () -> void
     def abort: (?String? reason) -> void
+    def reset!: () -> void
   end
 
   # Abort signal for tracking abort state (TypeScript SDK parity)
@@ -110,6 +113,7 @@ module ClaudeAgent
     def on_abort: () { (String?) -> void } -> void
     def wait: (?timeout: Numeric?) -> bool
     def check!: () -> void
+    def reset!: () -> void
     def abort!: (?String? reason) -> void
   end
 
@@ -687,6 +691,10 @@ module ClaudeAgent
     def initialize: (uuid: String, session_id: String, event: Hash[String, untyped], ?parent_tool_use_id: String?) -> void
     def type: () -> :stream_event
     def event_type: () -> String?
+    def delta_text: () -> String?
+    def delta_type: () -> String?
+    def thinking_text: () -> String?
+    def content_index: () -> Integer?
   end
 
   class CompactBoundaryMessage
@@ -1175,6 +1183,8 @@ module ClaudeAgent
     def pending?: () -> bool
     def result: () -> permission_result?
     def wait: (?timeout: Numeric?) -> permission_result
+    def display_label: () -> String
+    def summary: (?max: Integer) -> String
     def inspect: () -> String
   end
 

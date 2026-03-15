@@ -132,6 +132,23 @@ module ClaudeAgent
       end
     end
 
+    # Human-readable label for the permission request.
+    #
+    # Delegates to {ToolUseBlock#display_label} formatting.
+    #
+    # @return [String]
+    def display_label
+      ToolUseBlock.new(id: "", name: tool_name, input: input || {}).display_label
+    end
+
+    # Detailed summary of the tool call.
+    #
+    # @param max [Integer] Maximum length before truncation
+    # @return [String]
+    def summary(max: 60)
+      ToolUseBlock.new(id: "", name: tool_name, input: input || {}).summary(max: max)
+    end
+
     def inspect
       status = resolved? ? "resolved(#{@result&.behavior})" : "pending"
       "#<#{self.class} tool=#{tool_name} status=#{status} age=#{(Time.now - created_at).round(1)}s>"

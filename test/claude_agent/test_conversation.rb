@@ -600,7 +600,7 @@ class TestClaudeAgentConversation < ActiveSupport::TestCase
     assert_instance_of ClaudeAgent::ToolActivityTracker, conversation.tool_tracker
   end
 
-  test "tracker resets between turns" do
+  test "tracker persists after turn and resets at start of next turn" do
     transport = MockTransport.new
     conversation = build_conversation(transport: transport, track_tools: true)
 
@@ -613,10 +613,10 @@ class TestClaudeAgentConversation < ActiveSupport::TestCase
     transport.add_response(result_response)
     conversation.say("Read a.rb")
 
-    # After turn completes, tracker should be reset
-    assert conversation.tool_tracker.empty?
+    # After turn completes, tracker retains data for consumers (e.g., on abort)
+    refute conversation.tool_tracker.empty?
 
-    # Turn 2 with a different tool
+    # Turn 2 — tracker resets at the start of say()
     transport.add_response(assistant_response(
       text: "Writing.",
       tool_use: { id: "t2", name: "Write", input: { "file_path" => "/b.rb", "content" => "hello" } }
@@ -625,8 +625,9 @@ class TestClaudeAgentConversation < ActiveSupport::TestCase
     transport.add_response(result_response)
     conversation.say("Write b.rb")
 
-    # After second turn, tracker is reset again
-    assert conversation.tool_tracker.empty?
+    # After second turn, tracker has only turn 2's tools
+    assert_equal 1, conversation.tool_tracker.size
+    assert_equal "Write", conversation.tool_tracker.first.name
   end
 
   # --- on_permission ---

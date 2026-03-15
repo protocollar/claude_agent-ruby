@@ -66,8 +66,8 @@ class TestIntegrationPermissionsAndToolsScenarios < IntegrationTestCase
     assert started.any?, "Expected at least one on_start callback"
     assert completed.any?, "Expected at least one on_complete callback"
 
-    # Tracker resets after say
-    assert conversation.tool_tracker.empty?, "Tracker should be empty after say returns"
+    # Tracker persists after say (resets at start of next say)
+    refute conversation.tool_tracker.empty?, "Tracker should retain data after say returns"
   ensure
     conversation&.close
   end

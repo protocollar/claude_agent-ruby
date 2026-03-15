@@ -35,6 +35,7 @@ module ClaudeAgent
     def initialize
       @messages = []
       @result = nil
+      @streamed_text = +""
     end
 
     # Append a message to this turn
@@ -44,6 +45,13 @@ module ClaudeAgent
     def <<(message)
       @messages << message
       @result = message if message.is_a?(ResultMessage)
+
+      # Accumulate streaming text deltas for reliable text access on abort
+      if message.is_a?(StreamEvent)
+        delta = message.delta_text
+        @streamed_text << delta if delta
+      end
+
       self
     end
 
@@ -61,10 +69,20 @@ module ClaudeAgent
 
     # --- Text & Thinking ---
 
-    # All text content concatenated across assistant messages
+    # All text content from the turn.
+    #
+    # Returns text from AssistantMessages when available (canonical source).
+    # Falls back to accumulated streaming deltas when assistant messages
+    # have no text (e.g., turn was aborted before AssistantMessage arrived).
+    #
     # @return [String]
     def text
-      assistant_messages.map(&:text).join
+      t = assistant_messages.map(&:text).join
+      if t.empty? && !@streamed_text.empty?
+        @streamed_text.dup.freeze
+      else
+        t
+      end
     end
 
     # All thinking content concatenated across assistant messages

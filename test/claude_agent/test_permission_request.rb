@@ -181,6 +181,47 @@ class TestClaudeAgentPermissionRequest < ActiveSupport::TestCase
     assert_nil request.result.tool_use_id
   end
 
+  # --- display_label ---
+
+  test "display_label for Bash tool" do
+    assert_equal "Bash: rm -rf /tmp/test", @request.display_label
+  end
+
+  test "display_label for Read tool" do
+    request = ClaudeAgent::PermissionRequest.new(
+      tool_name: "Read",
+      input: { file_path: "/Users/me/Code/project/lib/foo.rb" },
+      context: @context,
+      request_id: "req-read"
+    )
+    assert_equal "Read lib/foo.rb", request.display_label
+  end
+
+  test "display_label for unknown tool" do
+    request = ClaudeAgent::PermissionRequest.new(
+      tool_name: "CustomTool",
+      input: { data: "stuff" },
+      context: @context,
+      request_id: "req-custom"
+    )
+    assert_equal "CustomTool", request.display_label
+  end
+
+  test "display_label with nil input" do
+    request = ClaudeAgent::PermissionRequest.new(
+      tool_name: "Bash",
+      input: nil,
+      context: @context,
+      request_id: "req-nil"
+    )
+    assert_equal "Bash", request.display_label
+  end
+
+  test "summary for Bash tool" do
+    summary = @request.summary(max: 80)
+    assert_match(/Bash: rm -rf \/tmp\/test/, summary)
+  end
+
   # --- Thread safety ---
 
   test "concurrent resolution attempts" do
