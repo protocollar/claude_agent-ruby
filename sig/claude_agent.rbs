@@ -255,6 +255,13 @@ module ClaudeAgent
     def initialize: (type: String, uuid: String, session_id: String, message: untyped, ?parent_tool_use_id: nil) -> void
   end
 
+  # Fork session result (TypeScript SDK v0.2.76 parity)
+  class ForkSessionResult
+    attr_reader session_id: String
+
+    def initialize: (session_id: String) -> void
+  end
+
   # Agent definition for custom subagents (TypeScript SDK parity)
   class AgentDefinition
     attr_reader description: String
@@ -996,6 +1003,13 @@ module ClaudeAgent
     def initialize: (trigger: String, ?custom_instructions: String?, **untyped) -> void
   end
 
+  class PostCompactInput < BaseHookInput
+    attr_reader trigger: String
+    attr_reader compact_summary: String
+
+    def initialize: (trigger: String, compact_summary: String, **untyped) -> void
+  end
+
   class PermissionRequestInput < BaseHookInput
     attr_reader tool_name: String
     attr_reader tool_input: Hash[String, untyped]
@@ -1384,6 +1398,7 @@ module ClaudeAgent
   def self.rename_session: (String session_id, String title, ?dir: String?) -> void
   def self.tag_session: (String session_id, String? tag, ?dir: String?) -> void
   def self.get_session_info: (String session_id, ?dir: String?) -> SessionInfo?
+  def self.fork_session: (String session_id, ?up_to_message_id: String?, ?title: String?, ?dir: String?) -> ForkSessionResult
 
   # Shared session path infrastructure
   module SessionPaths
@@ -1425,6 +1440,14 @@ module ClaudeAgent
   # Single session lookup (TypeScript SDK v0.2.75 parity)
   module GetSessionInfo
     def self.call: (String session_id, ?dir: String?) -> SessionInfo?
+  end
+
+  # Session forking (TypeScript SDK v0.2.76 parity)
+  module ForkSession
+    UUID_FIELDS: Array[String]
+    SESSION_ID_FIELDS: Array[String]
+
+    def self.call: (String session_id, ?up_to_message_id: String?, ?title: String?, ?dir: String?) -> ForkSessionResult
   end
 
   # Convenience methods
@@ -1514,6 +1537,8 @@ module ClaudeAgent
     def mcp_server_status: () -> Array[McpServerStatus]
     def account_info: () -> AccountInfo
     def initialization_result: () -> InitializationResult
+    def cancel_async_message: (String message_uuid) -> Hash[String, untyped]
+    def get_settings: () -> Hash[String, untyped]
     def pending_permission: () -> PermissionRequest?
     def pending_permissions?: () -> bool
   end
@@ -1580,6 +1605,8 @@ module ClaudeAgent
     def mcp_server_status: () -> Array[McpServerStatus]
     def account_info: () -> AccountInfo
     def initialization_result: () -> InitializationResult
+    def cancel_async_message: (String message_uuid) -> Hash[String, untyped]
+    def get_settings: () -> Hash[String, untyped]
   end
 
   # Transport layer

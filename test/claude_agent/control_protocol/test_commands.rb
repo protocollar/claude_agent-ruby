@@ -100,6 +100,35 @@ class TestClaudeAgentControlProtocolCommands < ActiveSupport::TestCase
     assert_equal "my-remote-server", msg["request"]["serverName"]
   end
 
+  test "cancel_async_message sends correct request format" do
+    @transport.connect
+
+    @protocol.send(:write_message, {
+      type: "control_request",
+      request_id: "test-req",
+      request: { subtype: "cancel_async_message", message_uuid: "msg-uuid-123" }
+    })
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" }
+    assert_not_nil msg
+    assert_equal "cancel_async_message", msg["request"]["subtype"]
+    assert_equal "msg-uuid-123", msg["request"]["message_uuid"]
+  end
+
+  test "get_settings sends correct request format" do
+    @transport.connect
+
+    @protocol.send(:write_message, {
+      type: "control_request",
+      request_id: "test-req",
+      request: { subtype: "get_settings" }
+    })
+
+    msg = @transport.written_messages.find { |m| m["type"] == "control_request" }
+    assert_not_nil msg
+    assert_equal "get_settings", msg["request"]["subtype"]
+  end
+
   test "mcp_toggle sends correct request format" do
     @transport.connect
 

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `PostCompact` hook event with `PostCompactInput` type (`trigger` and `compact_summary` fields) (TypeScript SDK v0.2.76 parity)
+- `cancel_async_message` control request to drop queued user messages by UUID (TypeScript SDK v0.2.76 parity)
+- `get_settings` control request to read effective merged settings (TypeScript SDK v0.2.76 parity)
+- `fork_session` standalone function to branch a session from a specific point with UUID remapping (TypeScript SDK v0.2.76 parity)
+- `ForkSessionResult` data type returned by `fork_session`
+
 ## [0.7.14] - 2026-03-14
 
 ### Fixed

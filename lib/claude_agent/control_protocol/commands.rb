@@ -299,6 +299,34 @@ module ClaudeAgent
           errors: response["errors"] || {}
         )
       end
+      # Cancel a queued async user message (TypeScript SDK v0.2.76 parity)
+      #
+      # Drops a previously queued user message before it is processed.
+      #
+      # @param message_uuid [String] UUID of the message to cancel
+      # @return [Hash] Response from the CLI
+      #
+      # @example
+      #   protocol.cancel_async_message("msg-uuid-123")
+      #
+      def cancel_async_message(message_uuid)
+        send_control_request(subtype: "cancel_async_message", message_uuid: message_uuid)
+      end
+
+      # Get effective merged settings (TypeScript SDK v0.2.76 parity)
+      #
+      # Returns the current effective settings after merging all layers
+      # (user, project, local, flag, etc.).
+      #
+      # @return [Hash] Merged settings
+      #
+      # @example
+      #   settings = protocol.get_settings
+      #   puts settings["model"]
+      #
+      def get_settings
+        send_control_request(subtype: "get_settings")
+      end
     end
   end
 end

@@ -328,8 +328,8 @@ Bidirectional control protocol for SDK-CLI communication.
 | `account_info`            |     ✅      |   ❌    |  ✅   | Get account information                      |
 | `apply_flag_settings`     |     ✅      |   ❌    |  ✅   | Merge settings into flag layer               |
 | `supported_agents`        |     ✅      |   ❌    |  ✅   | Get available subagents (v0.2.63)            |
-| `cancel_async_message`    |     ✅      |   ❌    |  ❌   | Cancel queued user message by UUID (v0.2.76) |
-| `get_settings`            |     ✅      |   ❌    |  ❌   | Get effective merged settings (v0.2.72)      |
+| `cancel_async_message`    |     ✅      |   ❌    |  ✅   | Cancel queued user message by UUID (v0.2.76) |
+| `get_settings`            |     ✅      |   ❌    |  ✅   | Get effective merged settings (v0.2.72)      |
 
 ### Return Types
 
@@ -428,7 +428,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `SubagentStart`      |     ✅      |   ✅    |  ✅   | Subagent starts (Py v0.1.29)      |
 | `SubagentStop`       |     ✅      |   ✅    |  ✅   | Subagent stops                    |
 | `PreCompact`         |     ✅      |   ✅    |  ✅   | Before compaction                 |
-| `PostCompact`        |     ✅      |   ❌    |  ❌   | After compaction (v0.2.76)        |
+| `PostCompact`        |     ✅      |   ❌    |  ✅   | After compaction (v0.2.76)        |
 | `PermissionRequest`  |     ✅      |   ✅    |  ✅   | Permission requested (Py v0.1.29) |
 | `Setup`              |     ✅      |   ❌    |  ✅   | Initial setup/maintenance         |
 | `TeammateIdle`       |     ✅      |   ❌    |  ✅   | Teammate idle (v0.2.33)           |
@@ -455,7 +455,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `SubagentStartHookInput`      |     ✅      |   ✅    |  ✅   |
 | `SubagentStopHookInput`       |     ✅      |   ✅    |  ✅   |
 | `PreCompactHookInput`         |     ✅      |   ✅    |  ✅   |
-| `PostCompactHookInput`        |     ✅      |   ❌    |  ❌   |
+| `PostCompactHookInput`        |     ✅      |   ❌    |  ✅   |
 | `PermissionRequestHookInput`  |     ✅      |   ✅    |  ✅   |
 | `SetupHookInput`              |     ✅      |   ❌    |  ✅   |
 | `TeammateIdleHookInput`       |     ✅      |   ❌    |  ✅   |
@@ -545,8 +545,8 @@ Event-specific fields returned via `hookSpecificOutput`:
 
 | Field             | TypeScript | Python | Ruby | Notes                          |
 |-------------------|:----------:|:------:|:----:|--------------------------------|
-| `trigger`         |     ✅      |   ❌    |  ❌   | 'manual' or 'auto'             |
-| `compact_summary` |     ✅      |   ❌    |  ❌   | Summary produced by compaction |
+| `trigger`         |     ✅      |   ❌    |  ✅   | 'manual' or 'auto'             |
+| `compact_summary` |     ✅      |   ❌    |  ✅   | Summary produced by compaction |
 
 #### SetupHookSpecificOutput
 
@@ -751,7 +751,7 @@ Session management and resumption.
 | `getSessionInfo()`     |     ✅      |   ❌    |  ✅   | Get single session metadata (v0.2.75)            |
 | `renameSession()`      |     ✅      |   ✅    |  ✅   | Rename a session (v0.2.74)                       |
 | `tagSession()`         |     ✅      |   ✅    |  ✅   | Tag a session (v0.2.75)                          |
-| `forkSession()`        |     ✅      |   ❌    |  ❌   | Fork/branch a session (v0.2.76)                  |
+| `forkSession()`        |     ✅      |   ❌    |  ✅   | Fork/branch a session (v0.2.76)                  |
 
 #### ListSessionsOptions
 
@@ -925,7 +925,7 @@ Public API surface for SDK clients.
 | `getSessionInfo()`     |     ✅      |   ❌    |  ✅   | Get single session metadata (v0.2.75)      |
 | `renameSession()`      |     ✅      |   ✅    |  ✅   | Rename a session (v0.2.74)                 |
 | `tagSession()`         |     ✅      |   ✅    |  ✅   | Tag a session (v0.2.75)                    |
-| `forkSession()`        |     ✅      |   ❌    |  ❌   | Fork/branch a session (v0.2.76)            |
+| `forkSession()`        |     ✅      |   ❌    |  ✅   | Fork/branch a session (v0.2.76)            |
 
 ### Query Interface
 
@@ -1048,10 +1048,8 @@ Public API surface for SDK clients.
 - Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`, `InstructionsLoaded` hook, `agentProgressSummaries`, `getSessionInfo()`, `forkSession()`, `PostCompact` hook, `cancel_async_message`, `get_settings`
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.75
+- Feature parity with TypeScript SDK v0.2.76
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)
-- Full v0.2.75 parity: `agentProgressSummaries`, `getSessionInfo()`, `renameSession()`, `tagSession()`, `offset` on `listSessions`, `tag`/`createdAt` on `SessionInfo`, `supportsAutoMode` on `ModelInfo`
-- Missing v0.2.76 features: `forkSession()` standalone function, `PostCompact` hook event, `cancel_async_message` control request, `get_settings` control request

@@ -17,6 +17,7 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert_includes ClaudeAgent::HOOK_EVENTS, "SubagentStart"
     assert_includes ClaudeAgent::HOOK_EVENTS, "SubagentStop"
     assert_includes ClaudeAgent::HOOK_EVENTS, "PreCompact"
+    assert_includes ClaudeAgent::HOOK_EVENTS, "PostCompact"
     assert_includes ClaudeAgent::HOOK_EVENTS, "PermissionRequest"
     assert_includes ClaudeAgent::HOOK_EVENTS, "InstructionsLoaded"
   end
@@ -307,6 +308,53 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
   test "pre_compact_input_without_instructions" do
     input = ClaudeAgent::PreCompactInput.new(trigger: "manual")
     assert_nil input.custom_instructions
+  end
+
+  # --- PostCompactInput ---
+
+  test "post_compact_event_in_hook_events" do
+    assert_includes ClaudeAgent::HOOK_EVENTS, "PostCompact"
+  end
+
+  test "post_compact_input" do
+    input = ClaudeAgent::PostCompactInput.new(
+      trigger: "auto",
+      compact_summary: "Summarized the conversation context",
+      session_id: "sess-123"
+    )
+    assert_equal "PostCompact", input.hook_event_name
+    assert_equal "auto", input.trigger
+    assert_equal "Summarized the conversation context", input.compact_summary
+    assert_equal "sess-123", input.session_id
+  end
+
+  test "post_compact_input_requires_trigger_and_compact_summary" do
+    assert_raises(ArgumentError) do
+      ClaudeAgent::PostCompactInput.new(trigger: "auto")
+      # Missing required :compact_summary
+    end
+
+    assert_raises(ArgumentError) do
+      ClaudeAgent::PostCompactInput.new(compact_summary: "summary")
+      # Missing required :trigger
+    end
+  end
+
+  test "post_compact_input_inherits_base_fields" do
+    input = ClaudeAgent::PostCompactInput.new(
+      trigger: "manual",
+      compact_summary: "Key points summarized",
+      transcript_path: "/path/to/transcript",
+      cwd: "/home/user",
+      permission_mode: "default",
+      agent_id: "agent-abc",
+      agent_type: "Explore"
+    )
+    assert_equal "/path/to/transcript", input.transcript_path
+    assert_equal "/home/user", input.cwd
+    assert_equal "default", input.permission_mode
+    assert_equal "agent-abc", input.agent_id
+    assert_equal "Explore", input.agent_type
   end
 
   # --- PermissionRequestInput ---
@@ -627,7 +675,7 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert ClaudeAgent::SetupInput < ClaudeAgent::BaseHookInput
   end
 
-  test "define_input generates all 20 input classes" do
+  test "define_input generates all 21 input classes" do
     ClaudeAgent::HOOK_EVENTS.each do |event|
       klass = ClaudeAgent.const_get("#{event}Input")
       assert klass < ClaudeAgent::BaseHookInput, "#{event}Input should inherit from BaseHookInput"
