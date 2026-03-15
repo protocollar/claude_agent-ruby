@@ -14,6 +14,7 @@ module ClaudeAgent
     SubagentStart
     SubagentStop
     PreCompact
+    PostCompact
     PermissionRequest
     Setup
     TeammateIdle
@@ -183,6 +184,9 @@ module ClaudeAgent
   BaseHookInput.define_input "PreCompact",
     required: [ :trigger ],
     optional: { custom_instructions: nil }
+
+  BaseHookInput.define_input "PostCompact",
+    required: [ :trigger, :compact_summary ]
 
   BaseHookInput.define_input "PermissionRequest",
     required: [ :tool_name, :tool_input ],

@@ -220,6 +220,38 @@ module ClaudeAgent
 
         @protocol.mcp_clear_auth(server_name)
       end
+
+      # Cancel a queued async user message (TypeScript SDK v0.2.76 parity)
+      #
+      # Drops a previously queued user message before it is processed.
+      #
+      # @param message_uuid [String] UUID of the message to cancel
+      # @return [Hash] Response from the CLI
+      #
+      # @example
+      #   client.cancel_async_message("msg-uuid-123")
+      #
+      def cancel_async_message(message_uuid)
+        require_connection!
+
+        @protocol.cancel_async_message(message_uuid)
+      end
+
+      # Get effective merged settings (TypeScript SDK v0.2.76 parity)
+      #
+      # Returns the current effective settings after merging all layers.
+      #
+      # @return [Hash] Merged settings
+      #
+      # @example
+      #   settings = client.get_settings
+      #   puts settings["model"]
+      #
+      def get_settings
+        require_connection!
+
+        @protocol.get_settings
+      end
     end
   end
 end

@@ -38,6 +38,7 @@ require_relative "claude_agent/get_session_messages"    # Session transcript rea
 require_relative "claude_agent/session_message_relation" # Chainable message query object
 require_relative "claude_agent/session_mutations"          # Session rename/tag mutations
 require_relative "claude_agent/get_session_info"           # Single session lookup
+require_relative "claude_agent/fork_session"               # Session forking (TypeScript SDK v0.2.76 parity)
 require_relative "claude_agent/v2_session"                  # V2 Session API (unstable)
 require_relative "claude_agent/session"                    # Session finder
 
@@ -108,6 +109,17 @@ module ClaudeAgent
     # @return [SessionInfo, nil]
     def get_session_info(session_id, dir: nil)
       GetSessionInfo.call(session_id, dir: dir)
+    end
+
+    # Fork a session by creating a new session file with remapped UUIDs.
+    #
+    # @param session_id [String] UUID of the source session
+    # @param up_to_message_id [String, nil] Truncate at this message UUID (inclusive)
+    # @param title [String, nil] Title for the forked session
+    # @param dir [String, nil] Project directory to find the session in
+    # @return [ForkSessionResult]
+    def fork_session(session_id, up_to_message_id: nil, title: nil, dir: nil)
+      ForkSession.call(session_id, up_to_message_id: up_to_message_id, title: title, dir: dir)
     end
 
     # Resume a previous Conversation by session ID

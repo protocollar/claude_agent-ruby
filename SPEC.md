@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.75 (npm package)
-- Python SDK: from GitHub (commit 9880677)
+- TypeScript SDK: v0.2.76 (npm package)
+- Python SDK: from GitHub (commit 302ceb6)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-03-13
+**Last Updated:** 2026-03-15
 
 ---
 
@@ -305,29 +305,31 @@ Bidirectional control protocol for SDK-CLI communication.
 
 ### Control Request Types
 
-| Request Subtype           | TypeScript | Python | Ruby | Notes                                      |
-|---------------------------|:----------:|:------:|:----:|--------------------------------------------|
-| `initialize`              |     ✅      |   ✅    |  ✅   | Initialize session with hooks/MCP          |
-| `interrupt`               |     ✅      |   ✅    |  ✅   | Interrupt current operation                |
-| `can_use_tool`            |     ✅      |   ✅    |  ✅   | Permission callback                        |
-| `hook_callback`           |     ✅      |   ✅    |  ✅   | Execute hook callback                      |
-| `set_permission_mode`     |     ✅      |   ✅    |  ✅   | Change permission mode                     |
-| `set_model`               |     ✅      |   ✅    |  ✅   | Change model                               |
-| `set_max_thinking_tokens` |     ✅      |   ❌    |  ✅   | Change thinking tokens limit               |
-| `rewind_files`            |     ✅      |   ✅    |  ✅   | Rewind file checkpoints (supports dry_run) |
-| `mcp_message`             |     ✅      |   ✅    |  ✅   | Route MCP message                          |
-| `mcp_set_servers`         |     ✅      |   ❌    |  ✅   | Dynamically set MCP servers                |
-| `mcp_status`              |     ✅      |   ✅    |  ✅   | Get MCP server status                      |
-| `mcp_reconnect`           |     ✅      |   ✅    |  ✅   | Reconnect to MCP server                    |
-| `mcp_toggle`              |     ✅      |   ✅    |  ✅   | Enable/disable MCP server                  |
-| `stop_task`               |     ✅      |   ✅    |  ✅   | Stop a running background task             |
-| `mcp_authenticate`        |     ✅      |   ❌    |  ✅   | Authenticate MCP server (v0.2.52)          |
-| `mcp_clear_auth`          |     ✅      |   ❌    |  ✅   | Clear MCP server auth (v0.2.52)            |
-| `supported_commands`      |     ✅      |   ❌    |  ✅   | Get available slash commands               |
-| `supported_models`        |     ✅      |   ❌    |  ✅   | Get available models                       |
-| `account_info`            |     ✅      |   ❌    |  ✅   | Get account information                    |
-| `apply_flag_settings`     |     ✅      |   ❌    |  ✅   | Merge settings into flag layer             |
-| `supported_agents`        |     ✅      |   ❌    |  ✅   | Get available subagents (v0.2.63)          |
+| Request Subtype           | TypeScript | Python | Ruby | Notes                                        |
+|---------------------------|:----------:|:------:|:----:|----------------------------------------------|
+| `initialize`              |     ✅      |   ✅    |  ✅   | Initialize session with hooks/MCP            |
+| `interrupt`               |     ✅      |   ✅    |  ✅   | Interrupt current operation                  |
+| `can_use_tool`            |     ✅      |   ✅    |  ✅   | Permission callback                          |
+| `hook_callback`           |     ✅      |   ✅    |  ✅   | Execute hook callback                        |
+| `set_permission_mode`     |     ✅      |   ✅    |  ✅   | Change permission mode                       |
+| `set_model`               |     ✅      |   ✅    |  ✅   | Change model                                 |
+| `set_max_thinking_tokens` |     ✅      |   ❌    |  ✅   | Change thinking tokens limit                 |
+| `rewind_files`            |     ✅      |   ✅    |  ✅   | Rewind file checkpoints (supports dry_run)   |
+| `mcp_message`             |     ✅      |   ✅    |  ✅   | Route MCP message                            |
+| `mcp_set_servers`         |     ✅      |   ❌    |  ✅   | Dynamically set MCP servers                  |
+| `mcp_status`              |     ✅      |   ✅    |  ✅   | Get MCP server status                        |
+| `mcp_reconnect`           |     ✅      |   ✅    |  ✅   | Reconnect to MCP server                      |
+| `mcp_toggle`              |     ✅      |   ✅    |  ✅   | Enable/disable MCP server                    |
+| `stop_task`               |     ✅      |   ✅    |  ✅   | Stop a running background task               |
+| `mcp_authenticate`        |     ✅      |   ❌    |  ✅   | Authenticate MCP server (v0.2.52)            |
+| `mcp_clear_auth`          |     ✅      |   ❌    |  ✅   | Clear MCP server auth (v0.2.52)              |
+| `supported_commands`      |     ✅      |   ❌    |  ✅   | Get available slash commands                 |
+| `supported_models`        |     ✅      |   ❌    |  ✅   | Get available models                         |
+| `account_info`            |     ✅      |   ❌    |  ✅   | Get account information                      |
+| `apply_flag_settings`     |     ✅      |   ❌    |  ✅   | Merge settings into flag layer               |
+| `supported_agents`        |     ✅      |   ❌    |  ✅   | Get available subagents (v0.2.63)            |
+| `cancel_async_message`    |     ✅      |   ❌    |  ✅   | Cancel queued user message by UUID (v0.2.76) |
+| `get_settings`            |     ✅      |   ❌    |  ✅   | Get effective merged settings (v0.2.72)      |
 
 ### Return Types
 
@@ -426,6 +428,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `SubagentStart`      |     ✅      |   ✅    |  ✅   | Subagent starts (Py v0.1.29)      |
 | `SubagentStop`       |     ✅      |   ✅    |  ✅   | Subagent stops                    |
 | `PreCompact`         |     ✅      |   ✅    |  ✅   | Before compaction                 |
+| `PostCompact`        |     ✅      |   ❌    |  ✅   | After compaction (v0.2.76)        |
 | `PermissionRequest`  |     ✅      |   ✅    |  ✅   | Permission requested (Py v0.1.29) |
 | `Setup`              |     ✅      |   ❌    |  ✅   | Initial setup/maintenance         |
 | `TeammateIdle`       |     ✅      |   ❌    |  ✅   | Teammate idle (v0.2.33)           |
@@ -452,6 +455,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `SubagentStartHookInput`      |     ✅      |   ✅    |  ✅   |
 | `SubagentStopHookInput`       |     ✅      |   ✅    |  ✅   |
 | `PreCompactHookInput`         |     ✅      |   ✅    |  ✅   |
+| `PostCompactHookInput`        |     ✅      |   ❌    |  ✅   |
 | `PermissionRequestHookInput`  |     ✅      |   ✅    |  ✅   |
 | `SetupHookInput`              |     ✅      |   ❌    |  ✅   |
 | `TeammateIdleHookInput`       |     ✅      |   ❌    |  ✅   |
@@ -536,6 +540,13 @@ Event-specific fields returned via `hookSpecificOutput`:
 | Field               | TypeScript | Python | Ruby | Notes                            |
 |---------------------|:----------:|:------:|:----:|----------------------------------|
 | `additionalContext` |     ✅      |   ✅    |  ✅   | Context string returned to model |
+
+#### PostCompactHookInput Fields
+
+| Field             | TypeScript | Python | Ruby | Notes                          |
+|-------------------|:----------:|:------:|:----:|--------------------------------|
+| `trigger`         |     ✅      |   ❌    |  ✅   | 'manual' or 'auto'             |
+| `compact_summary` |     ✅      |   ❌    |  ✅   | Summary produced by compaction |
 
 #### SetupHookSpecificOutput
 
@@ -740,6 +751,7 @@ Session management and resumption.
 | `getSessionInfo()`     |     ✅      |   ❌    |  ✅   | Get single session metadata (v0.2.75)            |
 | `renameSession()`      |     ✅      |   ✅    |  ✅   | Rename a session (v0.2.74)                       |
 | `tagSession()`         |     ✅      |   ✅    |  ✅   | Tag a session (v0.2.75)                          |
+| `forkSession()`        |     ✅      |   ❌    |  ✅   | Fork/branch a session (v0.2.76)                  |
 
 #### ListSessionsOptions
 
@@ -782,6 +794,20 @@ Session management and resumption.
 | `cwd`          |     ✅      |   ✅    |  ✅   | Working directory for session       |
 | `tag`          |     ✅      |   ❌    |  ✅   | User-set tag (v0.2.75)              |
 | `createdAt`    |     ✅      |   ❌    |  ✅   | Creation time in ms (v0.2.75)       |
+
+#### ForkSessionOptions
+
+| Field            | TypeScript | Python | Ruby | Notes                                          |
+|------------------|:----------:|:------:|:----:|------------------------------------------------|
+| `dir`            |     ✅      |   ❌    |  ❌   | Project directory                              |
+| `upToMessageId`  |     ✅      |   ❌    |  ❌   | Slice transcript up to this UUID (inclusive)   |
+| `title`          |     ✅      |   ❌    |  ❌   | Custom title for the fork                      |
+
+#### ForkSessionResult
+
+| Field       | TypeScript | Python | Ruby | Notes                          |
+|-------------|:----------:|:------:|:----:|--------------------------------|
+| `sessionId` |     ✅      |   ❌    |  ❌   | New forked session UUID        |
 
 ### V2 Session API (Unstable)
 
@@ -899,6 +925,7 @@ Public API surface for SDK clients.
 | `getSessionInfo()`     |     ✅      |   ❌    |  ✅   | Get single session metadata (v0.2.75)      |
 | `renameSession()`      |     ✅      |   ✅    |  ✅   | Rename a session (v0.2.74)                 |
 | `tagSession()`         |     ✅      |   ✅    |  ✅   | Tag a session (v0.2.75)                    |
+| `forkSession()`        |     ✅      |   ❌    |  ✅   | Fork/branch a session (v0.2.76)            |
 
 ### Query Interface
 
@@ -989,6 +1016,7 @@ Public API surface for SDK clients.
 - v0.2.73: Fixed `options.env` being overridden by `~/.claude/settings.json`
 - v0.2.74: Added `renameSession()` for renaming session files
 - v0.2.75: Added `tag`/`createdAt` fields on `SDKSessionInfo`; `getSessionInfo()` for single-session lookup; `offset` on `listSessions` for pagination; `tagSession()` for tagging sessions; `supportsAutoMode` in `ModelInfo`; `description` on `SDKControlPermissionRequest`; `prompt` on `SDKTaskStartedMessage`; `fast_mode_state` on `SDKControlInitializeResponse`; `queued_to_running` status on `AgentToolOutput`
+- v0.2.76: Added `forkSession(sessionId, opts?)` for branching conversations from a point; `cancel_async_message` control subtype to drop queued user messages; `PostCompact` hook event with `compact_summary` field; `get_settings` control request for reading effective merged settings; `planFilePath` field on `ExitPlanMode` tool input
 - Includes `Elicitation`/`ElicitationResult` hook events, `onElicitation` option, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState` (undocumented in changelog, present in types)
 
 ### Python SDK
@@ -1017,12 +1045,11 @@ Public API surface for SDK clients.
 - v0.1.48: Fixed fine-grained tool streaming regression
 - Added `RateLimitEvent` message type with `RateLimitInfo`
 - Added `rename_session()` and `tag_session()` session management functions
-- Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`, `InstructionsLoaded` hook, `agentProgressSummaries`, `getSessionInfo()`
+- Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`, `InstructionsLoaded` hook, `agentProgressSummaries`, `getSessionInfo()`, `forkSession()`, `PostCompact` hook, `cancel_async_message`, `get_settings`
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.75
+- Feature parity with TypeScript SDK v0.2.76
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)
-- Full v0.2.75 parity: `agentProgressSummaries`, `getSessionInfo()`, `renameSession()`, `tagSession()`, `offset` on `listSessions`, `tag`/`createdAt` on `SessionInfo`, `supportsAutoMode` on `ModelInfo`

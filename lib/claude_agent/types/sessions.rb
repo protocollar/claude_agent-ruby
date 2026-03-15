@@ -47,4 +47,12 @@ module ClaudeAgent
       super
     end
   end
+
+  # Result of forking a session (TypeScript SDK v0.2.76 parity)
+  #
+  # @example
+  #   result = ClaudeAgent.fork_session("abc-123")
+  #   puts result.session_id  # => new UUID
+  #
+  ForkSessionResult = Data.define(:session_id)
 end
