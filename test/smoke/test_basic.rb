@@ -44,4 +44,12 @@ class TestSmokeBasic < SmokeTestCase
   ensure
     conversation&.close
   end
+
+  test "ask returns TurnResult" do
+    turn = ClaudeAgent.ask("Reply with exactly: ASK_SMOKE", options: test_options)
+
+    assert_instance_of ClaudeAgent::TurnResult, turn
+    assert turn.complete?
+    assert turn.success?
+  end
 end

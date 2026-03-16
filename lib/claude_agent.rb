@@ -13,6 +13,9 @@ require_relative "claude_agent/spawn"              # Custom spawn support (TypeS
 require_relative "claude_agent/options"
 require_relative "claude_agent/content_blocks"
 require_relative "claude_agent/messages"
+require_relative "claude_agent/message"              # Shared interface module for all message/block types
+require_relative "claude_agent/permission_policy"    # Declarative permission DSL
+require_relative "claude_agent/hook_registry"        # Declarative hooks DSL
 require_relative "claude_agent/message_parser"
 require_relative "claude_agent/hooks"
 require_relative "claude_agent/permissions"
@@ -40,10 +43,135 @@ require_relative "claude_agent/session_mutations"          # Session rename/tag 
 require_relative "claude_agent/get_session_info"           # Single session lookup
 require_relative "claude_agent/fork_session"               # Session forking (TypeScript SDK v0.2.76 parity)
 require_relative "claude_agent/v2_session"                  # V2 Session API (unstable)
+require_relative "claude_agent/configuration"                # Stripe-style global config
 require_relative "claude_agent/session"                    # Session finder
 
 module ClaudeAgent
+  require "forwardable"
+
+  @config = Configuration.setup
+
   class << self
+    extend Forwardable
+    attr_reader :config
+
+    # --- Tier 1 delegators (set once at boot) ---
+
+    def_delegators :@config, :model, :model=,
+                             :permission_mode, :permission_mode=,
+                             :max_turns, :max_turns=,
+                             :max_budget_usd, :max_budget_usd=,
+                             :system_prompt, :system_prompt=,
+                             :append_system_prompt, :append_system_prompt=,
+                             :cli_path, :cli_path=,
+                             :cwd, :cwd=,
+                             :sandbox, :sandbox=,
+                             :debug, :debug=,
+                             :effort, :effort=,
+                             :persist_session, :persist_session=,
+                             :fallback_model, :fallback_model=
+
+    # Block-based bulk configuration.
+    #
+    # @example
+    #   ClaudeAgent.configure do |c|
+    #     c.model = "opus"
+    #     c.max_turns = 10
+    #   end
+    #
+    # @yield [Configuration]
+    # @return [void]
+    def configure
+      yield @config
+    end
+
+    # Reset configuration to defaults.
+    # @return [Configuration]
+    def reset_config!
+      @config = Configuration.setup
+    end
+
+    # --- Primary entry points ---
+
+    # One-shot query — the simple path returns a TurnResult.
+    #
+    # @param prompt [String] The prompt to send to Claude
+    # @param options [Options, nil] Pre-built Options (bypasses Configuration merge)
+    # @param kwargs Overrides merged with Configuration defaults
+    # @yield [Message] Each message as it streams in (optional)
+    # @return [TurnResult]
+    #
+    # @example Simple
+    #   turn = ClaudeAgent.ask("What is 2+2?")
+    #   puts turn.text
+    #
+    # @example With overrides
+    #   turn = ClaudeAgent.ask("Fix the bug", model: "opus", max_turns: 5)
+    #
+    # @example With streaming
+    #   turn = ClaudeAgent.ask("Explain Ruby") { |msg| print msg.text_content }
+    #
+    def ask(prompt, options: nil, **kwargs, &block)
+      callbacks, config_overrides = extract_callbacks(kwargs)
+
+      opts = options || @config.to_options(**config_overrides)
+      events = build_events(callbacks)
+
+      query_turn(prompt: prompt, options: opts, events: events, &block)
+    end
+
+    # Multi-turn conversation — block form auto-cleans, no block returns Conversation.
+    #
+    # @param kwargs Overrides merged with Configuration defaults
+    # @yield [Conversation] Block form with auto-cleanup
+    # @return [Conversation, Object] Conversation (no block) or block return value
+    #
+    # @example Block form
+    #   ClaudeAgent.chat(model: "opus") do |c|
+    #     c.say("Hello")
+    #     c.say("Goodbye")
+    #   end
+    #
+    # @example No block
+    #   c = ClaudeAgent.chat(model: "opus")
+    #   c.say("Hello")
+    #   c.close
+    #
+    def chat(**kwargs, &block)
+      # Merge global config defaults into kwargs for Conversation
+      merged = merge_config_into_kwargs(kwargs)
+
+      if block
+        Conversation.open(**merged, &block)
+      else
+        Conversation.new(**merged)
+      end
+    end
+
+    # Set a global permission policy.
+    #
+    # @yield [PermissionPolicy] DSL block
+    # @return [void]
+    def permissions(&block)
+      @config.default_permissions = PermissionPolicy.new(&block)
+    end
+
+    # Set global hooks.
+    #
+    # @yield [HookRegistry] DSL block
+    # @return [void]
+    def hooks(&block)
+      @config.default_hooks = HookRegistry.new(&block)
+    end
+
+    # Register a global MCP server.
+    #
+    # @param server [MCP::Server] Server instance
+    # @return [void]
+    def register_mcp_server(server)
+      @config.default_mcp_servers[server.name] = server.to_config
+    end
+
     # Create a new Conversation
     #
     # @see Conversation#initialize
@@ -129,6 +257,53 @@ module ClaudeAgent
     # @return [Conversation]
     def resume_conversation(session_id, **kwargs)
       Conversation.resume(session_id, **kwargs)
+    end
+
+    private
+
+    # Separate on_* callbacks from config overrides in kwargs.
+    def extract_callbacks(kwargs)
+      callbacks = {}
+      config_overrides = {}
+
+      kwargs.each do |key, value|
+        if key.to_s.start_with?("on_") || key == :can_use_tool
+          callbacks[key] = value
+        else
+          config_overrides[key] = value
+        end
+      end
+
+      [ callbacks, config_overrides ]
+    end
+
+    # Build an EventHandler from on_* callback kwargs.
+    def build_events(callbacks)
+      return nil if callbacks.empty?
+
+      events = EventHandler.new
+      callbacks.each do |key, value|
+        next unless value
+        next if key == :can_use_tool
+
+        event = Conversation::CALLBACK_ALIASES[key] || key.to_s.delete_prefix("on_").to_sym
+        events.on(event, &value)
+      end
+      events.has_handlers? ? events : nil
+    end
+
+    # Merge global config defaults into Conversation kwargs.
+    def merge_config_into_kwargs(kwargs)
+      merged = {}
+
+      # Apply config defaults for fields Conversation forwards to Options
+      Configuration::ALL_FIELDS.each do |field|
+        config_val = @config.public_send(field)
+        merged[field] = config_val unless config_val.nil?
+      end
+
+      # Per-request kwargs override config
+      merged.merge(kwargs)
     end
   end
 end

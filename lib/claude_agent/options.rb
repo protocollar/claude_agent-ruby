@@ -122,8 +122,18 @@ module ClaudeAgent
               "Must set allow_dangerously_skip_permissions: true to use bypassPermissions mode"
       end
 
+      # Auto-compile PermissionPolicy to can_use_tool lambda
+      if can_use_tool.is_a?(PermissionPolicy)
+        @can_use_tool = can_use_tool.to_can_use_tool
+      end
+
       if can_use_tool && !can_use_tool.respond_to?(:call)
         raise ConfigurationError, "can_use_tool must be callable (Proc, Lambda, or object responding to #call)"
+      end
+
+      # Auto-compile HookRegistry to hooks hash
+      if hooks.is_a?(HookRegistry)
+        @hooks = hooks.to_hooks_hash
       end
 
       if on_elicitation && !on_elicitation.respond_to?(:call)

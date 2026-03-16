@@ -73,12 +73,12 @@ module ClaudeAgent
 
       private
 
-      # Normalize schema from simple Ruby types to JSON Schema
+      # Normalize schema from simple Ruby types or symbol shortcuts to JSON Schema
       def normalize_schema(schema)
         return schema if json_schema?(schema)
 
-        # Convert simple {name: Type} format to JSON Schema
-        if schema.is_a?(Hash) && schema.values.all? { |v| v.is_a?(Class) || v.is_a?(Module) }
+        # Convert simple {name: Type} or {name: :type_symbol} format to JSON Schema
+        if schema.is_a?(Hash) && schema.values.all? { |v| v.is_a?(Class) || v.is_a?(Module) || v.is_a?(Symbol) }
           {
             type: "object",
             properties: schema.transform_values { |type| type_to_schema(type) },
@@ -96,7 +96,28 @@ module ClaudeAgent
           schema.key?(:properties) || schema.key?("properties")
       end
 
+      # Symbol type shortcuts for schema definitions
+      SYMBOL_TYPE_MAP = {
+        string: "string",
+        str: "string",
+        integer: "integer",
+        int: "integer",
+        number: "number",
+        float: "number",
+        numeric: "number",
+        boolean: "boolean",
+        bool: "boolean",
+        array: "array",
+        object: "object",
+        hash: "object"
+      }.freeze
+
       def type_to_schema(type)
+        if type.is_a?(Symbol)
+          json_type = SYMBOL_TYPE_MAP[type] || "string"
+          return { type: json_type }
+        end
+
         case type.to_s
         when "String"
           { type: "string" }

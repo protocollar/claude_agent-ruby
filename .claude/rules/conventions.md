@@ -587,36 +587,86 @@ validate! \
 
 ## Advanced Patterns
 
-### Global Coordinator (Use Sparingly)
+### Stripe-Style Global Configuration
 
-For CLI applications that need shared state:
+Module-level config with `Forwardable` delegators for common fields. A `Configuration`
+object holds defaults; `to_options(**overrides)` merges per-request overrides and returns
+the internal `Options` type.
 
 ```ruby
-# lib/gem_name/cli.rb
-COORDINATOR = Coordinator.new
+module GemName
+  require "forwardable"
 
-class Cli::Base
-  def initialize(*)
-    super
-    initialize_coordinator unless COORDINATOR.configured?
+  @config = Configuration.setup
+
+  class << self
+    extend Forwardable
+    attr_reader :config
+
+    def_delegators :@config, :model, :model=,
+                             :max_turns, :max_turns=
+
+    def configure = yield(@config)
+    def reset_config! = @config = Configuration.setup
+  end
+end
+
+# Usage:
+GemName.model = "opus"
+GemName.configure { |c| c.max_turns = 10 }
+```
+
+### DSL Builder Pattern
+
+Declarative builders that compile to the format consumed by internal plumbing.
+The builder accumulates rules/matchers, then `to_*` produces the final artifact.
+
+```ruby
+class PermissionPolicy
+  def initialize(&block)
+    @rules = []
+    yield self if block_given?
+  end
+
+  def allow(*names)
+    names.each { |n| @rules << { name: n, action: :allow } }
+    self
+  end
+
+  def to_can_use_tool
+    rules = @rules.dup.freeze
+    ->(tool_name, input, ctx) { ... }
   end
 end
 ```
 
-### Factory Methods in Coordinator
+Key conventions:
+- Constructor takes `&block` and yields `self`
+- Methods return `self` for chaining
+- `to_*` method compiles to the internal format
+- `empty?` predicate for skipping when unconfigured
+
+### Prepending Modules into Data.define Types
+
+To add shared behavior (like `deconstruct_keys` overrides) to `Data.define` classes,
+use `prepend` not `include`. Data.define generates methods on the class itself, so
+`include` would be shadowed. When overriding `deconstruct_keys`, filter virtual keys
+out before calling `super` — Data's implementation stops early on unknown member keys.
 
 ```ruby
-class Coordinator
-  def app(role: nil, host: nil)
-    Commands::App.new(config, role: role, host: host)
-  end
-
-  def builder
-    @builder ||= Commands::Builder.new(config)
-  end
-
-  def configured?
-    @config.present?
+module Message
+  def deconstruct_keys(keys)
+    if keys.nil?
+      { type: type }.merge(super)
+    elsif keys.include?(:type)
+      member_keys = keys - [ :type ]
+      base = member_keys.empty? ? {} : super(member_keys)
+      { type: type }.merge(base)
+    else
+      super
+    end
   end
 end
+
+MESSAGE_TYPES.each { |klass| klass.prepend(Message) }
 ```

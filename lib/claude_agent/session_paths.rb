@@ -93,9 +93,12 @@ module ClaudeAgent
     # @param path [String]
     # @return [String]
     def realpath(path)
-      File.realpath(path).unicode_normalize(:nfc)
+      resolved = File.realpath(path)
+      resolved = resolved.encode("UTF-8") unless resolved.encoding == Encoding::UTF_8
+      resolved.unicode_normalize(:nfc)
     rescue SystemCallError
-      path.unicode_normalize(:nfc)
+      safe = path.encode("UTF-8") rescue path
+      safe.unicode_normalize(:nfc) rescue safe
     end
 
     # Get git worktree paths for a directory.

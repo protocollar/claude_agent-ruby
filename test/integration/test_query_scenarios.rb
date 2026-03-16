@@ -59,4 +59,53 @@ class TestIntegrationQueryScenarios < IntegrationTestCase
     assert_not_nil result
     assert result.num_turns <= 1, "Expected max 1 turn"
   end
+
+  test "ask: returns TurnResult, streams via block, respects config overrides" do
+    # Set global config
+    original_config = ClaudeAgent.config
+    ClaudeAgent.reset_config!
+    ClaudeAgent.max_turns = 1
+
+    streamed = []
+    turn = ClaudeAgent.ask("Reply with exactly: ASK_TEST") { |msg| streamed << msg }
+
+    # --- Returns TurnResult ---
+    assert_instance_of ClaudeAgent::TurnResult, turn
+    assert turn.complete?
+    assert turn.success?
+    assert_includes turn.text, "ASK_TEST"
+
+    # --- Block receives messages ---
+    assert streamed.any?, "Expected block to receive messages"
+    assert streamed.any? { |m| m.is_a?(ClaudeAgent::AssistantMessage) }
+    assert streamed.any? { |m| m.is_a?(ClaudeAgent::ResultMessage) }
+
+    # --- Message module works on real messages ---
+    assistant = streamed.find { |m| m.is_a?(ClaudeAgent::AssistantMessage) }
+    assert_not_empty assistant.text_content
+    assert assistant.session_message?
+    assert assistant.identifiable?
+
+    # --- Per-request override wins ---
+    turn2 = ClaudeAgent.ask("Reply with exactly: OVERRIDE", system_prompt: "Be terse.")
+    assert turn2.success?
+  ensure
+    ClaudeAgent.instance_variable_set(:@config, original_config)
+  end
+
+  test "ask: PermissionPolicy flows through to CLI" do
+    policy = ClaudeAgent::PermissionPolicy.new do |p|
+      p.allow "Read", "Grep", "Glob"
+      p.deny_all message: "Denied by test policy"
+    end
+
+    # The policy compiles and runs against the real CLI without error
+    turn = ClaudeAgent.ask(
+      "Reply with exactly: POLICY_TEST",
+      options: ClaudeAgent::Options.new(max_turns: 1, can_use_tool: policy)
+    )
+
+    assert turn.success?
+    assert_includes turn.text, "POLICY_TEST"
+  end
 end

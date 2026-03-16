@@ -87,6 +87,9 @@ module ClaudeAgent
   # Raised when an invalid option is provided
   class ConfigurationError < Error; end
 
+  # Raised when a resource is not found (Stripe convention)
+  class NotFoundError < Error; end
+
   # Raised when an operation is aborted/cancelled (TypeScript SDK parity)
   #
   # This error is raised when an operation is explicitly cancelled,

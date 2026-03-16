@@ -112,11 +112,13 @@ class TestClaudeAgentSession < ActiveSupport::TestCase
     }.merge(overrides))
   end
 
-  # --- Session.find ---
+  # --- Session.find (uses GetSessionInfo, not ListSessions) ---
 
   test "find returns session when found" do
     info = sample_session_info
-    ClaudeAgent::ListSessions.stubs(:call).with(dir: nil).returns([ info ])
+    ClaudeAgent::GetSessionInfo.stubs(:call)
+      .with("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", dir: nil)
+      .returns(info)
 
     session = ClaudeAgent::Session.find("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
 
@@ -132,7 +134,9 @@ class TestClaudeAgentSession < ActiveSupport::TestCase
   end
 
   test "find returns nil when not found" do
-    ClaudeAgent::ListSessions.stubs(:call).with(dir: nil).returns([])
+    ClaudeAgent::GetSessionInfo.stubs(:call)
+      .with("nonexistent-id", dir: nil)
+      .returns(nil)
 
     session = ClaudeAgent::Session.find("nonexistent-id")
 
@@ -141,11 +145,112 @@ class TestClaudeAgentSession < ActiveSupport::TestCase
 
   test "find passes dir option" do
     info = sample_session_info
-    ClaudeAgent::ListSessions.stubs(:call).with(dir: "/my/project").returns([ info ])
+    ClaudeAgent::GetSessionInfo.stubs(:call)
+      .with("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", dir: "/my/project")
+      .returns(info)
 
     session = ClaudeAgent::Session.find("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", dir: "/my/project")
 
     assert_instance_of ClaudeAgent::Session, session
+  end
+
+  # --- Session.retrieve ---
+
+  test "retrieve returns session when found" do
+    info = sample_session_info
+    ClaudeAgent::GetSessionInfo.stubs(:call)
+      .with("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", dir: nil)
+      .returns(info)
+
+    session = ClaudeAgent::Session.retrieve("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+
+    assert_instance_of ClaudeAgent::Session, session
+    assert_equal "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", session.session_id
+  end
+
+  test "retrieve raises NotFoundError when not found" do
+    ClaudeAgent::GetSessionInfo.stubs(:call)
+      .with("nonexistent-id", dir: nil)
+      .returns(nil)
+
+    assert_raises(ClaudeAgent::NotFoundError) do
+      ClaudeAgent::Session.retrieve("nonexistent-id")
+    end
+  end
+
+  # --- Session#tag and Session#created_at ---
+
+  test "tag and created_at attributes exposed" do
+    info = sample_session_info(tag: "important", created_at: 1700000000000)
+    session = ClaudeAgent::Session.new(info)
+
+    assert_equal "important", session.tag
+    assert_equal 1700000000000, session.created_at
+  end
+
+  # --- Instance mutation methods ---
+
+  test "rename delegates to SessionMutations and updates custom_title" do
+    info = sample_session_info
+    session = ClaudeAgent::Session.new(info)
+
+    ClaudeAgent::SessionMutations.expects(:rename_session)
+      .with("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "New Title", dir: "/Users/dev/myapp")
+
+    result = session.rename("New Title")
+    assert_equal "New Title", session.custom_title
+    assert_equal session, result
+  end
+
+  test "tag_session delegates to SessionMutations and updates tag" do
+    info = sample_session_info
+    session = ClaudeAgent::Session.new(info)
+
+    ClaudeAgent::SessionMutations.expects(:tag_session)
+      .with("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "important", dir: "/Users/dev/myapp")
+
+    result = session.tag_session("important")
+    assert_equal "important", session.tag
+    assert_equal session, result
+  end
+
+  test "reload re-reads from disk" do
+    info = sample_session_info
+    session = ClaudeAgent::Session.new(info)
+
+    updated_info = sample_session_info(summary: "Updated summary", custom_title: "Updated Title")
+    ClaudeAgent::GetSessionInfo.stubs(:call)
+      .with("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", dir: "/Users/dev/myapp")
+      .returns(updated_info)
+
+    result = session.reload
+    assert_equal "Updated summary", session.summary
+    assert_equal "Updated Title", session.custom_title
+    assert_equal session, result
+  end
+
+  test "reload raises NotFoundError when session missing" do
+    info = sample_session_info
+    session = ClaudeAgent::Session.new(info)
+
+    ClaudeAgent::GetSessionInfo.stubs(:call)
+      .with("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", dir: "/Users/dev/myapp")
+      .returns(nil)
+
+    assert_raises(ClaudeAgent::NotFoundError) do
+      session.reload
+    end
+  end
+
+  test "resume returns Conversation" do
+    info = sample_session_info
+    session = ClaudeAgent::Session.new(info)
+
+    transport = MockTransport.new
+    client = ClaudeAgent::Client.new(transport: transport)
+    conversation = session.resume(client: client)
+
+    assert_instance_of ClaudeAgent::Conversation, conversation
   end
 
   # --- Session.all ---

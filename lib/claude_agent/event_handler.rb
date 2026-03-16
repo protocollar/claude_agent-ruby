@@ -54,6 +54,20 @@ module ClaudeAgent
     # All known events
     EVENTS = (META_EVENTS + TYPE_EVENTS + DECOMPOSED_EVENTS).freeze
 
+    # Create an EventHandler with block-based DSL.
+    #
+    # @example
+    #   handler = ClaudeAgent::EventHandler.define do
+    #     on_text { |t| print t }
+    #     on_result { |r| puts "\nCost: $#{r.total_cost_usd}" }
+    #   end
+    #
+    # @yield [self] Block evaluated in the context of the new handler
+    # @return [EventHandler]
+    def self.define(&block)
+      new.tap { |h| h.instance_eval(&block) }
+    end
+
     def initialize
       @handlers = Hash.new { |h, k| h[k] = [] }
       @pending_tool_uses = {}

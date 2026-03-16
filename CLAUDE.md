@@ -1,6 +1,23 @@
 # ClaudeAgent Ruby SDK
 
-Ruby SDK for building autonomous AI agents that interact with Claude Code CLI. See [README.md](README.md) for API usage, message types, configuration, and examples.
+Ruby SDK for building autonomous AI agents that interact with Claude Code CLI. See [README.md](README.md) for a quick start, and the [docs/](docs/) folder for full guides:
+
+| Guide                                      | What's in it                                         |
+|--------------------------------------------|------------------------------------------------------|
+| [Getting Started](docs/getting-started.md) | Install, first queries, multi-turn basics            |
+| [Configuration](docs/configuration.md)     | Global config, Options, sandbox, agents              |
+| [Conversations](docs/conversations.md)     | Multi-turn API, TurnResult, callbacks, tool tracking |
+| [Queries](docs/queries.md)                 | One-shot: ask, query_turn, query                     |
+| [Permissions](docs/permissions.md)         | PermissionPolicy DSL, can_use_tool, queue            |
+| [Hooks](docs/hooks.md)                     | HookRegistry DSL, hook events, input types           |
+| [MCP Tools](docs/mcp.md)                   | In-process tools, servers, schemas                   |
+| [Events](docs/events.md)                   | EventHandler, typed callbacks                        |
+| [Messages](docs/messages.md)               | 22 message types, 8 content blocks, pattern matching |
+| [Sessions](docs/sessions.md)               | Session discovery, mutations, forking                |
+| [Client](docs/client.md)                   | Low-level bidirectional API                          |
+| [Errors](docs/errors.md)                   | Error hierarchy                                      |
+| [Logging](docs/logging.md)                 | Debug logging, log levels                            |
+| [Architecture](docs/architecture.md)       | Internal design, data flow                           |
 
 ## Stack
 
@@ -36,11 +53,14 @@ bin/release VERSION                # Release gem (e.g., bin/release 1.2.0)
 
 ## Conventions
 
-- **Immutable data types**: All messages and options use `Data.define`
+- **Immutable data types**: All messages and content blocks use `Data.define`, frozen at construction
 - **Frozen string literals**: Every file starts with `# frozen_string_literal: true`
-- **Message polymorphism**: Use `case` statements or `is_a?()` for content block types
+- **Message module**: All message/block types include `ClaudeAgent::Message` (text_content, pattern matching)
+- **Stripe-style config**: `ClaudeAgent.model = "opus"`, `ClaudeAgent.configure { |c| ... }`, `Configuration#to_options`
+- **Convenience entry points**: `ClaudeAgent.ask(prompt)` (one-shot), `ClaudeAgent.chat { |c| ... }` (multi-turn)
+- **DSL builders**: `PermissionPolicy` and `HookRegistry` compile to lambdas/hashes consumed by Options
 - **Error hierarchy**: All errors inherit from `ClaudeAgent::Error` with context (exit code, stderr, etc.)
-- **Protocol flow**: Transport → ControlProtocol → MessageParser → typed message objects
+- **Protocol flow**: Configuration → Options → Transport → ControlProtocol → MessageParser → typed messages
 
 ## Testing Notes
 
