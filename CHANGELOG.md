@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.17] - 2026-03-17
+
 ### Added
 - `APIRetryMessage` system message type with `attempt`, `max_retries`, `retry_delay_ms`, `error_status`, and `error` fields (TypeScript SDK v0.2.77 parity)
 - `title` and `display_name` fields on `ToolPermissionContext` for richer permission prompt context (TypeScript SDK v0.2.77 parity)
