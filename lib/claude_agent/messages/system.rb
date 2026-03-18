@@ -55,6 +55,33 @@ module ClaudeAgent
   #     status: "compacting"
   #   )
   #
+  # API retry message (TypeScript SDK v0.2.77 parity)
+  #
+  # Emitted when an API request fails with a retryable error and will be
+  # retried after a delay. Exposes attempt count, max retries, delay, and
+  # error status for observability.
+  #
+  # @example
+  #   msg = APIRetryMessage.new(
+  #     uuid: "msg-123",
+  #     session_id: "session-abc",
+  #     attempt: 1,
+  #     max_retries: 3,
+  #     retry_delay_ms: 5000,
+  #     error_status: 529,
+  #     error: "rate_limit"
+  #   )
+  #
+  APIRetryMessage = Data.define(:uuid, :session_id, :attempt, :max_retries, :retry_delay_ms, :error_status, :error) do
+    def initialize(uuid: "", session_id: "", attempt: 0, max_retries: 0, retry_delay_ms: 0, error_status: nil, error: nil)
+      super
+    end
+
+    def type
+      :api_retry
+    end
+  end
+
   StatusMessage = Data.define(:uuid, :session_id, :status, :permission_mode) do
     def initialize(uuid:, session_id:, status:, permission_mode: nil)
       super

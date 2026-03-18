@@ -1418,6 +1418,67 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
     assert_equal "", msg.suggestion
   end
 
+  # --- APIRetryMessage parsing ---
+
+  test "parse_api_retry_message" do
+    raw = {
+      "type" => "system",
+      "subtype" => "api_retry",
+      "uuid" => "msg-123",
+      "session_id" => "sess-abc",
+      "attempt" => 2,
+      "max_retries" => 5,
+      "retry_delay_ms" => 3000,
+      "error_status" => 529,
+      "error" => "rate_limit"
+    }
+    msg = @parser.parse(raw)
+
+    assert_instance_of ClaudeAgent::APIRetryMessage, msg
+    assert_equal "msg-123", msg.uuid
+    assert_equal "sess-abc", msg.session_id
+    assert_equal 2, msg.attempt
+    assert_equal 5, msg.max_retries
+    assert_equal 3000, msg.retry_delay_ms
+    assert_equal 529, msg.error_status
+    assert_equal "rate_limit", msg.error
+    assert_equal :api_retry, msg.type
+  end
+
+  test "parse_api_retry_message_connection_error" do
+    raw = {
+      "type" => "system",
+      "subtype" => "api_retry",
+      "uuid" => "msg-456",
+      "session_id" => "sess-xyz",
+      "attempt" => 1,
+      "max_retries" => 3,
+      "retry_delay_ms" => 1000,
+      "error_status" => nil,
+      "error" => "unknown"
+    }
+    msg = @parser.parse(raw)
+
+    assert_nil msg.error_status
+    assert_equal "unknown", msg.error
+  end
+
+  test "parse_api_retry_message_defaults" do
+    raw = {
+      "type" => "system",
+      "subtype" => "api_retry"
+    }
+    msg = @parser.parse(raw)
+
+    assert_equal "", msg.uuid
+    assert_equal "", msg.session_id
+    assert_equal 0, msg.attempt
+    assert_equal 0, msg.max_retries
+    assert_equal 0, msg.retry_delay_ms
+    assert_nil msg.error_status
+    assert_nil msg.error
+  end
+
   # --- Parser Registry ---
 
   test "registry contains all top-level message types" do
@@ -1434,7 +1495,7 @@ class TestClaudeAgentMessageParser < ActiveSupport::TestCase
 
     %w[compact_boundary status hook_response task_notification hook_started
        hook_progress files_persisted task_started task_progress
-       elicitation_complete local_command_output].each do |subtype|
+       elicitation_complete local_command_output api_retry].each do |subtype|
       assert registry.key?("system:#{subtype}"), "Registry should contain 'system:#{subtype}'"
     end
   end

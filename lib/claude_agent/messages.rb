@@ -34,6 +34,7 @@ module ClaudeAgent
     PromptSuggestionMessage,
     ElicitationCompleteMessage,
     LocalCommandOutputMessage,
+    APIRetryMessage,
     GenericMessage
   ].freeze
 end

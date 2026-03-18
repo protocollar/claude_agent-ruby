@@ -86,6 +86,7 @@ module ClaudeAgent
     register "system:task_progress",            :parse_task_progress_message
     register "system:elicitation_complete",    :parse_elicitation_complete_message
     register "system:local_command_output",    :parse_local_command_output_message
+    register "system:api_retry",              :parse_api_retry_message
 
     private
 
@@ -419,6 +420,18 @@ module ClaudeAgent
         uuid: raw[:uuid] || "",
         session_id: raw[:session_id] || "",
         suggestion: raw[:suggestion] || ""
+      )
+    end
+
+    def parse_api_retry_message(raw)
+      APIRetryMessage.new(
+        uuid: raw[:uuid] || "",
+        session_id: raw[:session_id] || "",
+        attempt: raw[:attempt] || 0,
+        max_retries: raw[:max_retries] || 0,
+        retry_delay_ms: raw[:retry_delay_ms] || 0,
+        error_status: raw[:error_status],
+        error: raw[:error]
       )
     end
   end

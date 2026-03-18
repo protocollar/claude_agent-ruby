@@ -64,6 +64,8 @@ module ClaudeAgent
           tool_use_id: request["tool_use_id"],
           agent_id: request["agent_id"],
           description: request["description"],
+          title: request["title"],
+          display_name: request["display_name"],
           signal: @abort_signal,
           request: perm_request
         )
