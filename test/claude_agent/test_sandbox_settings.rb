@@ -368,4 +368,48 @@ class TestClaudeAgentSandboxSettings < ActiveSupport::TestCase
     h = sandbox.to_h
     refute h.key?(:filesystem)
   end
+
+  # --- SandboxFilesystemConfig allow_read and allow_managed_read_paths_only ---
+
+  test "sandbox_filesystem_config_allow_read" do
+    config = ClaudeAgent::SandboxFilesystemConfig.new(
+      deny_read: [ "/secrets/*" ],
+      allow_read: [ "/secrets/public/*" ]
+    )
+    assert_equal [ "/secrets/public/*" ], config.allow_read
+  end
+
+  test "sandbox_filesystem_config_allow_read_default" do
+    config = ClaudeAgent::SandboxFilesystemConfig.new
+    assert_equal [], config.allow_read
+    assert_equal false, config.allow_managed_read_paths_only
+  end
+
+  test "sandbox_filesystem_config_allow_managed_read_paths_only" do
+    config = ClaudeAgent::SandboxFilesystemConfig.new(
+      allow_managed_read_paths_only: true
+    )
+    assert_equal true, config.allow_managed_read_paths_only
+  end
+
+  test "sandbox_filesystem_config_to_h_with_allow_read" do
+    config = ClaudeAgent::SandboxFilesystemConfig.new(
+      deny_read: [ "/secrets/*" ],
+      allow_read: [ "/secrets/public/*" ],
+      allow_managed_read_paths_only: true
+    )
+    h = config.to_h
+    assert_equal [ "/secrets/*" ], h[:denyRead]
+    assert_equal [ "/secrets/public/*" ], h[:allowRead]
+    assert_equal true, h[:allowManagedReadPathsOnly]
+  end
+
+  test "sandbox_filesystem_config_to_h_omits_empty_allow_read" do
+    config = ClaudeAgent::SandboxFilesystemConfig.new(
+      allow_write: [ "/tmp/*" ]
+    )
+    h = config.to_h
+    refute h.key?(:allowRead)
+    refute h.key?(:allowManagedReadPathsOnly)
+  end
 end

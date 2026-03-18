@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.76 (npm package)
-- Python SDK: from GitHub (commit 302ceb6)
+- TypeScript SDK: v0.2.77 (npm package)
+- Python SDK: from GitHub (commit 971994c)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-03-15
+**Last Updated:** 2026-03-17
 
 ---
 
@@ -116,8 +116,19 @@ Messages exchanged between SDK and CLI.
 | `FilesPersistedEvent`        |     ✅      |   ❌    |  ✅   | File persistence confirmation      |
 | `ElicitationCompleteMessage` |     ✅      |   ❌    |  ✅   | MCP elicitation completed          |
 | `LocalCommandOutputMessage`  |     ✅      |   ❌    |  ✅   | Local command output               |
+| `APIRetryMessage`            |     ✅      |   ❌    |  ✅   | API retry notification (v0.2.77)   |
 
 ### Message Fields
+
+#### APIRetryMessage
+
+| Field             | TypeScript | Python | Ruby | Notes                                    |
+|-------------------|:----------:|:------:|:----:|------------------------------------------|
+| `attempt`         |     ✅      |   ❌    |  ✅   | Current retry attempt number             |
+| `max_retries`     |     ✅      |   ❌    |  ✅   | Maximum retry count                      |
+| `retry_delay_ms`  |     ✅      |   ❌    |  ✅   | Delay before retry in milliseconds       |
+| `error_status`    |     ✅      |   ❌    |  ✅   | HTTP status code (null for conn errors)  |
+| `error`           |     ✅      |   ❌    |  ✅   | Error type (AssistantMessageError)       |
 
 #### ResultMessage
 
@@ -666,6 +677,8 @@ Permission handling and updates.
 | `toolUseID`      |     ✅      |   ❌    |  ✅   | Tool call ID                                     |
 | `agentID`        |     ✅      |   ❌    |  ✅   | Subagent ID if applicable                        |
 | `description`    |     ✅      |   ❌    |  ✅   | Human-readable tool description (v0.2.75)        |
+| `title`          |     ✅      |   ❌    |  ✅   | Full permission prompt sentence (v0.2.77)        |
+| `displayName`    |     ✅      |   ❌    |  ✅   | Short noun phrase for tool action (v0.2.77)      |
 
 ---
 
@@ -799,15 +812,15 @@ Session management and resumption.
 
 | Field            | TypeScript | Python | Ruby | Notes                                          |
 |------------------|:----------:|:------:|:----:|------------------------------------------------|
-| `dir`            |     ✅      |   ❌    |  ❌   | Project directory                              |
-| `upToMessageId`  |     ✅      |   ❌    |  ❌   | Slice transcript up to this UUID (inclusive)   |
-| `title`          |     ✅      |   ❌    |  ❌   | Custom title for the fork                      |
+| `dir`            |     ✅      |   ❌    |  ✅   | Project directory                              |
+| `upToMessageId`  |     ✅      |   ❌    |  ✅   | Slice transcript up to this UUID (inclusive)   |
+| `title`          |     ✅      |   ❌    |  ✅   | Custom title for the fork                      |
 
 #### ForkSessionResult
 
 | Field       | TypeScript | Python | Ruby | Notes                          |
 |-------------|:----------:|:------:|:----:|--------------------------------|
-| `sessionId` |     ✅      |   ❌    |  ❌   | New forked session UUID        |
+| `sessionId` |     ✅      |   ❌    |  ✅   | New forked session UUID        |
 
 ### V2 Session API (Unstable)
 
@@ -833,9 +846,10 @@ Custom subagent definitions.
 | `tools`                               |     ✅      |   ✅    |  ✅   | Allowed tools                              |
 | `disallowedTools`                     |     ✅      |   ❌    |  ✅   | Blocked tools                              |
 | `model`                               |     ✅      |   ✅    |  ✅   | Model override (sonnet/opus/haiku/inherit) |
-| `mcpServers`                          |     ✅      |   ❌    |  ✅   | Agent-specific MCP servers                 |
+| `mcpServers`                          |     ✅      |   ✅    |  ✅   | Agent-specific MCP servers                 |
 | `criticalSystemReminder_EXPERIMENTAL` |     ✅      |   ❌    |  ✅   | Critical reminder (experimental)           |
-| `skills`                              |     ✅      |   ❌    |  ✅   | Skills to preload into agent context       |
+| `skills`                              |     ✅      |   ✅    |  ✅   | Skills to preload into agent context       |
+| `memory`                              |     ❌      |   ✅    |  ❌   | Memory scope for agent (Python-only)       |
 | `maxTurns`                            |     ✅      |   ❌    |  ✅   | Max agentic turns before stopping          |
 
 ---
@@ -861,11 +875,13 @@ Sandbox configuration for command execution isolation.
 
 ### SandboxFilesystemConfig
 
-| Field        | TypeScript | Python | Ruby |
-|--------------|:----------:|:------:|:----:|
-| `allowWrite` |     ✅      |   ❌    |  ✅   |
-| `denyWrite`  |     ✅      |   ❌    |  ✅   |
-| `denyRead`   |     ✅      |   ❌    |  ✅   |
+| Field                       | TypeScript | Python | Ruby |
+|-----------------------------|:----------:|:------:|:----:|
+| `allowWrite`                |     ✅      |   ❌    |  ✅   |
+| `denyWrite`                 |     ✅      |   ❌    |  ✅   |
+| `denyRead`                  |     ✅      |   ❌    |  ✅   |
+| `allowRead`                 |     ✅      |   ❌    |  ✅   |
+| `allowManagedReadPathsOnly` |     ✅      |   ❌    |  ✅   |
 
 ### SandboxNetworkConfig
 
@@ -1017,6 +1033,7 @@ Public API surface for SDK clients.
 - v0.2.74: Added `renameSession()` for renaming session files
 - v0.2.75: Added `tag`/`createdAt` fields on `SDKSessionInfo`; `getSessionInfo()` for single-session lookup; `offset` on `listSessions` for pagination; `tagSession()` for tagging sessions; `supportsAutoMode` in `ModelInfo`; `description` on `SDKControlPermissionRequest`; `prompt` on `SDKTaskStartedMessage`; `fast_mode_state` on `SDKControlInitializeResponse`; `queued_to_running` status on `AgentToolOutput`
 - v0.2.76: Added `forkSession(sessionId, opts?)` for branching conversations from a point; `cancel_async_message` control subtype to drop queued user messages; `PostCompact` hook event with `compact_summary` field; `get_settings` control request for reading effective merged settings; `planFilePath` field on `ExitPlanMode` tool input
+- v0.2.77: Added `SDKAPIRetryMessage` (system subtype `api_retry`) exposing attempt count, max retries, delay, and error status for transient API error retries; added `title` and `displayName` fields on `SDKControlPermissionRequest`/`CanUseTool` options; added `allowRead` and `allowManagedReadPathsOnly` on `SandboxFilesystemConfig`
 - Includes `Elicitation`/`ElicitationResult` hook events, `onElicitation` option, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState` (undocumented in changelog, present in types)
 
 ### Python SDK
@@ -1045,10 +1062,11 @@ Public API surface for SDK clients.
 - v0.1.48: Fixed fine-grained tool streaming regression
 - Added `RateLimitEvent` message type with `RateLimitInfo`
 - Added `rename_session()` and `tag_session()` session management functions
-- Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`, `InstructionsLoaded` hook, `agentProgressSummaries`, `getSessionInfo()`, `forkSession()`, `PostCompact` hook, `cancel_async_message`, `get_settings`
+- `AgentDefinition` now has `skills`, `mcpServers`, and `memory` (Python-only) fields
+- Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`, `InstructionsLoaded` hook, `agentProgressSummaries`, `getSessionInfo()`, `forkSession()`, `PostCompact` hook, `cancel_async_message`, `get_settings`, `APIRetryMessage`
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.76
+- Feature parity with TypeScript SDK v0.2.77
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations

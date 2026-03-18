@@ -147,6 +147,8 @@ module ClaudeAgent
   #     decision_reason: "Path outside allowed directories",
   #     tool_use_id: "tool_123",
   #     agent_id: "agent_456",
+  #     title: "Claude wants to read /etc/passwd",
+  #     display_name: "Read file",
   #     signal: abort_signal
   #   )
   #
@@ -158,6 +160,8 @@ module ClaudeAgent
     :agent_id,
     :signal,
     :description,
+    :title,
+    :display_name,
     :request
   ) do
     def initialize(
@@ -168,6 +172,8 @@ module ClaudeAgent
       agent_id: nil,
       signal: nil,
       description: nil,
+      title: nil,
+      display_name: nil,
       request: nil
     )
       super

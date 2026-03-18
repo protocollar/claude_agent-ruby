@@ -314,8 +314,10 @@ module ClaudeAgent
     attr_reader allow_write: Array[String]
     attr_reader deny_write: Array[String]
     attr_reader deny_read: Array[String]
+    attr_reader allow_read: Array[String]
+    attr_reader allow_managed_read_paths_only: bool
 
-    def initialize: (?allow_write: Array[String], ?deny_write: Array[String], ?deny_read: Array[String]) -> void
+    def initialize: (?allow_write: Array[String], ?deny_write: Array[String], ?deny_read: Array[String], ?allow_read: Array[String], ?allow_managed_read_paths_only: bool) -> void
     def to_h: () -> Hash[Symbol, untyped]
   end
 
@@ -573,6 +575,20 @@ module ClaudeAgent
     def type: () -> :local_command_output
   end
 
+  # API retry message (TypeScript SDK v0.2.77 parity)
+  class APIRetryMessage
+    attr_reader uuid: String
+    attr_reader session_id: String
+    attr_reader attempt: Integer
+    attr_reader max_retries: Integer
+    attr_reader retry_delay_ms: Integer
+    attr_reader error_status: Integer?
+    attr_reader error: String?
+
+    def initialize: (?uuid: String, ?session_id: String, ?attempt: Integer, ?max_retries: Integer, ?retry_delay_ms: Integer, ?error_status: Integer?, ?error: String?) -> void
+    def type: () -> :api_retry
+  end
+
   class GenericMessage
     attr_reader message_type: String?
     attr_reader raw: Hash[Symbol, untyped]
@@ -584,7 +600,7 @@ module ClaudeAgent
   end
 
   # Message types
-  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent | TaskStartedMessage | TaskProgressMessage | RateLimitEvent | PromptSuggestionMessage | ElicitationCompleteMessage | LocalCommandOutputMessage | GenericMessage
+  type message = UserMessage | UserMessageReplay | AssistantMessage | SystemMessage | ResultMessage | StreamEvent | CompactBoundaryMessage | StatusMessage | ToolProgressMessage | HookResponseMessage | AuthStatusMessage | TaskNotificationMessage | HookStartedMessage | HookProgressMessage | ToolUseSummaryMessage | FilesPersistedEvent | TaskStartedMessage | TaskProgressMessage | RateLimitEvent | PromptSuggestionMessage | ElicitationCompleteMessage | LocalCommandOutputMessage | APIRetryMessage | GenericMessage
 
   MESSAGE_TYPES: Array[Class]
 
@@ -1161,9 +1177,11 @@ module ClaudeAgent
     attr_reader agent_id: String?
     attr_reader signal: AbortSignal?
     attr_reader description: String?
+    attr_reader title: String?
+    attr_reader display_name: String?
     attr_reader request: PermissionRequest?
 
-    def initialize: (?permission_suggestions: untyped, ?blocked_path: String?, ?decision_reason: String?, ?tool_use_id: String?, ?agent_id: String?, ?signal: AbortSignal?, ?description: String?, ?request: PermissionRequest?) -> void
+    def initialize: (?permission_suggestions: untyped, ?blocked_path: String?, ?decision_reason: String?, ?tool_use_id: String?, ?agent_id: String?, ?signal: AbortSignal?, ?description: String?, ?title: String?, ?display_name: String?, ?request: PermissionRequest?) -> void
   end
 
   # Deferred permission request resolved from any thread

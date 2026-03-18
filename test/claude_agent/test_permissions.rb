@@ -305,4 +305,21 @@ class TestClaudeAgentPermissions < ActiveSupport::TestCase
     context = ClaudeAgent::ToolPermissionContext.new
     assert_nil context.request
   end
+
+  test "tool_permission_context_with_title_and_display_name" do
+    context = ClaudeAgent::ToolPermissionContext.new(
+      title: "Claude wants to read /etc/passwd",
+      display_name: "Read file",
+      tool_use_id: "tool-123"
+    )
+    assert_equal "Claude wants to read /etc/passwd", context.title
+    assert_equal "Read file", context.display_name
+    assert_equal "tool-123", context.tool_use_id
+  end
+
+  test "tool_permission_context_title_and_display_name_default_nil" do
+    context = ClaudeAgent::ToolPermissionContext.new
+    assert_nil context.title
+    assert_nil context.display_name
+  end
 end
