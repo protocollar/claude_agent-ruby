@@ -54,8 +54,8 @@ class TestClaudeAgentHookRegistry < ActiveSupport::TestCase
     assert hooks.key?("Stop")
   end
 
-  test "all 22 events are mapped" do
-    assert_equal 22, ClaudeAgent::HookRegistry::EVENT_MAP.size
+  test "all 23 events are mapped" do
+    assert_equal 23, ClaudeAgent::HookRegistry::EVENT_MAP.size
   end
 
   # --- Matcher normalization ---

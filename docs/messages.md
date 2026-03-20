@@ -61,7 +61,7 @@ end
 
 ## Message Types
 
-22 message types, grouped by category.
+24 message types, grouped by category.
 
 ### Conversation Messages
 
@@ -222,6 +222,28 @@ Methods:
 - `type` -- `:compact_boundary`
 - `trigger` -- compaction trigger type (`"manual"` or `"auto"`)
 - `pre_tokens` -- token count before compaction
+
+#### APIRetryMessage
+
+Emitted when an API request fails with a retryable error and will be retried.
+
+```ruby
+APIRetryMessage = Data.define(:uuid, :session_id, :attempt, :max_retries, :retry_delay_ms, :error_status, :error)
+```
+
+| Field            | Type           | Default |
+|------------------|----------------|---------|
+| `uuid`           | `String`       | `""`    |
+| `session_id`     | `String`       | `""`    |
+| `attempt`        | `Integer`      | `0`     |
+| `max_retries`    | `Integer`      | `0`     |
+| `retry_delay_ms` | `Integer`      | `0`     |
+| `error_status`   | `Integer, nil` | `nil`   |
+| `error`          | `String, nil`  | `nil`   |
+
+Methods:
+
+- `type` -- `:api_retry`
 
 #### StatusMessage
 

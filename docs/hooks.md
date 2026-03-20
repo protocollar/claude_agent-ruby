@@ -64,11 +64,11 @@ When both global and per-conversation hooks are set, they are merged additively 
 
 Each hook method accepts an optional first argument that filters which tool names trigger the callback. The matcher is passed as the first positional argument, before any keyword arguments.
 
-| Matcher type | Behavior | Example |
-|---|---|---|
-| `nil` (omitted) | Catch-all, fires for every tool | `h.before_tool_use { \|i, c\| ... }` |
-| `String` | Treated as a regex pattern | `h.before_tool_use("Bash") { \|i, c\| ... }` |
-| `Regexp` | Normalized to its `source` string | `h.before_tool_use(/Bash\|Write/) { \|i, c\| ... }` |
+| Matcher type    | Behavior                          | Example                                             |
+|-----------------|-----------------------------------|-----------------------------------------------------|
+| `nil` (omitted) | Catch-all, fires for every tool   | `h.before_tool_use { \|i, c\| ... }`                |
+| `String`        | Treated as a regex pattern        | `h.before_tool_use("Bash") { \|i, c\| ... }`        |
+| `Regexp`        | Normalized to its `source` string | `h.before_tool_use(/Bash\|Write/) { \|i, c\| ... }` |
 
 A `Regexp` is converted to its `.source` string internally so it can be serialized over the control protocol. This means flags like `Regexp::IGNORECASE` are not preserved.
 
@@ -133,7 +133,7 @@ end
 
 ## Event Mapping Table
 
-All 22 hook events with their Ruby DSL method, CLI event name, and description:
+All 23 hook events with their Ruby DSL method, CLI event name, and description:
 
 | Ruby method              | CLI event            | Description                                     |
 |--------------------------|----------------------|-------------------------------------------------|
@@ -145,6 +145,7 @@ All 22 hook events with their Ruby DSL method, CLI event name, and description:
 | `on_session_start`       | `SessionStart`       | When a session begins.                          |
 | `on_session_end`         | `SessionEnd`         | When a session ends.                            |
 | `on_stop`                | `Stop`               | When the agent stops.                           |
+| `on_stop_failure`        | `StopFailure`        | When the agent stops due to an API error.       |
 | `on_subagent_start`      | `SubagentStart`      | When a subagent is spawned.                     |
 | `on_subagent_stop`       | `SubagentStop`       | When a subagent stops.                          |
 | `before_compact`         | `PreCompact`         | Before context compaction.                      |
@@ -190,6 +191,7 @@ All input types inherit these fields from `BaseHookInput`:
 | `SessionStart`       | `SessionStartInput`       | `source`, `agent_type`, `model`                                                                                                         |
 | `SessionEnd`         | `SessionEndInput`         | `reason`                                                                                                                                |
 | `Stop`               | `StopInput`               | `stop_hook_active`, `last_assistant_message`                                                                                            |
+| `StopFailure`        | `StopFailureInput`        | `error`, `error_details`, `last_assistant_message`                                                                                      |
 | `SubagentStart`      | `SubagentStartInput`      | `agent_id`, `agent_type`                                                                                                                |
 | `SubagentStop`       | `SubagentStopInput`       | `stop_hook_active`, `agent_id`, `agent_transcript_path`, `agent_type`, `last_assistant_message`                                         |
 | `PreCompact`         | `PreCompactInput`         | `trigger`, `custom_instructions`                                                                                                        |
