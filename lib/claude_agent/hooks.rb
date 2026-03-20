@@ -11,6 +11,7 @@ module ClaudeAgent
     SessionStart
     SessionEnd
     Stop
+    StopFailure
     SubagentStart
     SubagentStop
     PreCompact
@@ -174,6 +175,10 @@ module ClaudeAgent
 
   BaseHookInput.define_input "Stop",
     optional: { stop_hook_active: false, last_assistant_message: nil }
+
+  BaseHookInput.define_input "StopFailure",
+    required: [ :error ],
+    optional: { error_details: nil, last_assistant_message: nil }
 
   BaseHookInput.define_input "SubagentStart",
     required: [ :agent_id, :agent_type ]

@@ -1003,6 +1003,14 @@ module ClaudeAgent
     def initialize: (?stop_hook_active: bool, ?last_assistant_message: String?, **untyped) -> void
   end
 
+  class StopFailureInput < BaseHookInput
+    attr_reader error: String
+    attr_reader error_details: String?
+    attr_reader last_assistant_message: String?
+
+    def initialize: (error: String, ?error_details: String?, ?last_assistant_message: String?, **untyped) -> void
+  end
+
   class SubagentStartInput < BaseHookInput
     attr_reader agent_id: String
     attr_reader agent_type: String

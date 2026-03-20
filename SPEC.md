@@ -3,11 +3,11 @@
 This document provides a comprehensive specification of the Claude Agent SDK, comparing feature parity across the official TypeScript and Python SDKs with this Ruby implementation.
 
 **Reference Versions:**
-- TypeScript SDK: v0.2.77 (npm package)
-- Python SDK: from GitHub (commit 971994c)
+- TypeScript SDK: v0.2.80 (npm package)
+- Python SDK: from GitHub (commit 13e119a)
 - Ruby SDK: This repository
 
-**Last Updated:** 2026-03-17
+**Last Updated:** 2026-03-20
 
 ---
 
@@ -436,6 +436,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `SessionStart`       |     ✅      |   ✅    |  ✅   | Session starts                    |
 | `SessionEnd`         |     ✅      |   ❌    |  ✅   | Session ends                      |
 | `Stop`               |     ✅      |   ✅    |  ✅   | Agent stops                       |
+| `StopFailure`        |     ✅      |   ❌    |  ✅   | Agent stops due to API error      |
 | `SubagentStart`      |     ✅      |   ✅    |  ✅   | Subagent starts (Py v0.1.29)      |
 | `SubagentStop`       |     ✅      |   ✅    |  ✅   | Subagent stops                    |
 | `PreCompact`         |     ✅      |   ✅    |  ✅   | Before compaction                 |
@@ -463,6 +464,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `SessionStartHookInput`       |     ✅      |   ❌    |  ✅   |
 | `SessionEndHookInput`         |     ✅      |   ❌    |  ✅   |
 | `StopHookInput`               |     ✅      |   ✅    |  ✅   |
+| `StopFailureHookInput`        |     ✅      |   ❌    |  ✅   |
 | `SubagentStartHookInput`      |     ✅      |   ✅    |  ✅   |
 | `SubagentStopHookInput`       |     ✅      |   ✅    |  ✅   |
 | `PreCompactHookInput`         |     ✅      |   ✅    |  ✅   |
@@ -495,6 +497,14 @@ Event hooks for intercepting and modifying SDK behavior.
 |--------------------------|:----------:|:------:|:----:|----------------------------------------|
 | `stop_hook_active`       |     ✅      |   ✅    |  ✅   | Whether stop hook is active            |
 | `last_assistant_message` |     ✅      |   ❌    |  ✅   | Last assistant message text (v0.2.51+) |
+
+#### StopFailureHookInput Fields
+
+| Field                    | TypeScript | Python | Ruby | Notes                                  |
+|--------------------------|:----------:|:------:|:----:|----------------------------------------|
+| `error`                  |     ✅      |   ❌    |  ✅   | API error type (AssistantMessageError) |
+| `error_details`          |     ✅      |   ❌    |  ✅   | Additional error details               |
+| `last_assistant_message` |     ✅      |   ❌    |  ✅   | Last assistant message text            |
 
 #### SubagentStopHookInput Fields
 
@@ -761,7 +771,7 @@ Session management and resumption.
 |------------------------|:----------:|:------:|:----:|--------------------------------------------------|
 | `listSessions()`       |     ✅      |   ✅    |  ✅   | List past sessions with metadata (v0.2.53)       |
 | `getSessionMessages()` |     ✅      |   ✅    |  ✅   | Read session transcript messages (v0.2.59)       |
-| `getSessionInfo()`     |     ✅      |   ❌    |  ✅   | Get single session metadata (v0.2.75)            |
+| `getSessionInfo()`     |     ✅      |   ✅    |  ✅   | Get single session metadata (v0.2.75)            |
 | `renameSession()`      |     ✅      |   ✅    |  ✅   | Rename a session (v0.2.74)                       |
 | `tagSession()`         |     ✅      |   ✅    |  ✅   | Tag a session (v0.2.75)                          |
 | `forkSession()`        |     ✅      |   ❌    |  ✅   | Fork/branch a session (v0.2.76)                  |
@@ -805,8 +815,8 @@ Session management and resumption.
 | `firstPrompt`  |     ✅      |   ✅    |  ✅   | First meaningful user prompt        |
 | `gitBranch`    |     ✅      |   ✅    |  ✅   | Git branch at end of session        |
 | `cwd`          |     ✅      |   ✅    |  ✅   | Working directory for session       |
-| `tag`          |     ✅      |   ❌    |  ✅   | User-set tag (v0.2.75)              |
-| `createdAt`    |     ✅      |   ❌    |  ✅   | Creation time in ms (v0.2.75)       |
+| `tag`          |     ✅      |   ✅    |  ✅   | User-set tag (v0.2.75)              |
+| `createdAt`    |     ✅      |   ✅    |  ✅   | Creation time in ms (v0.2.75)       |
 
 #### ForkSessionOptions
 
@@ -839,18 +849,18 @@ Custom subagent definitions.
 
 ### AgentDefinition
 
-| Field                                 | TypeScript | Python | Ruby | Notes                                      |
-|---------------------------------------|:----------:|:------:|:----:|--------------------------------------------|
-| `description`                         |     ✅      |   ✅    |  ✅   | When to use agent                          |
-| `prompt`                              |     ✅      |   ✅    |  ✅   | Agent system prompt                        |
-| `tools`                               |     ✅      |   ✅    |  ✅   | Allowed tools                              |
-| `disallowedTools`                     |     ✅      |   ❌    |  ✅   | Blocked tools                              |
-| `model`                               |     ✅      |   ✅    |  ✅   | Model override (sonnet/opus/haiku/inherit) |
-| `mcpServers`                          |     ✅      |   ✅    |  ✅   | Agent-specific MCP servers                 |
-| `criticalSystemReminder_EXPERIMENTAL` |     ✅      |   ❌    |  ✅   | Critical reminder (experimental)           |
-| `skills`                              |     ✅      |   ✅    |  ✅   | Skills to preload into agent context       |
-| `memory`                              |     ❌      |   ✅    |  ❌   | Memory scope for agent (Python-only)       |
-| `maxTurns`                            |     ✅      |   ❌    |  ✅   | Max agentic turns before stopping          |
+| Field                                 | TypeScript | Python | Ruby | Notes                                        |
+|---------------------------------------|:----------:|:------:|:----:|----------------------------------------------|
+| `description`                         |     ✅      |   ✅    |  ✅   | When to use agent                            |
+| `prompt`                              |     ✅      |   ✅    |  ✅   | Agent system prompt                          |
+| `tools`                               |     ✅      |   ✅    |  ✅   | Allowed tools                                |
+| `disallowedTools`                     |     ✅      |   ❌    |  ✅   | Blocked tools                                |
+| `model`                               |     ✅      |   ✅    |  ✅   | Model override (sonnet/opus/haiku/inherit)   |
+| `mcpServers`                          |     ✅      |   ✅    |  ✅   | Agent-specific MCP servers                   |
+| `criticalSystemReminder_EXPERIMENTAL` |     ✅      |   ❌    |  ✅   | Critical reminder (experimental)             |
+| `skills`                              |     ✅      |   ✅    |  ✅   | Skills to preload into agent context         |
+| `memory`                              |     ❌      |   ✅    |  ❌   | Memory scope for agent (Python-only v0.1.49) |
+| `maxTurns`                            |     ✅      |   ❌    |  ✅   | Max agentic turns before stopping            |
 
 ---
 
@@ -938,7 +948,7 @@ Public API surface for SDK clients.
 |------------------------|:----------:|:------:|:----:|--------------------------------------------|
 | `listSessions()`       |     ✅      |   ✅    |  ✅   | List past sessions with metadata (v0.2.53) |
 | `getSessionMessages()` |     ✅      |   ✅    |  ✅   | Read session transcript (v0.2.59)          |
-| `getSessionInfo()`     |     ✅      |   ❌    |  ✅   | Get single session metadata (v0.2.75)      |
+| `getSessionInfo()`     |     ✅      |   ✅    |  ✅   | Get single session metadata (v0.2.75)      |
 | `renameSession()`      |     ✅      |   ✅    |  ✅   | Rename a session (v0.2.74)                 |
 | `tagSession()`         |     ✅      |   ✅    |  ✅   | Tag a session (v0.2.75)                    |
 | `forkSession()`        |     ✅      |   ❌    |  ✅   | Fork/branch a session (v0.2.76)            |
@@ -1007,66 +1017,22 @@ Public API surface for SDK clients.
 ## Notes
 
 ### TypeScript SDK
-- Primary reference for API surface (most comprehensive)
-- Source is bundled/minified, but `sdk.d.ts` provides complete type definitions
-- Includes unstable V2 session API
+- Primary reference for API surface — `sdk.d.ts` provides complete type definitions
 - `executable`/`executableArgs` are JS-specific (`node`/`bun`/`deno`)
 - Does NOT have `user`, `init`/`initOnly`/`maintenance` as typed Options (use `extraArgs` or `settingSources`)
-- `ApiKeySource` includes `'oauth'`
-- v0.2.45: Added `TaskStartedMessage`, `RateLimitEvent` message types
-- v0.2.47: Added `promptSuggestions` option and `PromptSuggestionMessage`
-- v0.2.49: Added `ConfigChange` hook event, `SandboxFilesystemConfig`, ModelInfo capability fields
-- v0.2.50: Added `WorktreeCreate`/`WorktreeRemove` hook events, `apply_flag_settings` control request
-- v0.2.51: Added `TaskProgressMessage`, `StopHookInput.last_assistant_message`, `SubagentStopHookInput.last_assistant_message`
-- v0.2.52: Added `mcp_authenticate`/`mcp_clear_auth` control requests for MCP server authentication
-- v0.2.53: Added `listSessions()` for discovering and listing past sessions with `SDKSessionInfo` metadata
-- v0.2.54 – v0.2.58: CLI parity updates (no new SDK-facing features)
-- v0.2.59: Added `getSessionMessages()` for reading session transcript history with pagination (limit/offset)
-- v0.2.61 – v0.2.62: CLI parity updates (no new SDK-facing features)
-- v0.2.63: Added `supportedAgents()` method on Query, fixed `pathToClaudeCodeExecutable` PATH resolution
-- v0.2.64 – v0.2.68: CLI parity updates (no new SDK-facing features)
-- v0.2.69: Added `toolConfig` option (askUserQuestion preview format), `supportsFastMode` in ModelInfo, `agent_id`/`agent_type` on BaseHookInput, `InstructionsLoaded` hook event
-- v0.2.70: Made `AgentToolInput.subagent_type` optional (defaults to general-purpose), fixed HTTP MCP servers
-- v0.2.71: CLI parity update; `settings` now a typed Option (string path or `Settings` object)
-- v0.2.72: Added `agentProgressSummaries` option for periodic AI-generated progress summaries
-- v0.2.73: Fixed `options.env` being overridden by `~/.claude/settings.json`
-- v0.2.74: Added `renameSession()` for renaming session files
-- v0.2.75: Added `tag`/`createdAt` fields on `SDKSessionInfo`; `getSessionInfo()` for single-session lookup; `offset` on `listSessions` for pagination; `tagSession()` for tagging sessions; `supportsAutoMode` in `ModelInfo`; `description` on `SDKControlPermissionRequest`; `prompt` on `SDKTaskStartedMessage`; `fast_mode_state` on `SDKControlInitializeResponse`; `queued_to_running` status on `AgentToolOutput`
-- v0.2.76: Added `forkSession(sessionId, opts?)` for branching conversations from a point; `cancel_async_message` control subtype to drop queued user messages; `PostCompact` hook event with `compact_summary` field; `get_settings` control request for reading effective merged settings; `planFilePath` field on `ExitPlanMode` tool input
-- v0.2.77: Added `SDKAPIRetryMessage` (system subtype `api_retry`) exposing attempt count, max retries, delay, and error status for transient API error retries; added `title` and `displayName` fields on `SDKControlPermissionRequest`/`CanUseTool` options; added `allowRead` and `allowManagedReadPathsOnly` on `SandboxFilesystemConfig`
-- Includes `Elicitation`/`ElicitationResult` hook events, `onElicitation` option, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState` (undocumented in changelog, present in types)
+- Some features present in types but undocumented in changelog: `StopFailure` hook, `Elicitation`/`ElicitationResult` hooks, `onElicitation` option, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`
 
 ### Python SDK
-- Full source available with `Transport` abstract class
-- Partial control protocol: query and client support interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus, reconnectMcpServer, toggleMcpServer, stopTask
-- Has `CLINotFoundError`, `CLIConnectionError`, `ProcessError`, `CLIJSONDecodeError`, `MessageParseError` error types
-- Has `TaskStartedMessage`, `TaskProgressMessage`, `TaskNotificationMessage` typed message classes (v0.1.46+)
-- Has `stop_reason` field on ResultMessage (v0.1.46+)
-- Has `SDKSessionInfo`, `SessionMessage` types with `list_sessions()`/`get_session_messages()` functions (v0.1.46+)
-- Has `McpServerStatus` with all fields (name, status, serverInfo, error, config, scope, tools) (v0.1.46+)
-- Has `agent_id`/`agent_type` on tool-lifecycle hook inputs (v0.1.46+)
-- Has `add_mcp_server()`/`remove_mcp_server()` client methods for runtime MCP management (v0.1.46+)
-- Has `include_worktrees` parameter on `list_sessions()` (v0.1.46+)
-- Missing hooks: SessionEnd, Setup, TeammateIdle, TaskCompleted, Elicitation, ElicitationResult, ConfigChange, WorktreeCreate, WorktreeRemove, InstructionsLoaded
-- Missing permission modes: `dontAsk`
-- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `init`/`initOnly`/`maintenance`, `debug`/`debugFile`, `promptSuggestions`, `onElicitation`, `toolConfig`, `agentProgressSummaries`, `agent` (main thread agent)
-- `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`
-- Has `rename_session()`/`tag_session()` for session mutation
-- Has `RateLimitEvent`/`RateLimitInfo` types with full field coverage
-- Has SDK MCP server support with `tool()` helper and annotations
-- Missing `getSessionInfo()`, `offset` on `list_sessions`, `tag`/`createdAt` on `SDKSessionInfo`
-- Added `thinking` config and `effort` option in v0.1.36
-- Handles `rate_limit_event` and unknown message types gracefully (v0.1.40)
-- Client has `get_server_info()` for accessing the initialization result (v0.1.31+)
-- v0.1.45 – v0.1.48: Major catch-up with TypeScript SDK (task messages, session APIs, MCP control methods, stop_reason)
-- v0.1.48: Fixed fine-grained tool streaming regression
-- Added `RateLimitEvent` message type with `RateLimitInfo`
-- Added `rename_session()` and `tag_session()` session management functions
-- `AgentDefinition` now has `skills`, `mcpServers`, and `memory` (Python-only) fields
-- Missing: `onElicitation`, `Elicitation`/`ElicitationResult` hooks, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `FastModeState`, `InstructionsLoaded` hook, `agentProgressSummaries`, `getSessionInfo()`, `forkSession()`, `PostCompact` hook, `cancel_async_message`, `get_settings`, `APIRetryMessage`
+- Partial control protocol: supports interrupt, setPermissionMode, setModel, rewindFiles, mcpStatus, reconnectMcp, toggleMcp, stopTask
+- Has `add_mcp_server()`/`remove_mcp_server()` client methods (not in TypeScript)
+- `AgentDefinition.memory` is Python-only (not in TypeScript or Ruby)
+- Missing hooks: SessionEnd, StopFailure, Setup, TeammateIdle, TaskCompleted, Elicitation, ElicitationResult, ConfigChange, WorktreeCreate, WorktreeRemove, InstructionsLoaded, PostCompact
+- Missing options: `allowDangerouslySkipPermissions`, `persistSession`, `resumeSessionAt`, `sessionId`, `strictMcpConfig`, `debug`/`debugFile`, `promptSuggestions`, `onElicitation`, `toolConfig`, `agentProgressSummaries`, `agent` (main thread agent), `dontAsk` permission mode
+- `ToolPermissionContext` missing `blockedPath`, `decisionReason`, `toolUseID`, `agentID`, `description`, `title`, `displayName`
+- Missing: `forkSession()`, `offset` on `list_sessions`, `cancel_async_message`, `get_settings`, `APIRetryMessage`
 
 ### Ruby SDK (This Repository)
-- Feature parity with TypeScript SDK v0.2.77
+- Feature parity with TypeScript SDK v0.2.80
 - Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations

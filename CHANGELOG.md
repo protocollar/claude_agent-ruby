@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `StopFailure` hook event with `StopFailureInput` type (`error`, `error_details`, `last_assistant_message` fields) for handling API error-triggered stops (TypeScript SDK v0.2.80 parity)
+- `on_stop_failure` DSL method on `HookRegistry` for the new event
+
 ## [0.7.17] - 2026-03-17
 
 ### Added

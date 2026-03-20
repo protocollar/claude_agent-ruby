@@ -28,6 +28,7 @@ module ClaudeAgent
       on_session_start: "SessionStart",
       on_session_end: "SessionEnd",
       on_stop: "Stop",
+      on_stop_failure: "StopFailure",
       on_subagent_start: "SubagentStart",
       on_subagent_stop: "SubagentStop",
       before_compact: "PreCompact",

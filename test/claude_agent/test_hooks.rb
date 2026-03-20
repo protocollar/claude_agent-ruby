@@ -247,6 +247,31 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert_equal "I've completed the task.", input.last_assistant_message
   end
 
+  # --- StopFailureInput ---
+
+  test "stop_failure_input" do
+    input = ClaudeAgent::StopFailureInput.new(error: "rate_limit")
+    assert_equal "StopFailure", input.hook_event_name
+    assert_equal "rate_limit", input.error
+  end
+
+  test "stop_failure_input_defaults" do
+    input = ClaudeAgent::StopFailureInput.new(error: "server_error")
+    assert_nil input.error_details
+    assert_nil input.last_assistant_message
+  end
+
+  test "stop_failure_input_with_all_fields" do
+    input = ClaudeAgent::StopFailureInput.new(
+      error: "rate_limit",
+      error_details: "Rate limit exceeded for model",
+      last_assistant_message: "I was working on..."
+    )
+    assert_equal "rate_limit", input.error
+    assert_equal "Rate limit exceeded for model", input.error_details
+    assert_equal "I was working on...", input.last_assistant_message
+  end
+
   # --- SubagentStartInput ---
 
   test "subagent_start_input" do
@@ -675,7 +700,7 @@ class TestClaudeAgentHooks < ActiveSupport::TestCase
     assert ClaudeAgent::SetupInput < ClaudeAgent::BaseHookInput
   end
 
-  test "define_input generates all 21 input classes" do
+  test "define_input generates all 22 input classes" do
     ClaudeAgent::HOOK_EVENTS.each do |event|
       klass = ClaudeAgent.const_get("#{event}Input")
       assert klass < ClaudeAgent::BaseHookInput, "#{event}Input should inherit from BaseHookInput"
