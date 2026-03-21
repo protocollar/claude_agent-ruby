@@ -6,7 +6,10 @@ module ClaudeAgent
   # @example
   #   msg = SystemMessage.new(subtype: "init", data: {version: "2.0.0"})
   #
-  SystemMessage = Data.define(:subtype, :data) do
+  class SystemMessage < ImmutableRecord
+    attribute :subtype
+    attribute :data
+
     def type
       :system
     end
@@ -26,7 +29,11 @@ module ClaudeAgent
   #   msg.trigger     # => "auto"
   #   msg.pre_tokens  # => 50000
   #
-  CompactBoundaryMessage = Data.define(:uuid, :session_id, :compact_metadata) do
+  class CompactBoundaryMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :compact_metadata
+
     def type
       :compact_boundary
     end
@@ -72,20 +79,25 @@ module ClaudeAgent
   #     error: "rate_limit"
   #   )
   #
-  APIRetryMessage = Data.define(:uuid, :session_id, :attempt, :max_retries, :retry_delay_ms, :error_status, :error) do
-    def initialize(uuid: "", session_id: "", attempt: 0, max_retries: 0, retry_delay_ms: 0, error_status: nil, error: nil)
-      super
-    end
+  class APIRetryMessage < ImmutableRecord
+    attribute :uuid, default: ""
+    attribute :session_id, default: ""
+    attribute :attempt, default: 0
+    attribute :max_retries, default: 0
+    attribute :retry_delay_ms, default: 0
+    attribute :error_status, default: nil
+    attribute :error, default: nil
 
     def type
       :api_retry
     end
   end
 
-  StatusMessage = Data.define(:uuid, :session_id, :status, :permission_mode) do
-    def initialize(uuid:, session_id:, status:, permission_mode: nil)
-      super
-    end
+  class StatusMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :status
+    attribute :permission_mode, default: nil
 
     def type
       :status

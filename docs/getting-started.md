@@ -4,7 +4,7 @@ This guide walks you through the ClaudeAgent Ruby SDK from first install to mult
 
 ## Requirements
 
-- **Ruby 3.2+** (the SDK uses `Data.define` for immutable types)
+- **Ruby 3.2+**
 - **Claude Code CLI v2.0.0+** ([install guide](https://code.claude.com/docs/en/getting-started))
 
 Verify both are available:

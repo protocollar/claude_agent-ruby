@@ -15,10 +15,12 @@ module ClaudeAgent
   #     env: { "CLAUDE_CODE_ENTRYPOINT" => "sdk-rb" }
   #   )
   #
-  SpawnOptions = Data.define(:command, :args, :cwd, :env, :abort_signal) do
-    def initialize(command:, args: [], cwd: nil, env: {}, abort_signal: nil)
-      super
-    end
+  class SpawnOptions < ImmutableRecord
+    attribute :command
+    attribute :args, default: []
+    attribute :cwd, default: nil
+    attribute :env, default: {}
+    attribute :abort_signal, default: nil
 
     # Get the full command line as an array
     # @return [Array<String>]

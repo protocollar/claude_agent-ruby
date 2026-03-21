@@ -15,26 +15,14 @@ module ClaudeAgent
   #     task_type: "bash"
   #   )
   #
-  TaskStartedMessage = Data.define(
-    :uuid,
-    :session_id,
-    :task_id,
-    :tool_use_id,
-    :description,
-    :task_type,
-    :prompt
-  ) do
-    def initialize(
-      uuid:,
-      session_id:,
-      task_id:,
-      tool_use_id: nil,
-      description: nil,
-      task_type: nil,
-      prompt: nil
-    )
-      super
-    end
+  class TaskStartedMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :task_id
+    attribute :tool_use_id, default: nil
+    attribute :description, default: nil
+    attribute :task_type, default: nil
+    attribute :prompt, default: nil
 
     def type
       :task_started
@@ -55,22 +43,15 @@ module ClaudeAgent
   #     usage: { total_tokens: 5000, tool_uses: 3, duration_ms: 2500 }
   #   )
   #
-  TaskProgressMessage = Data.define(
-    :uuid, :session_id, :task_id, :tool_use_id,
-    :description, :usage, :last_tool_name, :summary
-  ) do
-    def initialize(
-      uuid:,
-      session_id:,
-      task_id:,
-      description:,
-      usage: nil,
-      tool_use_id: nil,
-      last_tool_name: nil,
-      summary: nil
-    )
-      super
-    end
+  class TaskProgressMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :task_id
+    attribute :description
+    attribute :tool_use_id, default: nil
+    attribute :usage, default: nil
+    attribute :last_tool_name, default: nil
+    attribute :summary, default: nil
 
     def type
       :task_progress
@@ -99,28 +80,15 @@ module ClaudeAgent
   # - "failed" - Task encountered an error
   # - "stopped" - Task was manually stopped
   #
-  TaskNotificationMessage = Data.define(
-    :uuid,
-    :session_id,
-    :task_id,
-    :status,
-    :output_file,
-    :summary,
-    :tool_use_id,
-    :usage
-  ) do
-    def initialize(
-      uuid:,
-      session_id:,
-      task_id:,
-      status:,
-      output_file:,
-      summary:,
-      tool_use_id: nil,
-      usage: nil
-    )
-      super
-    end
+  class TaskNotificationMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :task_id
+    attribute :status
+    attribute :output_file
+    attribute :summary
+    attribute :tool_use_id, default: nil
+    attribute :usage, default: nil
 
     def type
       :task_notification
@@ -160,22 +128,12 @@ module ClaudeAgent
   #   )
   #   msg.files.first[:filename]  # => "test.rb"
   #
-  FilesPersistedEvent = Data.define(
-    :uuid,
-    :session_id,
-    :files,
-    :failed,
-    :processed_at
-  ) do
-    def initialize(
-      uuid:,
-      session_id:,
-      files: [],
-      failed: [],
-      processed_at: nil
-    )
-      super
-    end
+  class FilesPersistedEvent < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :files, default: []
+    attribute :failed, default: []
+    attribute :processed_at, default: nil
 
     def type
       :files_persisted
@@ -194,10 +152,11 @@ module ClaudeAgent
   #     elicitation_id: "elic-456"
   #   )
   #
-  ElicitationCompleteMessage = Data.define(:uuid, :session_id, :mcp_server_name, :elicitation_id) do
-    def initialize(uuid: "", session_id: "", mcp_server_name: "", elicitation_id: "")
-      super
-    end
+  class ElicitationCompleteMessage < ImmutableRecord
+    attribute :uuid, default: ""
+    attribute :session_id, default: ""
+    attribute :mcp_server_name, default: ""
+    attribute :elicitation_id, default: ""
 
     def type
       :elicitation_complete
@@ -216,22 +175,12 @@ module ClaudeAgent
   #     output: ["Waiting for browser..."]
   #   )
   #
-  AuthStatusMessage = Data.define(
-    :uuid,
-    :session_id,
-    :is_authenticating,
-    :output,
-    :error
-  ) do
-    def initialize(
-      uuid:,
-      session_id:,
-      is_authenticating:,
-      output: [],
-      error: nil
-    )
-      super
-    end
+  class AuthStatusMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :is_authenticating
+    attribute :output, default: []
+    attribute :error, default: nil
 
     def type
       :auth_status

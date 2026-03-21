@@ -1033,7 +1033,6 @@ Public API surface for SDK clients.
 
 ### Ruby SDK (This Repository)
 - Feature parity with TypeScript SDK v0.2.80
-- Ruby-idiomatic patterns (Data.define, snake_case)
 - Complete control protocol, hook, and V2 Session API support
 - Dedicated Client class for multi-turn conversations
 - `executable`/`executableArgs` marked N/A (JS runtime options)

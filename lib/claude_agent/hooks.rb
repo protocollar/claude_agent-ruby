@@ -37,10 +37,10 @@ module ClaudeAgent
   #     timeout: 30
   #   )
   #
-  HookMatcher = Data.define(:matcher, :callbacks, :timeout) do
-    def initialize(matcher:, callbacks:, timeout: nil)
-      super
-    end
+  class HookMatcher < ImmutableRecord
+    attribute :matcher
+    attribute :callbacks
+    attribute :timeout, default: nil
 
     # Check if this matcher matches a tool name
     # @param tool_name [String] Tool name to check
@@ -63,10 +63,8 @@ module ClaudeAgent
 
   # Context passed to hook callbacks
   #
-  HookContext = Data.define(:tool_use_id) do
-    def initialize(tool_use_id: nil)
-      super
-    end
+  class HookContext < ImmutableRecord
+    attribute :tool_use_id, default: nil
   end
 
   # Base class for hook input types (TypeScript SDK parity)

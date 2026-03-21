@@ -305,7 +305,7 @@ puts result.text
 
 ### SessionOptions
 
-`SessionOptions` is a `Data.define` type with the following fields:
+`SessionOptions` is an `ImmutableRecord` type with the following fields:
 
 | Field                            | Type            | Description                                        |
 |----------------------------------|-----------------|----------------------------------------------------|

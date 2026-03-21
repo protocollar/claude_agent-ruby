@@ -7,10 +7,9 @@ module ClaudeAgent
   #   preset = ToolsPreset.new(preset: "claude_code")
   #   options = ClaudeAgent::Options.new(tools: preset)
   #
-  ToolsPreset = Data.define(:type, :preset) do
-    def initialize(type: "preset", preset: "claude_code")
-      super
-    end
+  class ToolsPreset < ImmutableRecord
+    attribute :type, default: "preset"
+    attribute :preset, default: "claude_code"
 
     def to_h
       { type: type, preset: preset }
@@ -24,9 +23,9 @@ module ClaudeAgent
   #   cmd.name        # => "commit"
   #   cmd.description # => "Create a commit"
   #
-  SlashCommand = Data.define(:name, :description, :argument_hint) do
-    def initialize(name:, description: nil, argument_hint: nil)
-      super
-    end
+  class SlashCommand < ImmutableRecord
+    attribute :name
+    attribute :description, default: nil
+    attribute :argument_hint, default: nil
   end
 end

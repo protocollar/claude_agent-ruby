@@ -9,10 +9,10 @@ module ClaudeAgent
   #     tool_use_id: "tool_123"
   #   )
   #
-  PermissionResultAllow = Data.define(:updated_input, :updated_permissions, :tool_use_id) do
-    def initialize(updated_input: nil, updated_permissions: nil, tool_use_id: nil)
-      super
-    end
+  class PermissionResultAllow < ImmutableRecord
+    attribute :updated_input, default: nil
+    attribute :updated_permissions, default: nil
+    attribute :tool_use_id, default: nil
 
     def behavior
       "allow"
@@ -36,10 +36,10 @@ module ClaudeAgent
   #     tool_use_id: "tool_123"
   #   )
   #
-  PermissionResultDeny = Data.define(:message, :interrupt, :tool_use_id) do
-    def initialize(message: "", interrupt: false, tool_use_id: nil)
-      super
-    end
+  class PermissionResultDeny < ImmutableRecord
+    attribute :message, default: ""
+    attribute :interrupt, default: false
+    attribute :tool_use_id, default: nil
 
     def behavior
       "deny"
@@ -70,24 +70,13 @@ module ClaudeAgent
   #     rules: [{tool_name: "Read", behavior: "allow"}]
   #   )
   #
-  PermissionUpdate = Data.define(
-    :type,
-    :rules,
-    :behavior,
-    :mode,
-    :directories,
-    :destination
-  ) do
-    def initialize(
-      type:,
-      rules: nil,
-      behavior: nil,
-      mode: nil,
-      directories: nil,
-      destination: nil
-    )
-      super
-    end
+  class PermissionUpdate < ImmutableRecord
+    attribute :type
+    attribute :rules, default: nil
+    attribute :behavior, default: nil
+    attribute :mode, default: nil
+    attribute :directories, default: nil
+    attribute :destination, default: nil
 
     def to_h
       h = { type: type }
@@ -116,10 +105,9 @@ module ClaudeAgent
   # Permission rule value (TypeScript SDK parity)
   # Note: behavior is on PermissionUpdate, not on individual rules
   #
-  PermissionRuleValue = Data.define(:tool_name, :rule_content) do
-    def initialize(tool_name: nil, rule_content: nil)
-      super
-    end
+  class PermissionRuleValue < ImmutableRecord
+    attribute :tool_name, default: nil
+    attribute :rule_content, default: nil
 
     def to_h
       {
@@ -152,31 +140,16 @@ module ClaudeAgent
   #     signal: abort_signal
   #   )
   #
-  ToolPermissionContext = Data.define(
-    :permission_suggestions,
-    :blocked_path,
-    :decision_reason,
-    :tool_use_id,
-    :agent_id,
-    :signal,
-    :description,
-    :title,
-    :display_name,
-    :request
-  ) do
-    def initialize(
-      permission_suggestions: nil,
-      blocked_path: nil,
-      decision_reason: nil,
-      tool_use_id: nil,
-      agent_id: nil,
-      signal: nil,
-      description: nil,
-      title: nil,
-      display_name: nil,
-      request: nil
-    )
-      super
-    end
+  class ToolPermissionContext < ImmutableRecord
+    attribute :permission_suggestions, default: nil
+    attribute :blocked_path, default: nil
+    attribute :decision_reason, default: nil
+    attribute :tool_use_id, default: nil
+    attribute :agent_id, default: nil
+    attribute :signal, default: nil
+    attribute :description, default: nil
+    attribute :title, default: nil
+    attribute :display_name, default: nil
+    attribute :request, default: nil
   end
 end

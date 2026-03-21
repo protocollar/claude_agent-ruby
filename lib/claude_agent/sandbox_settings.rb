@@ -10,26 +10,14 @@ module ClaudeAgent
   #     allowed_domains: ["api.example.com"]
   #   )
   #
-  SandboxNetworkConfig = Data.define(
-    :allowed_domains,
-    :allow_local_binding,
-    :allow_unix_sockets,
-    :allow_all_unix_sockets,
-    :allow_managed_domains_only,
-    :http_proxy_port,
-    :socks_proxy_port
-  ) do
-    def initialize(
-      allowed_domains: [],
-      allow_local_binding: false,
-      allow_unix_sockets: [],
-      allow_all_unix_sockets: false,
-      allow_managed_domains_only: false,
-      http_proxy_port: nil,
-      socks_proxy_port: nil
-    )
-      super
-    end
+  class SandboxNetworkConfig < ImmutableRecord
+    attribute :allowed_domains, default: []
+    attribute :allow_local_binding, default: false
+    attribute :allow_unix_sockets, default: []
+    attribute :allow_all_unix_sockets, default: false
+    attribute :allow_managed_domains_only, default: false
+    attribute :http_proxy_port, default: nil
+    attribute :socks_proxy_port, default: nil
 
     def to_h
       result = {}
@@ -52,10 +40,9 @@ module ClaudeAgent
   #     network: ["localhost:*"]
   #   )
   #
-  SandboxIgnoreViolations = Data.define(:file, :network) do
-    def initialize(file: [], network: [])
-      super
-    end
+  class SandboxIgnoreViolations < ImmutableRecord
+    attribute :file, default: []
+    attribute :network, default: []
 
     def to_h
       result = {}
@@ -73,10 +60,9 @@ module ClaudeAgent
   #     args: ["--hidden"]
   #   )
   #
-  SandboxRipgrepConfig = Data.define(:command, :args) do
-    def initialize(command:, args: nil)
-      super
-    end
+  class SandboxRipgrepConfig < ImmutableRecord
+    attribute :command
+    attribute :args, default: nil
 
     def to_h
       result = { command: command }
@@ -96,10 +82,12 @@ module ClaudeAgent
   #     allow_managed_read_paths_only: false
   #   )
   #
-  SandboxFilesystemConfig = Data.define(:allow_write, :deny_write, :deny_read, :allow_read, :allow_managed_read_paths_only) do
-    def initialize(allow_write: [], deny_write: [], deny_read: [], allow_read: [], allow_managed_read_paths_only: false)
-      super
-    end
+  class SandboxFilesystemConfig < ImmutableRecord
+    attribute :allow_write, default: []
+    attribute :deny_write, default: []
+    attribute :deny_read, default: []
+    attribute :allow_read, default: []
+    attribute :allow_managed_read_paths_only, default: false
 
     def to_h
       result = {}
@@ -131,32 +119,17 @@ module ClaudeAgent
   #     ripgrep: SandboxRipgrepConfig.new(command: "/usr/local/bin/rg")
   #   )
   #
-  SandboxSettings = Data.define(
-    :enabled,
-    :auto_allow_bash_if_sandboxed,
-    :excluded_commands,
-    :allow_unsandboxed_commands,
-    :network,
-    :ignore_violations,
-    :enable_weaker_nested_sandbox,
-    :enable_weaker_network_isolation,
-    :ripgrep,
-    :filesystem
-  ) do
-    def initialize(
-      enabled: false,
-      auto_allow_bash_if_sandboxed: false,
-      excluded_commands: [],
-      allow_unsandboxed_commands: false,
-      network: nil,
-      ignore_violations: nil,
-      enable_weaker_nested_sandbox: false,
-      enable_weaker_network_isolation: false,
-      ripgrep: nil,
-      filesystem: nil
-    )
-      super
-    end
+  class SandboxSettings < ImmutableRecord
+    attribute :enabled, default: false
+    attribute :auto_allow_bash_if_sandboxed, default: false
+    attribute :excluded_commands, default: []
+    attribute :allow_unsandboxed_commands, default: false
+    attribute :network, default: nil
+    attribute :ignore_violations, default: nil
+    attribute :enable_weaker_nested_sandbox, default: false
+    attribute :enable_weaker_network_isolation, default: false
+    attribute :ripgrep, default: nil
+    attribute :filesystem, default: nil
 
     def to_h
       result = { enabled: enabled }

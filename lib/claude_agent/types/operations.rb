@@ -6,18 +6,18 @@ module ClaudeAgent
   # @example
   #   usage = TaskUsage.new(total_tokens: 5000, tool_uses: 3, duration_ms: 2500)
   #
-  TaskUsage = Data.define(:total_tokens, :tool_uses, :duration_ms) do
-    def initialize(total_tokens: 0, tool_uses: 0, duration_ms: 0)
-      super
-    end
+  class TaskUsage < ImmutableRecord
+    attribute :total_tokens, default: 0
+    attribute :tool_uses, default: 0
+    attribute :duration_ms, default: 0
   end
 
   # Permission denial information in result messages (TypeScript SDK parity)
   #
-  SDKPermissionDenial = Data.define(:tool_name, :tool_use_id, :tool_input) do
-    def initialize(tool_name:, tool_use_id:, tool_input:)
-      super
-    end
+  class SDKPermissionDenial < ImmutableRecord
+    attribute :tool_name
+    attribute :tool_use_id
+    attribute :tool_input
   end
 
   # Result of rewind_files() control method (TypeScript SDK parity)
@@ -30,9 +30,11 @@ module ClaudeAgent
   #     deletions: 5
   #   )
   #
-  RewindFilesResult = Data.define(:can_rewind, :error, :files_changed, :insertions, :deletions) do
-    def initialize(can_rewind:, error: nil, files_changed: nil, insertions: nil, deletions: nil)
-      super
-    end
+  class RewindFilesResult < ImmutableRecord
+    attribute :can_rewind
+    attribute :error, default: nil
+    attribute :files_changed, default: nil
+    attribute :insertions, default: nil
+    attribute :deletions, default: nil
   end
 end

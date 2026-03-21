@@ -2,7 +2,7 @@
 
 Complete reference for all message types and content blocks in the ClaudeAgent Ruby SDK.
 
-All types are immutable (`Data.define`, frozen at construction). All types include the `ClaudeAgent::Message` module.
+All types are immutable (`ImmutableRecord`, frozen at construction). All types include the `ClaudeAgent::Message` module.
 
 ## Message Module
 
@@ -70,7 +70,12 @@ end
 User message sent to Claude.
 
 ```ruby
-UserMessage = Data.define(:content, :uuid, :session_id, :parent_tool_use_id)
+class UserMessage < ImmutableRecord
+  attribute :content
+  attribute :uuid, default: nil
+  attribute :session_id, default: nil
+  attribute :parent_tool_use_id, default: nil
+end
 ```
 
 | Field                | Type                | Default  |
@@ -91,10 +96,15 @@ Methods:
 Replayed user message from a resumed session.
 
 ```ruby
-UserMessageReplay = Data.define(
-  :content, :uuid, :session_id, :parent_tool_use_id,
-  :is_replay, :is_synthetic, :tool_use_result
-)
+class UserMessageReplay < ImmutableRecord
+  attribute :content
+  attribute :uuid, default: nil
+  attribute :session_id, default: nil
+  attribute :parent_tool_use_id, default: nil
+  attribute :is_replay, default: true
+  attribute :is_synthetic, default: nil
+  attribute :tool_use_result, default: nil
+end
 ```
 
 | Field                | Type                | Default  |
@@ -119,7 +129,14 @@ Methods:
 Response from Claude containing content blocks.
 
 ```ruby
-AssistantMessage = Data.define(:content, :model, :uuid, :session_id, :error, :parent_tool_use_id)
+class AssistantMessage < ImmutableRecord
+  attribute :content
+  attribute :model
+  attribute :uuid, default: nil
+  attribute :session_id, default: nil
+  attribute :error, default: nil
+  attribute :parent_tool_use_id, default: nil
+end
 ```
 
 | Field                | Type                  | Default  |
@@ -152,11 +169,24 @@ msg.has_tool_use?  # => true
 Final message with cost, usage, and outcome info.
 
 ```ruby
-ResultMessage = Data.define(
-  :subtype, :duration_ms, :duration_api_ms, :is_error, :num_turns,
-  :session_id, :uuid, :total_cost_usd, :usage, :result, :structured_output,
-  :errors, :permission_denials, :model_usage, :stop_reason, :fast_mode_state
-)
+class ResultMessage < ImmutableRecord
+  attribute :subtype
+  attribute :duration_ms
+  attribute :duration_api_ms
+  attribute :is_error
+  attribute :num_turns
+  attribute :session_id
+  attribute :uuid, default: nil
+  attribute :total_cost_usd, default: nil
+  attribute :usage, default: nil
+  attribute :result, default: nil
+  attribute :structured_output, default: nil
+  attribute :errors, default: nil
+  attribute :permission_denials, default: nil
+  attribute :model_usage, default: nil
+  attribute :stop_reason, default: nil
+  attribute :fast_mode_state, default: nil
+end
 ```
 
 | Field                | Type                 | Default  |
@@ -191,7 +221,10 @@ Methods:
 Internal system event (e.g., session init).
 
 ```ruby
-SystemMessage = Data.define(:subtype, :data)
+class SystemMessage < ImmutableRecord
+  attribute :subtype
+  attribute :data
+end
 ```
 
 | Field     | Type     | Default  |
@@ -208,7 +241,11 @@ Methods:
 Conversation compaction marker.
 
 ```ruby
-CompactBoundaryMessage = Data.define(:uuid, :session_id, :compact_metadata)
+class CompactBoundaryMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :compact_metadata
+end
 ```
 
 | Field              | Type     | Default  |
@@ -228,7 +265,15 @@ Methods:
 Emitted when an API request fails with a retryable error and will be retried.
 
 ```ruby
-APIRetryMessage = Data.define(:uuid, :session_id, :attempt, :max_retries, :retry_delay_ms, :error_status, :error)
+class APIRetryMessage < ImmutableRecord
+  attribute :uuid, default: ""
+  attribute :session_id, default: ""
+  attribute :attempt, default: 0
+  attribute :max_retries, default: 0
+  attribute :retry_delay_ms, default: 0
+  attribute :error_status, default: nil
+  attribute :error, default: nil
+end
 ```
 
 | Field            | Type           | Default |
@@ -250,7 +295,12 @@ Methods:
 Session status report (e.g., `"compacting"`).
 
 ```ruby
-StatusMessage = Data.define(:uuid, :session_id, :status, :permission_mode)
+class StatusMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :status
+  attribute :permission_mode, default: nil
+end
 ```
 
 | Field             | Type          | Default  |
@@ -271,7 +321,12 @@ Methods:
 Partial message during streaming.
 
 ```ruby
-StreamEvent = Data.define(:uuid, :session_id, :event, :parent_tool_use_id)
+class StreamEvent < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :event
+  attribute :parent_tool_use_id, default: nil
+end
 ```
 
 | Field                | Type          | Default  |
@@ -301,7 +356,11 @@ event.thinking_text  # => nil (only set for thinking deltas)
 Rate limit status and utilization info.
 
 ```ruby
-RateLimitEvent = Data.define(:rate_limit_info, :uuid, :session_id)
+class RateLimitEvent < ImmutableRecord
+  attribute :rate_limit_info
+  attribute :uuid, default: nil
+  attribute :session_id, default: nil
+end
 ```
 
 | Field             | Type          | Default  |
@@ -320,7 +379,11 @@ Methods:
 Suggested prompt for the user.
 
 ```ruby
-PromptSuggestionMessage = Data.define(:uuid, :session_id, :suggestion)
+class PromptSuggestionMessage < ImmutableRecord
+  attribute :uuid, default: nil
+  attribute :session_id, default: nil
+  attribute :suggestion
+end
 ```
 
 | Field        | Type          | Default  |
@@ -340,10 +403,15 @@ Methods:
 Progress during long-running tool execution.
 
 ```ruby
-ToolProgressMessage = Data.define(
-  :uuid, :session_id, :tool_use_id, :tool_name,
-  :parent_tool_use_id, :elapsed_time_seconds, :task_id
-)
+class ToolProgressMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :tool_use_id
+  attribute :tool_name
+  attribute :elapsed_time_seconds
+  attribute :parent_tool_use_id, default: nil
+  attribute :task_id, default: nil
+end
 ```
 
 | Field                  | Type          | Default  |
@@ -365,7 +433,12 @@ Methods:
 Summary of tool use for collapsed display.
 
 ```ruby
-ToolUseSummaryMessage = Data.define(:uuid, :session_id, :summary, :preceding_tool_use_ids)
+class ToolUseSummaryMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :summary
+  attribute :preceding_tool_use_ids, default: []
+end
 ```
 
 | Field                    | Type            | Default  |
@@ -384,7 +457,11 @@ Methods:
 Output from a local command execution.
 
 ```ruby
-LocalCommandOutputMessage = Data.define(:uuid, :session_id, :content)
+class LocalCommandOutputMessage < ImmutableRecord
+  attribute :uuid, default: ""
+  attribute :session_id, default: ""
+  attribute :content, default: ""
+end
 ```
 
 | Field        | Type     | Default |
@@ -404,7 +481,13 @@ Methods:
 Sent when a hook execution starts.
 
 ```ruby
-HookStartedMessage = Data.define(:uuid, :session_id, :hook_id, :hook_name, :hook_event)
+class HookStartedMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :hook_id
+  attribute :hook_name
+  attribute :hook_event
+end
 ```
 
 | Field        | Type     | Default  |
@@ -424,10 +507,16 @@ Methods:
 Progress during hook execution.
 
 ```ruby
-HookProgressMessage = Data.define(
-  :uuid, :session_id, :hook_id, :hook_name, :hook_event,
-  :stdout, :stderr, :output
-)
+class HookProgressMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :hook_id
+  attribute :hook_name
+  attribute :hook_event
+  attribute :stdout, default: ""
+  attribute :stderr, default: ""
+  attribute :output, default: ""
+end
 ```
 
 | Field        | Type     | Default  |
@@ -450,10 +539,18 @@ Methods:
 Final result of a hook execution.
 
 ```ruby
-HookResponseMessage = Data.define(
-  :uuid, :session_id, :hook_id, :hook_name, :hook_event,
-  :stdout, :stderr, :output, :exit_code, :outcome
-)
+class HookResponseMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :hook_id, default: nil
+  attribute :hook_name
+  attribute :hook_event
+  attribute :stdout, default: ""
+  attribute :stderr, default: ""
+  attribute :output, default: ""
+  attribute :exit_code, default: nil
+  attribute :outcome, default: nil
+end
 ```
 
 | Field        | Type           | Default  |
@@ -483,10 +580,15 @@ Methods:
 Sent when a new task (subagent) starts.
 
 ```ruby
-TaskStartedMessage = Data.define(
-  :uuid, :session_id, :task_id, :tool_use_id,
-  :description, :task_type, :prompt
-)
+class TaskStartedMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :task_id
+  attribute :tool_use_id, default: nil
+  attribute :description, default: nil
+  attribute :task_type, default: nil
+  attribute :prompt, default: nil
+end
 ```
 
 | Field         | Type          | Default  |
@@ -508,10 +610,16 @@ Methods:
 Progress during background task (subagent) execution.
 
 ```ruby
-TaskProgressMessage = Data.define(
-  :uuid, :session_id, :task_id, :tool_use_id,
-  :description, :usage, :last_tool_name, :summary
-)
+class TaskProgressMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :task_id
+  attribute :description
+  attribute :tool_use_id, default: nil
+  attribute :usage, default: nil
+  attribute :last_tool_name, default: nil
+  attribute :summary, default: nil
+end
 ```
 
 | Field            | Type          | Default  |
@@ -534,10 +642,16 @@ Methods:
 Sent when a background task completes, fails, or is stopped.
 
 ```ruby
-TaskNotificationMessage = Data.define(
-  :uuid, :session_id, :task_id, :status,
-  :output_file, :summary, :tool_use_id, :usage
-)
+class TaskNotificationMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :task_id
+  attribute :status
+  attribute :output_file
+  attribute :summary
+  attribute :tool_use_id, default: nil
+  attribute :usage, default: nil
+end
 ```
 
 | Field         | Type          | Default  |
@@ -565,7 +679,13 @@ Methods:
 Sent when files are persisted to storage.
 
 ```ruby
-FilesPersistedEvent = Data.define(:uuid, :session_id, :files, :failed, :processed_at)
+class FilesPersistedEvent < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :files, default: []
+  attribute :failed, default: []
+  attribute :processed_at, default: nil
+end
 ```
 
 | Field          | Type          | Default  |
@@ -585,7 +705,12 @@ Methods:
 Sent when an MCP server elicitation request completes.
 
 ```ruby
-ElicitationCompleteMessage = Data.define(:uuid, :session_id, :mcp_server_name, :elicitation_id)
+class ElicitationCompleteMessage < ImmutableRecord
+  attribute :uuid, default: ""
+  attribute :session_id, default: ""
+  attribute :mcp_server_name, default: ""
+  attribute :elicitation_id, default: ""
+end
 ```
 
 | Field             | Type     | Default |
@@ -604,7 +729,13 @@ Methods:
 Authentication status during login flows.
 
 ```ruby
-AuthStatusMessage = Data.define(:uuid, :session_id, :is_authenticating, :output, :error)
+class AuthStatusMessage < ImmutableRecord
+  attribute :uuid
+  attribute :session_id
+  attribute :is_authenticating
+  attribute :output, default: []
+  attribute :error, default: nil
+end
 ```
 
 | Field               | Type          | Default  |
@@ -624,7 +755,10 @@ Methods:
 Catch-all for unknown/future protocol message types. Supports dynamic field access.
 
 ```ruby
-GenericMessage = Data.define(:message_type, :raw)
+class GenericMessage < ImmutableRecord
+  attribute :message_type
+  attribute :raw
+end
 ```
 
 | Field          | Type     | Default  |
@@ -657,7 +791,9 @@ msg.data    # => "hello"
 Plain text content.
 
 ```ruby
-TextBlock = Data.define(:text)
+class TextBlock < ImmutableRecord
+  attribute :text
+end
 ```
 
 | Field  | Type     | Default  |
@@ -674,7 +810,10 @@ Methods:
 Extended thinking content.
 
 ```ruby
-ThinkingBlock = Data.define(:thinking, :signature)
+class ThinkingBlock < ImmutableRecord
+  attribute :thinking
+  attribute :signature
+end
 ```
 
 | Field       | Type     | Default  |
@@ -692,7 +831,11 @@ Methods:
 Tool use request from Claude.
 
 ```ruby
-ToolUseBlock = Data.define(:id, :name, :input)
+class ToolUseBlock < ImmutableRecord
+  attribute :id
+  attribute :name
+  attribute :input
+end
 ```
 
 | Field   | Type     | Default  |
@@ -721,7 +864,11 @@ block.summary        # => "Read: /tmp/file.rb"
 Result returned from a tool execution.
 
 ```ruby
-ToolResultBlock = Data.define(:tool_use_id, :content, :is_error)
+class ToolResultBlock < ImmutableRecord
+  attribute :tool_use_id
+  attribute :content, default: nil
+  attribute :is_error, default: nil
+end
 ```
 
 | Field         | Type           | Default  |
@@ -740,7 +887,12 @@ Methods:
 Tool use request for an MCP server tool.
 
 ```ruby
-ServerToolUseBlock = Data.define(:id, :name, :input, :server_name)
+class ServerToolUseBlock < ImmutableRecord
+  attribute :id
+  attribute :name
+  attribute :input
+  attribute :server_name
+end
 ```
 
 | Field         | Type     | Default  |
@@ -763,7 +915,12 @@ Methods:
 Result from an MCP server tool execution.
 
 ```ruby
-ServerToolResultBlock = Data.define(:tool_use_id, :content, :is_error, :server_name)
+class ServerToolResultBlock < ImmutableRecord
+  attribute :tool_use_id
+  attribute :server_name
+  attribute :content, default: nil
+  attribute :is_error, default: nil
+end
 ```
 
 | Field         | Type           | Default  |
@@ -783,7 +940,9 @@ Methods:
 Image content (base64-encoded or URL-sourced).
 
 ```ruby
-ImageContentBlock = Data.define(:source)
+class ImageContentBlock < ImmutableRecord
+  attribute :source
+end
 ```
 
 | Field    | Type   | Default  |
@@ -810,7 +969,10 @@ block.media_type   # => "image/png"
 Catch-all for unknown/future content block types. Supports dynamic field access.
 
 ```ruby
-GenericBlock = Data.define(:block_type, :raw)
+class GenericBlock < ImmutableRecord
+  attribute :block_type
+  attribute :raw
+end
 ```
 
 | Field        | Type     | Default  |

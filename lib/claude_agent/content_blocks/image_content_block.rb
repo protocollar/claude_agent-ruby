@@ -18,7 +18,9 @@ module ClaudeAgent
   #   )
   #   block.url  # => "https://example.com/image.png"
   #
-  ImageContentBlock = Data.define(:source) do
+  class ImageContentBlock < ImmutableRecord
+    attribute :source
+
     def type
       :image
     end

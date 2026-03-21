@@ -269,7 +269,7 @@ end
 
 ### ToolActivity Accessors
 
-Each `ToolActivity` is an immutable `Data.define` object built after a turn completes.
+Each `ToolActivity` is an immutable `ImmutableRecord` object built after a turn completes.
 
 | Method          | Return Type            | Description                                                   |
 |-----------------|------------------------|---------------------------------------------------------------|

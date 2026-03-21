@@ -22,44 +22,23 @@ module ClaudeAgent
   #     ...
   #   )
   #
-  ResultMessage = Data.define(
-    :subtype,
-    :duration_ms,
-    :duration_api_ms,
-    :is_error,
-    :num_turns,
-    :session_id,
-    :uuid,
-    :total_cost_usd,
-    :usage,
-    :result,
-    :structured_output,
-    :errors,             # Array<String> for error subtypes
-    :permission_denials, # Array<SDKPermissionDenial>
-    :model_usage,        # Hash with per-model usage breakdown
-    :stop_reason,        # Why the model stopped generating (TypeScript SDK parity)
-    :fast_mode_state     # Fast mode state (TypeScript SDK v0.2.63 parity)
-  ) do
-    def initialize(
-      subtype:,
-      duration_ms:,
-      duration_api_ms:,
-      is_error:,
-      num_turns:,
-      session_id:,
-      uuid: nil,
-      total_cost_usd: nil,
-      usage: nil,
-      result: nil,
-      structured_output: nil,
-      errors: nil,
-      permission_denials: nil,
-      model_usage: nil,
-      stop_reason: nil,
-      fast_mode_state: nil
-    )
-      super
-    end
+  class ResultMessage < ImmutableRecord
+    attribute :subtype
+    attribute :duration_ms
+    attribute :duration_api_ms
+    attribute :is_error
+    attribute :num_turns
+    attribute :session_id
+    attribute :uuid, default: nil
+    attribute :total_cost_usd, default: nil
+    attribute :usage, default: nil
+    attribute :result, default: nil
+    attribute :structured_output, default: nil
+    attribute :errors, default: nil             # Array<String> for error subtypes
+    attribute :permission_denials, default: nil  # Array<SDKPermissionDenial>
+    attribute :model_usage, default: nil         # Hash with per-model usage breakdown
+    attribute :stop_reason, default: nil         # Why the model stopped generating (TypeScript SDK parity)
+    attribute :fast_mode_state, default: nil     # Fast mode state (TypeScript SDK v0.2.63 parity)
 
     def type
       :result

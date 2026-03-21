@@ -129,7 +129,7 @@ Internal architecture of the ClaudeAgent Ruby SDK.
 
 | Module                | Role                                                                                                                                                                                                         |
 |-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ToolActivity`        | Immutable (`Data.define`) record of a completed tool execution. Pairs `ToolUseBlock` + `ToolResultBlock` with turn index and wall-clock timestamps.                                                          |
+| `ToolActivity`        | Immutable (`ImmutableRecord`) record of a completed tool execution. Pairs `ToolUseBlock` + `ToolResultBlock` with turn index and wall-clock timestamps.                                                      |
 | `LiveToolActivity`    | Mutable wrapper for real-time status tracking. States: `:running`, `:done`, `:error`. Updated by progress messages. Suitable for live UIs.                                                                   |
 | `ToolActivityTracker` | Enumerable collection with auto-wiring. Attaches to `EventHandler` or `Client`. Callbacks: `on_start`, `on_complete`, `on_progress`, `on_change`. Query methods: `running`, `done`, `errored`, `find_by_id`. |
 
@@ -236,7 +236,7 @@ CLI sends control_request { subtype: "can_use_tool" }
 
 ## Immutable Types
 
-All message types and content blocks use `Data.define`, frozen at construction:
+All message types and content blocks inherit from `ImmutableRecord`, frozen at construction:
 
 **Messages**: `UserMessage`, `UserMessageReplay`, `AssistantMessage`, `SystemMessage`, `ResultMessage`, `StreamEvent`, `CompactBoundaryMessage`, `StatusMessage`, `ToolProgressMessage`, `HookResponseMessage`, `AuthStatusMessage`, `TaskNotificationMessage`, `HookStartedMessage`, `HookProgressMessage`, `ToolUseSummaryMessage`, `FilesPersistedEvent`, `TaskStartedMessage`, `TaskProgressMessage`, `RateLimitEvent`, `PromptSuggestionMessage`, `ElicitationCompleteMessage`, `LocalCommandOutputMessage`, `GenericMessage`
 

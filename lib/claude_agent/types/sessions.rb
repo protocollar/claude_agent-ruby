@@ -15,21 +15,17 @@ module ClaudeAgent
   #     cwd: "/Users/dev/myapp"
   #   )
   #
-  SessionInfo = Data.define(
-    :session_id,
-    :summary,
-    :last_modified,
-    :file_size,
-    :custom_title,
-    :first_prompt,
-    :git_branch,
-    :cwd,
-    :tag,
-    :created_at
-  ) do
-    def initialize(session_id:, summary:, last_modified:, file_size:, custom_title: nil, first_prompt: nil, git_branch: nil, cwd: nil, tag: nil, created_at: nil)
-      super
-    end
+  class SessionInfo < ImmutableRecord
+    attribute :session_id
+    attribute :summary
+    attribute :last_modified
+    attribute :file_size
+    attribute :custom_title, default: nil
+    attribute :first_prompt, default: nil
+    attribute :git_branch, default: nil
+    attribute :cwd, default: nil
+    attribute :tag, default: nil
+    attribute :created_at, default: nil
   end
 
   # Message from a session transcript returned by get_session_messages (TypeScript SDK v0.2.59 parity)
@@ -42,10 +38,12 @@ module ClaudeAgent
   #     message: { "role" => "user", "content" => [{ "type" => "text", "text" => "Hello" }] }
   #   )
   #
-  SessionMessage = Data.define(:type, :uuid, :session_id, :message, :parent_tool_use_id) do
-    def initialize(type:, uuid:, session_id:, message:, parent_tool_use_id: nil)
-      super
-    end
+  class SessionMessage < ImmutableRecord
+    attribute :type
+    attribute :uuid
+    attribute :session_id
+    attribute :message
+    attribute :parent_tool_use_id, default: nil
   end
 
   # Result of forking a session (TypeScript SDK v0.2.76 parity)
@@ -54,5 +52,7 @@ module ClaudeAgent
   #   result = ClaudeAgent.fork_session("abc-123")
   #   puts result.session_id  # => new UUID
   #
-  ForkSessionResult = Data.define(:session_id)
+  class ForkSessionResult < ImmutableRecord
+    attribute :session_id
+  end
 end

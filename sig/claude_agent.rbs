@@ -117,10 +117,22 @@ module ClaudeAgent
     def abort!: (?String? reason) -> void
   end
 
+  # Base class for immutable record types (replaces Data.define)
+  class ImmutableRecord
+    def self.attribute: (Symbol name, ?default: untyped) -> void
+    def self.members: () -> Array[Symbol]
+    def self.inherited: (Class subclass) -> void
+    def initialize: (**untyped) -> void
+    def ==: (untyped other) -> bool
+    def eql?: (untyped other) -> bool
+    def hash: () -> Integer
+    def deconstruct_keys: (Array[Symbol]? keys) -> Hash[Symbol, untyped]
+  end
+
   # TypeScript SDK parity types
   ASSISTANT_MESSAGE_ERROR_TYPES: Array[String]
   API_KEY_SOURCES: Array[String]
-  class SlashCommand
+  class SlashCommand < ImmutableRecord
     attr_reader name: String
     attr_reader description: String?
     attr_reader argument_hint: String?
@@ -128,7 +140,7 @@ module ClaudeAgent
     def initialize: (name: String, ?description: String?, ?argument_hint: String?) -> void
   end
 
-  class ModelInfo
+  class ModelInfo < ImmutableRecord
     attr_reader value: String
     attr_reader display_name: String?
     attr_reader description: String?
@@ -141,7 +153,7 @@ module ClaudeAgent
     def initialize: (value: String, ?display_name: String?, ?description: String?, ?supports_effort: bool?, ?supported_effort_levels: Array[String]?, ?supports_adaptive_thinking: bool?, ?supports_fast_mode: bool?, ?supports_auto_mode: bool?) -> void
   end
 
-  class McpServerStatus
+  class McpServerStatus < ImmutableRecord
     attr_reader name: String
     attr_reader status: String
     attr_reader server_info: Hash[String, untyped]?
@@ -153,7 +165,7 @@ module ClaudeAgent
     def initialize: (name: String, status: String, ?server_info: Hash[String, untyped]?, ?error: String?, ?config: Hash[String, untyped]?, ?scope: String?, ?tools: Array[Hash[String, untyped]]?) -> void
   end
 
-  class TaskUsage
+  class TaskUsage < ImmutableRecord
     attr_reader total_tokens: Integer
     attr_reader tool_uses: Integer
     attr_reader duration_ms: Integer
@@ -161,7 +173,7 @@ module ClaudeAgent
     def initialize: (?total_tokens: Integer, ?tool_uses: Integer, ?duration_ms: Integer) -> void
   end
 
-  class AccountInfo
+  class AccountInfo < ImmutableRecord
     attr_reader email: String?
     attr_reader organization: String?
     attr_reader subscription_type: String?
@@ -171,7 +183,7 @@ module ClaudeAgent
     def initialize: (?email: String?, ?organization: String?, ?subscription_type: String?, ?token_source: String?, ?api_key_source: String?) -> void
   end
 
-  class AgentInfo
+  class AgentInfo < ImmutableRecord
     attr_reader name: String
     attr_reader description: String?
     attr_reader model: String?
@@ -179,7 +191,7 @@ module ClaudeAgent
     def initialize: (name: String, ?description: String?, ?model: String?) -> void
   end
 
-  class InitializationResult
+  class InitializationResult < ImmutableRecord
     attr_reader commands: Array[SlashCommand]
     attr_reader output_style: String?
     attr_reader available_output_styles: Array[String]
@@ -191,7 +203,7 @@ module ClaudeAgent
     def initialize: (?commands: Array[SlashCommand], ?output_style: String?, ?available_output_styles: Array[String], ?models: Array[ModelInfo], ?account: AccountInfo?, ?agents: Array[AgentInfo], ?fast_mode_state: String?) -> void
   end
 
-  class ModelUsage
+  class ModelUsage < ImmutableRecord
     attr_reader input_tokens: Integer
     attr_reader output_tokens: Integer
     attr_reader cache_read_input_tokens: Integer
@@ -204,7 +216,7 @@ module ClaudeAgent
     def initialize: (?input_tokens: Integer, ?output_tokens: Integer, ?cache_read_input_tokens: Integer, ?cache_creation_input_tokens: Integer, ?web_search_requests: Integer, ?cost_usd: Float, ?context_window: Integer?, ?max_output_tokens: Integer?) -> void
   end
 
-  class SDKPermissionDenial
+  class SDKPermissionDenial < ImmutableRecord
     attr_reader tool_name: String
     attr_reader tool_use_id: String
     attr_reader tool_input: Hash[String, untyped]
@@ -213,7 +225,7 @@ module ClaudeAgent
   end
 
   # Result of set_mcp_servers() control method (TypeScript SDK parity)
-  class McpSetServersResult
+  class McpSetServersResult < ImmutableRecord
     attr_reader added: Array[String]
     attr_reader removed: Array[String]
     attr_reader errors: Hash[String, String]
@@ -222,7 +234,7 @@ module ClaudeAgent
   end
 
   # Result of rewind_files() control method (TypeScript SDK parity)
-  class RewindFilesResult
+  class RewindFilesResult < ImmutableRecord
     attr_reader can_rewind: bool
     attr_reader error: String?
     attr_reader files_changed: Array[String]?
@@ -233,7 +245,7 @@ module ClaudeAgent
   end
 
   # Session metadata returned by list_sessions (TypeScript SDK parity: SDKSessionInfo)
-  class SessionInfo
+  class SessionInfo < ImmutableRecord
     attr_reader session_id: String
     attr_reader summary: String
     attr_reader last_modified: Integer
@@ -249,7 +261,7 @@ module ClaudeAgent
   end
 
   # Session transcript message returned by get_session_messages (TypeScript SDK v0.2.59 parity)
-  class SessionMessage
+  class SessionMessage < ImmutableRecord
     attr_reader type: String
     attr_reader uuid: String
     attr_reader session_id: String
@@ -260,14 +272,14 @@ module ClaudeAgent
   end
 
   # Fork session result (TypeScript SDK v0.2.76 parity)
-  class ForkSessionResult
+  class ForkSessionResult < ImmutableRecord
     attr_reader session_id: String
 
     def initialize: (session_id: String) -> void
   end
 
   # Agent definition for custom subagents (TypeScript SDK parity)
-  class AgentDefinition
+  class AgentDefinition < ImmutableRecord
     attr_reader description: String
     attr_reader prompt: String
     attr_reader tools: Array[String]?
@@ -281,7 +293,7 @@ module ClaudeAgent
   end
 
   # Sandbox configuration types
-  class SandboxNetworkConfig
+  class SandboxNetworkConfig < ImmutableRecord
     attr_reader allowed_domains: Array[String]
     attr_reader allow_local_binding: bool
     attr_reader allow_unix_sockets: Array[String]
@@ -294,7 +306,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class SandboxRipgrepConfig
+  class SandboxRipgrepConfig < ImmutableRecord
     attr_reader command: String
     attr_reader args: Array[String]?
 
@@ -302,7 +314,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class SandboxIgnoreViolations
+  class SandboxIgnoreViolations < ImmutableRecord
     attr_reader file: Array[String]
     attr_reader network: Array[String]
 
@@ -310,7 +322,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class SandboxFilesystemConfig
+  class SandboxFilesystemConfig < ImmutableRecord
     attr_reader allow_write: Array[String]
     attr_reader deny_write: Array[String]
     attr_reader deny_read: Array[String]
@@ -321,7 +333,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class SandboxSettings
+  class SandboxSettings < ImmutableRecord
     attr_reader enabled: bool
     attr_reader auto_allow_bash_if_sandboxed: bool
     attr_reader excluded_commands: Array[String]
@@ -338,7 +350,7 @@ module ClaudeAgent
   end
 
   # Tools preset configuration
-  class ToolsPreset
+  class ToolsPreset < ImmutableRecord
     attr_reader type: String
     attr_reader preset: String
 
@@ -463,7 +475,7 @@ module ClaudeAgent
   end
 
   # Content block types
-  class TextBlock
+  class TextBlock < ImmutableRecord
     attr_reader text: String
 
     def initialize: (text: String) -> void
@@ -471,7 +483,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class ThinkingBlock
+  class ThinkingBlock < ImmutableRecord
     attr_reader thinking: String
     attr_reader signature: String?
 
@@ -480,7 +492,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class ToolUseBlock
+  class ToolUseBlock < ImmutableRecord
     attr_reader id: String
     attr_reader name: String
     attr_reader input: Hash[String, untyped]
@@ -493,7 +505,7 @@ module ClaudeAgent
     def summary: (?max: Integer) -> String
   end
 
-  class ToolResultBlock
+  class ToolResultBlock < ImmutableRecord
     attr_reader tool_use_id: String
     attr_reader content: String?
     attr_reader is_error: bool?
@@ -503,7 +515,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class ServerToolUseBlock
+  class ServerToolUseBlock < ImmutableRecord
     attr_reader id: String
     attr_reader name: String
     attr_reader input: Hash[String, untyped]
@@ -517,7 +529,7 @@ module ClaudeAgent
     def summary: (?max: Integer) -> String
   end
 
-  class ServerToolResultBlock
+  class ServerToolResultBlock < ImmutableRecord
     attr_reader tool_use_id: String
     attr_reader server_name: String
     attr_reader content: String?
@@ -528,7 +540,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class ImageContentBlock
+  class ImageContentBlock < ImmutableRecord
     attr_reader source: Hash[String | Symbol, untyped]
 
     def initialize: (source: Hash[String | Symbol, untyped]) -> void
@@ -540,7 +552,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class GenericBlock
+  class GenericBlock < ImmutableRecord
     attr_reader block_type: String?
     attr_reader raw: Hash[Symbol, untyped]
 
@@ -555,7 +567,7 @@ module ClaudeAgent
   CONTENT_BLOCK_TYPES: Array[Class]
 
   # Elicitation complete message (TypeScript SDK v0.2.63 parity)
-  class ElicitationCompleteMessage
+  class ElicitationCompleteMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader mcp_server_name: String
@@ -566,7 +578,7 @@ module ClaudeAgent
   end
 
   # Local command output message (TypeScript SDK v0.2.63 parity)
-  class LocalCommandOutputMessage
+  class LocalCommandOutputMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader content: String
@@ -576,7 +588,7 @@ module ClaudeAgent
   end
 
   # API retry message (TypeScript SDK v0.2.77 parity)
-  class APIRetryMessage
+  class APIRetryMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader attempt: Integer
@@ -589,7 +601,7 @@ module ClaudeAgent
     def type: () -> :api_retry
   end
 
-  class GenericMessage
+  class GenericMessage < ImmutableRecord
     attr_reader message_type: String?
     attr_reader raw: Hash[Symbol, untyped]
 
@@ -604,7 +616,7 @@ module ClaudeAgent
 
   MESSAGE_TYPES: Array[Class]
 
-  class UserMessage
+  class UserMessage < ImmutableRecord
     attr_reader content: String | Array[content_block]
     attr_reader uuid: String?
     attr_reader session_id: String?
@@ -616,7 +628,7 @@ module ClaudeAgent
     def replay?: () -> bool
   end
 
-  class UserMessageReplay
+  class UserMessageReplay < ImmutableRecord
     attr_reader content: String | Array[content_block]
     attr_reader uuid: String?
     attr_reader session_id: String?
@@ -632,7 +644,7 @@ module ClaudeAgent
     def synthetic?: () -> bool
   end
 
-  class AssistantMessage
+  class AssistantMessage < ImmutableRecord
     attr_reader content: Array[content_block]
     attr_reader model: String
     attr_reader uuid: String?
@@ -648,7 +660,7 @@ module ClaudeAgent
     def has_tool_use?: () -> bool
   end
 
-  class SystemMessage
+  class SystemMessage < ImmutableRecord
     attr_reader subtype: String
     attr_reader data: Hash[String, untyped]
 
@@ -656,7 +668,7 @@ module ClaudeAgent
     def type: () -> :system
   end
 
-  class ResultMessage
+  class ResultMessage < ImmutableRecord
     attr_reader subtype: String
     attr_reader duration_ms: Integer
     attr_reader duration_api_ms: Integer
@@ -698,7 +710,7 @@ module ClaudeAgent
     def error?: () -> bool
   end
 
-  class StreamEvent
+  class StreamEvent < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader event: Hash[String, untyped]
@@ -713,7 +725,7 @@ module ClaudeAgent
     def content_index: () -> Integer?
   end
 
-  class CompactBoundaryMessage
+  class CompactBoundaryMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader compact_metadata: Hash[String | Symbol, untyped]
@@ -725,7 +737,7 @@ module ClaudeAgent
   end
 
   # Status message (TypeScript SDK parity)
-  class StatusMessage
+  class StatusMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader status: String
@@ -736,7 +748,7 @@ module ClaudeAgent
   end
 
   # Tool progress message (TypeScript SDK parity)
-  class ToolProgressMessage
+  class ToolProgressMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader tool_use_id: String
@@ -750,7 +762,7 @@ module ClaudeAgent
   end
 
   # Hook response message (TypeScript SDK parity)
-  class HookResponseMessage
+  class HookResponseMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader hook_id: String?
@@ -770,7 +782,7 @@ module ClaudeAgent
   end
 
   # Auth status message (TypeScript SDK parity)
-  class AuthStatusMessage
+  class AuthStatusMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader is_authenticating: bool
@@ -782,7 +794,7 @@ module ClaudeAgent
   end
 
   # Task notification message (TypeScript SDK parity)
-  class TaskNotificationMessage
+  class TaskNotificationMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader task_id: String
@@ -800,7 +812,7 @@ module ClaudeAgent
   end
 
   # Hook started message (TypeScript SDK parity)
-  class HookStartedMessage
+  class HookStartedMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader hook_id: String
@@ -812,7 +824,7 @@ module ClaudeAgent
   end
 
   # Hook progress message (TypeScript SDK parity)
-  class HookProgressMessage
+  class HookProgressMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader hook_id: String
@@ -827,7 +839,7 @@ module ClaudeAgent
   end
 
   # Tool use summary message (TypeScript SDK parity)
-  class ToolUseSummaryMessage
+  class ToolUseSummaryMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader summary: String
@@ -838,7 +850,7 @@ module ClaudeAgent
   end
 
   # Files persisted event (TypeScript SDK v0.2.25 parity)
-  class FilesPersistedEvent
+  class FilesPersistedEvent < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader files: Array[Hash[String, String]]
@@ -850,7 +862,7 @@ module ClaudeAgent
   end
 
   # Task started message (TypeScript SDK v0.2.75 parity)
-  class TaskStartedMessage
+  class TaskStartedMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader task_id: String
@@ -864,7 +876,7 @@ module ClaudeAgent
   end
 
   # Task progress message (TypeScript SDK v0.2.75 parity)
-  class TaskProgressMessage
+  class TaskProgressMessage < ImmutableRecord
     attr_reader uuid: String
     attr_reader session_id: String
     attr_reader task_id: String
@@ -879,7 +891,7 @@ module ClaudeAgent
   end
 
   # Rate limit event (TypeScript SDK v0.2.45 parity)
-  class RateLimitEvent
+  class RateLimitEvent < ImmutableRecord
     attr_reader rate_limit_info: Hash[String, untyped]
     attr_reader uuid: String?
     attr_reader session_id: String?
@@ -890,7 +902,7 @@ module ClaudeAgent
   end
 
   # Prompt suggestion message (TypeScript SDK v0.2.47 parity)
-  class PromptSuggestionMessage
+  class PromptSuggestionMessage < ImmutableRecord
     attr_reader uuid: String?
     attr_reader session_id: String?
     attr_reader suggestion: String
@@ -911,7 +923,7 @@ module ClaudeAgent
   # Hook types
   HOOK_EVENTS: Array[String]
 
-  class HookMatcher
+  class HookMatcher < ImmutableRecord
     attr_reader matcher: String | Regexp
     attr_reader callbacks: Array[^(BaseHookInput, HookContext) -> Hash[Symbol, untyped]]
     attr_reader timeout: Integer?
@@ -920,7 +932,7 @@ module ClaudeAgent
     def matches?: (String tool_name) -> bool
   end
 
-  class HookContext
+  class HookContext < ImmutableRecord
     attr_reader tool_use_id: String?
 
     def initialize: (?tool_use_id: String?) -> void
@@ -1137,7 +1149,7 @@ module ClaudeAgent
   PERMISSION_UPDATE_TYPES: Array[String]
   PERMISSION_UPDATE_DESTINATIONS: Array[String]
 
-  class PermissionResultAllow
+  class PermissionResultAllow < ImmutableRecord
     attr_reader updated_input: Hash[String, untyped]?
     attr_reader updated_permissions: Array[PermissionUpdate]?
     attr_reader tool_use_id: String?
@@ -1147,7 +1159,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class PermissionResultDeny
+  class PermissionResultDeny < ImmutableRecord
     attr_reader message: String
     attr_reader interrupt: bool
     attr_reader tool_use_id: String?
@@ -1157,7 +1169,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class PermissionUpdate
+  class PermissionUpdate < ImmutableRecord
     attr_reader type: String
     attr_reader rules: Array[PermissionRuleValue]?
     attr_reader behavior: String?
@@ -1169,7 +1181,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class PermissionRuleValue
+  class PermissionRuleValue < ImmutableRecord
     attr_reader tool_name: String?
     attr_reader rule_content: String?
 
@@ -1177,7 +1189,7 @@ module ClaudeAgent
     def to_h: () -> Hash[Symbol, untyped]
   end
 
-  class ToolPermissionContext
+  class ToolPermissionContext < ImmutableRecord
     attr_reader permission_suggestions: untyped
     attr_reader blocked_path: String?
     attr_reader decision_reason: String?
@@ -1334,7 +1346,7 @@ module ClaudeAgent
   end
 
   # A single tool execution in the conversation timeline
-  class ToolActivity
+  class ToolActivity < ImmutableRecord
     attr_reader tool_use: ToolUseBlock | ServerToolUseBlock
     attr_reader tool_result: ToolResultBlock | ServerToolResultBlock | nil
     attr_reader turn_index: Integer
@@ -1675,7 +1687,7 @@ module ClaudeAgent
   end
 
   # Spawn options for custom process creation (TypeScript SDK parity)
-  class SpawnOptions
+  class SpawnOptions < ImmutableRecord
     attr_reader command: String
     attr_reader args: Array[String]
     attr_reader cwd: String?
@@ -1762,7 +1774,7 @@ module ClaudeAgent
   # @alpha
 
   # V2 Session options (subset of full Options)
-  class SessionOptions
+  class SessionOptions < ImmutableRecord
     attr_reader model: String
     attr_reader path_to_claude_code_executable: String?
     attr_reader env: Hash[String, String]?

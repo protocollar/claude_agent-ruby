@@ -4,7 +4,7 @@ Ruby SDK for building AI-powered applications with the [Claude Agent SDK](https:
 
 ## Requirements
 
-- Ruby 3.2+ (uses `Data.define`)
+- Ruby 3.2+
 - [Claude Code CLI](https://code.claude.com/docs/en/getting-started) v2.0.0+
 
 ## Installation

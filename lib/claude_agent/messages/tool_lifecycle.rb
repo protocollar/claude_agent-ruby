@@ -14,26 +14,14 @@ module ClaudeAgent
   #     elapsed_time_seconds: 5.2
   #   )
   #
-  ToolProgressMessage = Data.define(
-    :uuid,
-    :session_id,
-    :tool_use_id,
-    :tool_name,
-    :parent_tool_use_id,
-    :elapsed_time_seconds,
-    :task_id
-  ) do
-    def initialize(
-      uuid:,
-      session_id:,
-      tool_use_id:,
-      tool_name:,
-      elapsed_time_seconds:,
-      parent_tool_use_id: nil,
-      task_id: nil
-    )
-      super
-    end
+  class ToolProgressMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :tool_use_id
+    attribute :tool_name
+    attribute :elapsed_time_seconds
+    attribute :parent_tool_use_id, default: nil
+    attribute :task_id, default: nil
 
     def type
       :tool_progress
@@ -52,20 +40,11 @@ module ClaudeAgent
   #     preceding_tool_use_ids: ["tool-1", "tool-2", "tool-3"]
   #   )
   #
-  ToolUseSummaryMessage = Data.define(
-    :uuid,
-    :session_id,
-    :summary,
-    :preceding_tool_use_ids
-  ) do
-    def initialize(
-      uuid:,
-      session_id:,
-      summary:,
-      preceding_tool_use_ids: []
-    )
-      super
-    end
+  class ToolUseSummaryMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :summary
+    attribute :preceding_tool_use_ids, default: []
 
     def type
       :tool_use_summary
@@ -83,10 +62,10 @@ module ClaudeAgent
   #     content: "command output here"
   #   )
   #
-  LocalCommandOutputMessage = Data.define(:uuid, :session_id, :content) do
-    def initialize(uuid: "", session_id: "", content: "")
-      super
-    end
+  class LocalCommandOutputMessage < ImmutableRecord
+    attribute :uuid, default: ""
+    attribute :session_id, default: ""
+    attribute :content, default: ""
 
     def type
       :local_command_output

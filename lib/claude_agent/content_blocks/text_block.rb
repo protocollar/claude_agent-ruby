@@ -7,7 +7,9 @@ module ClaudeAgent
   #   block = TextBlock.new(text: "Hello, world!")
   #   block.text # => "Hello, world!"
   #
-  TextBlock = Data.define(:text) do
+  class TextBlock < ImmutableRecord
+    attribute :text
+
     def type
       :text
     end

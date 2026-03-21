@@ -30,11 +30,11 @@ lib/
 
 Separate concerns into distinct layers:
 
-| Layer | Purpose | Example |
-|-------|---------|---------|
-| CLI | Orchestrates operations, user interaction | `Cli::App#deploy` |
-| Commands | Builds command arrays, no execution | `Commands::App#run` |
-| Configuration | Loads, validates, provides config | `Configuration::Role` |
+| Layer         | Purpose                                   | Example               |
+|---------------|-------------------------------------------|-----------------------|
+| CLI           | Orchestrates operations, user interaction | `Cli::App#deploy`     |
+| Commands      | Builds command arrays, no execution       | `Commands::App#run`   |
+| Configuration | Loads, validates, provides config         | `Configuration::Role` |
 
 ### Entry Point Pattern
 
@@ -646,27 +646,23 @@ Key conventions:
 - `to_*` method compiles to the internal format
 - `empty?` predicate for skipping when unconfigured
 
-### Prepending Modules into Data.define Types
+### ImmutableRecord Base Class
 
-To add shared behavior (like `deconstruct_keys` overrides) to `Data.define` classes,
-use `prepend` not `include`. Data.define generates methods on the class itself, so
-`include` would be shadowed. When overriding `deconstruct_keys`, filter virtual keys
-out before calling `super` — Data's implementation stops early on unknown member keys.
+All immutable value types (messages, content blocks, permissions, sandbox config, etc.)
+inherit from `ImmutableRecord`. It provides an `attribute` DSL, freeze-on-initialize,
+structural equality, and `deconstruct_keys` for pattern matching.
 
 ```ruby
-module Message
-  def deconstruct_keys(keys)
-    if keys.nil?
-      { type: type }.merge(super)
-    elsif keys.include?(:type)
-      member_keys = keys - [ :type ]
-      base = member_keys.empty? ? {} : super(member_keys)
-      { type: type }.merge(base)
-    else
-      super
-    end
-  end
-end
+class TextBlock < ImmutableRecord
+  attribute :text
 
-MESSAGE_TYPES.each { |klass| klass.prepend(Message) }
+  def type = :text
+  def to_h = { type: "text", text: text }
+end
 ```
+
+Key conventions:
+- Required attributes: `attribute :name`
+- Optional attributes: `attribute :name, default: nil`
+- No need to override `initialize` — the base class handles keyword args and freeze
+- The `Message` module is `include`d (not prepended) into message/content block types

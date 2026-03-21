@@ -14,7 +14,10 @@ module ClaudeAgent
   #   block.url      # => "https://example.com"
   #   block.to_h     # => { text: "ref", url: "https://example.com" }
   #
-  GenericBlock = Data.define(:block_type, :raw) do
+  class GenericBlock < ImmutableRecord
+    attribute :block_type
+    attribute :raw
+
     def type
       block_type&.to_sym || :unknown
     end

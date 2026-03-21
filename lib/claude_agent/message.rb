@@ -4,7 +4,8 @@ module ClaudeAgent
   # Shared interface for all message and content block types.
   #
   # Provides a consistent API across the 22+ message types and 8 content
-  # block types without interfering with `Data.define` inheritance.
+  # block types. Included (not prepended) into all ImmutableRecord subclasses
+  # that represent messages or content blocks.
   #
   # @example Universal text extraction
   #   message.text_content  # works on AssistantMessage, UserMessage, TextBlock, etc.
@@ -66,9 +67,7 @@ module ClaudeAgent
     # Override deconstruct_keys to include :type for pattern matching.
     #
     # Allows `case msg; in { type: :assistant }` to work naturally.
-    #
-    # Data#deconstruct_keys stops early if it encounters a non-member key,
-    # so we filter out :type (a virtual key) before delegating to super.
+    # The virtual :type key is added to ImmutableRecord's attribute hash.
     #
     # @param keys [Array<Symbol>, nil]
     # @return [Hash]
@@ -85,9 +84,9 @@ module ClaudeAgent
     end
   end
 
-  # Prepend Message in all message types (prepend needed to override Data#deconstruct_keys)
-  MESSAGE_TYPES.each { |klass| klass.prepend(Message) }
+  # Include Message in all message types
+  MESSAGE_TYPES.each { |klass| klass.include(Message) }
 
-  # Prepend Message in all content block types
-  CONTENT_BLOCK_TYPES.each { |klass| klass.prepend(Message) }
+  # Include Message in all content block types
+  CONTENT_BLOCK_TYPES.each { |klass| klass.include(Message) }
 end

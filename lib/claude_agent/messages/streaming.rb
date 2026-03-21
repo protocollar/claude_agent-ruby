@@ -10,10 +10,11 @@ module ClaudeAgent
   #     event: {type: "content_block_delta", delta: {type: "text_delta", text: "Hello"}}
   #   )
   #
-  StreamEvent = Data.define(:uuid, :session_id, :event, :parent_tool_use_id) do
-    def initialize(uuid:, session_id:, event:, parent_tool_use_id: nil)
-      super
-    end
+  class StreamEvent < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :event
+    attribute :parent_tool_use_id, default: nil
 
     def type
       :stream_event
@@ -82,10 +83,10 @@ module ClaudeAgent
   #   )
   #   msg.status  # => "allowed_warning"
   #
-  RateLimitEvent = Data.define(:rate_limit_info, :uuid, :session_id) do
-    def initialize(rate_limit_info:, uuid: nil, session_id: nil)
-      super
-    end
+  class RateLimitEvent < ImmutableRecord
+    attribute :rate_limit_info
+    attribute :uuid, default: nil
+    attribute :session_id, default: nil
 
     def type
       :rate_limit_event
@@ -109,10 +110,10 @@ module ClaudeAgent
   #     suggestion: "Tell me about this project"
   #   )
   #
-  PromptSuggestionMessage = Data.define(:uuid, :session_id, :suggestion) do
-    def initialize(uuid: nil, session_id: nil, suggestion:)
-      super
-    end
+  class PromptSuggestionMessage < ImmutableRecord
+    attribute :suggestion
+    attribute :uuid, default: nil
+    attribute :session_id, default: nil
 
     def type
       :prompt_suggestion

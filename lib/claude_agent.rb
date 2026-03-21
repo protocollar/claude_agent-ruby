@@ -6,6 +6,7 @@ require "active_support/core_ext/hash/keys"
 require_relative "claude_agent/version"
 require_relative "claude_agent/logging"
 require_relative "claude_agent/errors"
+require_relative "claude_agent/immutable_record"    # Base class for all immutable value types
 require_relative "claude_agent/types"              # TypeScript SDK parity types
 require_relative "claude_agent/sandbox_settings"   # Sandbox configuration types
 require_relative "claude_agent/abort_controller"   # Abort/cancel support (TypeScript SDK parity)

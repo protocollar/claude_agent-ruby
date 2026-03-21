@@ -3,7 +3,12 @@
 module ClaudeAgent
   # Server tool use block (for MCP servers)
   #
-  ServerToolUseBlock = Data.define(:id, :name, :input, :server_name) do
+  class ServerToolUseBlock < ImmutableRecord
+    attribute :id
+    attribute :name
+    attribute :input
+    attribute :server_name
+
     def type
       :server_tool_use
     end

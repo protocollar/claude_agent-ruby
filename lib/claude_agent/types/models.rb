@@ -8,10 +8,15 @@ module ClaudeAgent
   #   model.value        # => "claude-3-opus"
   #   model.display_name # => "Claude 3 Opus"
   #
-  ModelInfo = Data.define(:value, :display_name, :description, :supports_effort, :supported_effort_levels, :supports_adaptive_thinking, :supports_fast_mode, :supports_auto_mode) do
-    def initialize(value:, display_name: nil, description: nil, supports_effort: nil, supported_effort_levels: nil, supports_adaptive_thinking: nil, supports_fast_mode: nil, supports_auto_mode: nil)
-      super
-    end
+  class ModelInfo < ImmutableRecord
+    attribute :value
+    attribute :display_name, default: nil
+    attribute :description, default: nil
+    attribute :supports_effort, default: nil
+    attribute :supported_effort_levels, default: nil
+    attribute :supports_adaptive_thinking, default: nil
+    attribute :supports_fast_mode, default: nil
+    attribute :supports_auto_mode, default: nil
   end
 
   # Per-model usage statistics returned in result messages (TypeScript SDK parity)
@@ -19,28 +24,15 @@ module ClaudeAgent
   # @example
   #   usage = ModelUsage.new(input_tokens: 100, output_tokens: 50, cost_usd: 0.01, max_output_tokens: 4096)
   #
-  ModelUsage = Data.define(
-    :input_tokens,
-    :output_tokens,
-    :cache_read_input_tokens,
-    :cache_creation_input_tokens,
-    :web_search_requests,
-    :cost_usd,
-    :context_window,
-    :max_output_tokens
-  ) do
-    def initialize(
-      input_tokens: 0,
-      output_tokens: 0,
-      cache_read_input_tokens: 0,
-      cache_creation_input_tokens: 0,
-      web_search_requests: 0,
-      cost_usd: 0.0,
-      context_window: nil,
-      max_output_tokens: nil
-    )
-      super
-    end
+  class ModelUsage < ImmutableRecord
+    attribute :input_tokens, default: 0
+    attribute :output_tokens, default: 0
+    attribute :cache_read_input_tokens, default: 0
+    attribute :cache_creation_input_tokens, default: 0
+    attribute :web_search_requests, default: 0
+    attribute :cost_usd, default: 0.0
+    attribute :context_window, default: nil
+    attribute :max_output_tokens, default: nil
   end
 
   # Return type for account_info() (TypeScript SDK parity)
@@ -48,10 +40,12 @@ module ClaudeAgent
   # @example
   #   info = AccountInfo.new(email: "user@example.com", organization: "Acme Corp")
   #
-  AccountInfo = Data.define(:email, :organization, :subscription_type, :token_source, :api_key_source) do
-    def initialize(email: nil, organization: nil, subscription_type: nil, token_source: nil, api_key_source: nil)
-      super
-    end
+  class AccountInfo < ImmutableRecord
+    attribute :email, default: nil
+    attribute :organization, default: nil
+    attribute :subscription_type, default: nil
+    attribute :token_source, default: nil
+    attribute :api_key_source, default: nil
   end
 
   # Return type for supported_agents() (TypeScript SDK v0.2.63 parity)
@@ -61,10 +55,10 @@ module ClaudeAgent
   #   agent.name         # => "Explore"
   #   agent.description  # => "Search agent"
   #
-  AgentInfo = Data.define(:name, :description, :model) do
-    def initialize(name:, description: nil, model: nil)
-      super
-    end
+  class AgentInfo < ImmutableRecord
+    attribute :name
+    attribute :description, default: nil
+    attribute :model, default: nil
   end
 
   # Agent definition for custom subagents (TypeScript SDK parity)
@@ -85,30 +79,16 @@ module ClaudeAgent
   #     max_turns: 10
   #   )
   #
-  AgentDefinition = Data.define(
-    :description,
-    :prompt,
-    :tools,
-    :disallowed_tools,
-    :model,
-    :mcp_servers,
-    :critical_system_reminder,
-    :skills,
-    :max_turns
-  ) do
-    def initialize(
-      description:,
-      prompt:,
-      tools: nil,
-      disallowed_tools: nil,
-      model: nil,
-      mcp_servers: nil,
-      critical_system_reminder: nil,
-      skills: nil,
-      max_turns: nil
-    )
-      super
-    end
+  class AgentDefinition < ImmutableRecord
+    attribute :description
+    attribute :prompt
+    attribute :tools, default: nil
+    attribute :disallowed_tools, default: nil
+    attribute :model, default: nil
+    attribute :mcp_servers, default: nil
+    attribute :critical_system_reminder, default: nil
+    attribute :skills, default: nil
+    attribute :max_turns, default: nil
 
     def to_h
       result = {
@@ -138,9 +118,13 @@ module ClaudeAgent
   #     agents: [AgentInfo.new(name: "Explore")]
   #   )
   #
-  InitializationResult = Data.define(:commands, :output_style, :available_output_styles, :models, :account, :agents, :fast_mode_state) do
-    def initialize(commands: [], output_style: nil, available_output_styles: [], models: [], account: nil, agents: [], fast_mode_state: nil)
-      super
-    end
+  class InitializationResult < ImmutableRecord
+    attribute :commands, default: []
+    attribute :output_style, default: nil
+    attribute :available_output_styles, default: []
+    attribute :models, default: []
+    attribute :account, default: nil
+    attribute :agents, default: []
+    attribute :fast_mode_state, default: nil
   end
 end

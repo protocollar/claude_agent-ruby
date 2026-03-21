@@ -14,22 +14,12 @@ module ClaudeAgent
   #     hook_event: "PreToolUse"
   #   )
   #
-  HookStartedMessage = Data.define(
-    :uuid,
-    :session_id,
-    :hook_id,
-    :hook_name,
-    :hook_event
-  ) do
-    def initialize(
-      uuid:,
-      session_id:,
-      hook_id:,
-      hook_name:,
-      hook_event:
-    )
-      super
-    end
+  class HookStartedMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :hook_id
+    attribute :hook_name
+    attribute :hook_event
 
     def type
       :hook_started
@@ -52,28 +42,15 @@ module ClaudeAgent
   #     output: "Combined output"
   #   )
   #
-  HookProgressMessage = Data.define(
-    :uuid,
-    :session_id,
-    :hook_id,
-    :hook_name,
-    :hook_event,
-    :stdout,
-    :stderr,
-    :output
-  ) do
-    def initialize(
-      uuid:,
-      session_id:,
-      hook_id:,
-      hook_name:,
-      hook_event:,
-      stdout: "",
-      stderr: "",
-      output: ""
-    )
-      super
-    end
+  class HookProgressMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :hook_id
+    attribute :hook_name
+    attribute :hook_event
+    attribute :stdout, default: ""
+    attribute :stderr, default: ""
+    attribute :output, default: ""
 
     def type
       :hook_progress
@@ -106,32 +83,17 @@ module ClaudeAgent
   # - "error" - Hook encountered an error
   # - "cancelled" - Hook was cancelled
   #
-  HookResponseMessage = Data.define(
-    :uuid,
-    :session_id,
-    :hook_id,
-    :hook_name,
-    :hook_event,
-    :stdout,
-    :stderr,
-    :output,
-    :exit_code,
-    :outcome
-  ) do
-    def initialize(
-      uuid:,
-      session_id:,
-      hook_id: nil,
-      hook_name:,
-      hook_event:,
-      stdout: "",
-      stderr: "",
-      output: "",
-      exit_code: nil,
-      outcome: nil
-    )
-      super
-    end
+  class HookResponseMessage < ImmutableRecord
+    attribute :uuid
+    attribute :session_id
+    attribute :hook_name
+    attribute :hook_event
+    attribute :hook_id, default: nil
+    attribute :stdout, default: ""
+    attribute :stderr, default: ""
+    attribute :output, default: ""
+    attribute :exit_code, default: nil
+    attribute :outcome, default: nil
 
     def type
       :hook_response

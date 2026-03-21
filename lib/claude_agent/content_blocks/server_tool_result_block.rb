@@ -3,10 +3,11 @@
 module ClaudeAgent
   # Server tool result block
   #
-  ServerToolResultBlock = Data.define(:tool_use_id, :content, :is_error, :server_name) do
-    def initialize(tool_use_id:, server_name:, content: nil, is_error: nil)
-      super
-    end
+  class ServerToolResultBlock < ImmutableRecord
+    attribute :tool_use_id
+    attribute :server_name
+    attribute :content, default: nil
+    attribute :is_error, default: nil
 
     def type
       :server_tool_result
