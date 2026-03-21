@@ -407,7 +407,7 @@ options = ClaudeAgent::Options.new(
 
 ## Sandbox Settings
 
-`SandboxSettings` configures execution sandboxing for the CLI process. It is an immutable `Data.define` type.
+`SandboxSettings` configures execution sandboxing for the CLI process. It is an immutable `ImmutableRecord` type.
 
 ### Basic sandbox
 

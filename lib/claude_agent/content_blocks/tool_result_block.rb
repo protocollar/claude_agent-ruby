@@ -6,10 +6,10 @@ module ClaudeAgent
   # @example
   #   block = ToolResultBlock.new(tool_use_id: "tool_123", content: "file contents", is_error: false)
   #
-  ToolResultBlock = Data.define(:tool_use_id, :content, :is_error) do
-    def initialize(tool_use_id:, content: nil, is_error: nil)
-      super
-    end
+  class ToolResultBlock < ImmutableRecord
+    attribute :tool_use_id
+    attribute :content, default: nil
+    attribute :is_error, default: nil
 
     def type
       :tool_result

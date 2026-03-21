@@ -6,10 +6,11 @@ module ClaudeAgent
   # @example
   #   msg = UserMessage.new(content: "Hello!", uuid: "abc-123", session_id: "session-abc")
   #
-  UserMessage = Data.define(:content, :uuid, :session_id, :parent_tool_use_id) do
-    def initialize(content:, uuid: nil, session_id: nil, parent_tool_use_id: nil)
-      super
-    end
+  class UserMessage < ImmutableRecord
+    attribute :content
+    attribute :uuid, default: nil
+    attribute :session_id, default: nil
+    attribute :parent_tool_use_id, default: nil
 
     def type
       :user
@@ -42,26 +43,14 @@ module ClaudeAgent
   #   )
   #   msg.replay?  # => true
   #
-  UserMessageReplay = Data.define(
-    :content,
-    :uuid,
-    :session_id,
-    :parent_tool_use_id,
-    :is_replay,
-    :is_synthetic,
-    :tool_use_result
-  ) do
-    def initialize(
-      content:,
-      uuid: nil,
-      session_id: nil,
-      parent_tool_use_id: nil,
-      is_replay: true,
-      is_synthetic: nil,
-      tool_use_result: nil
-    )
-      super
-    end
+  class UserMessageReplay < ImmutableRecord
+    attribute :content
+    attribute :uuid, default: nil
+    attribute :session_id, default: nil
+    attribute :parent_tool_use_id, default: nil
+    attribute :is_replay, default: true
+    attribute :is_synthetic, default: nil
+    attribute :tool_use_result, default: nil
 
     def type
       :user
@@ -96,10 +85,13 @@ module ClaudeAgent
   #     session_id: "session-abc"
   #   )
   #
-  AssistantMessage = Data.define(:content, :model, :uuid, :session_id, :error, :parent_tool_use_id) do
-    def initialize(content:, model:, uuid: nil, session_id: nil, error: nil, parent_tool_use_id: nil)
-      super
-    end
+  class AssistantMessage < ImmutableRecord
+    attribute :content
+    attribute :model
+    attribute :uuid, default: nil
+    attribute :session_id, default: nil
+    attribute :error, default: nil
+    attribute :parent_tool_use_id, default: nil
 
     def type
       :assistant

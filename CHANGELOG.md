@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Replaced all 63 `Data.define` types with plain class inheritance from `ImmutableRecord` base class
+- `Message` module is now `include`d instead of `prepend`ed into message and content block types
+- RBS signatures now use real supertype inheritance (`< ImmutableRecord`)
+
 ## [0.7.18] - 2026-03-20
 
 ### Added

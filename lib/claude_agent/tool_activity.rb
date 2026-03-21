@@ -14,16 +14,12 @@ module ClaudeAgent
   #     puts "  Error!" if activity.error?
   #   end
   #
-  ToolActivity = Data.define(
-    :tool_use,
-    :tool_result,
-    :turn_index,
-    :started_at,
-    :completed_at
-  ) do
-    def initialize(tool_use:, tool_result: nil, turn_index:, started_at: nil, completed_at: nil)
-      super
-    end
+  class ToolActivity < ImmutableRecord
+    attribute :tool_use
+    attribute :turn_index
+    attribute :tool_result, default: nil
+    attribute :started_at, default: nil
+    attribute :completed_at, default: nil
 
     # Tool name
     # @return [String]

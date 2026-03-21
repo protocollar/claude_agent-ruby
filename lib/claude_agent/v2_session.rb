@@ -11,28 +11,15 @@ module ClaudeAgent
   #     permission_mode: "acceptEdits"
   #   )
   #
-  SessionOptions = Data.define(
-    :model,
-    :path_to_claude_code_executable,
-    :env,
-    :allowed_tools,
-    :disallowed_tools,
-    :can_use_tool,
-    :hooks,
-    :permission_mode
-  ) do
-    def initialize(
-      model:,
-      path_to_claude_code_executable: nil,
-      env: nil,
-      allowed_tools: nil,
-      disallowed_tools: nil,
-      can_use_tool: nil,
-      hooks: nil,
-      permission_mode: nil
-    )
-      super
-    end
+  class SessionOptions < ImmutableRecord
+    attribute :model
+    attribute :path_to_claude_code_executable, default: nil
+    attribute :env, default: nil
+    attribute :allowed_tools, default: nil
+    attribute :disallowed_tools, default: nil
+    attribute :can_use_tool, default: nil
+    attribute :hooks, default: nil
+    attribute :permission_mode, default: nil
   end
 
   # V2 API - UNSTABLE

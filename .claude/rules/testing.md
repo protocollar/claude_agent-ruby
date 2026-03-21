@@ -90,9 +90,9 @@ require "mocha/minitest"
 Dir[File.join(__dir__, "support", "**", "*.rb")].each { |f| require f }
 ```
 
-## Testing Data.define Types
+## Testing ImmutableRecord Types
 
-This SDK uses `Data.define` for immutable message types:
+This SDK uses `ImmutableRecord` for immutable message types:
 
 ```ruby
 test "data type attributes" do

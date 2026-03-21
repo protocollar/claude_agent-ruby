@@ -21,7 +21,7 @@ Ruby SDK for building autonomous AI agents that interact with Claude Code CLI. S
 
 ## Stack
 
-- **Ruby** 3.2+ (uses `Data.define` for immutable types)
+- **Ruby** 3.2+
 - **Minitest** for testing
 - **RuboCop** with `rubocop-rails-omakase` for linting
 - **RBS** for type signatures (in `sig/`)
@@ -53,7 +53,7 @@ bin/release VERSION                # Release gem (e.g., bin/release 1.2.0)
 
 ## Conventions
 
-- **Immutable data types**: All messages and content blocks use `Data.define`, frozen at construction
+- **Immutable data types**: All messages and content blocks inherit from `ImmutableRecord`, frozen at construction
 - **Frozen string literals**: Every file starts with `# frozen_string_literal: true`
 - **Message module**: All message/block types include `ClaudeAgent::Message` (text_content, pattern matching)
 - **Stripe-style config**: `ClaudeAgent.model = "opus"`, `ClaudeAgent.configure { |c| ... }`, `Configuration#to_options`

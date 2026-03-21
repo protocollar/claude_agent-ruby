@@ -296,7 +296,7 @@ opts = ClaudeAgent::Options.new(hooks: hooks)
 turn = ClaudeAgent.ask("Hello", options: opts)
 ```
 
-Each key is a CLI event name string (e.g., `"PreToolUse"`). Each value is an array of `HookMatcher` instances. A `HookMatcher` is a `Data.define` with three fields:
+Each key is a CLI event name string (e.g., `"PreToolUse"`). Each value is an array of `HookMatcher` instances. A `HookMatcher` is an `ImmutableRecord` with three fields:
 
 | Field       | Type             | Description                                                  |
 |-------------|------------------|--------------------------------------------------------------|

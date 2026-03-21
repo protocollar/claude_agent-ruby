@@ -7,7 +7,10 @@ module ClaudeAgent
   #   block = ThinkingBlock.new(thinking: "Let me consider...", signature: "abc123")
   #   block.thinking # => "Let me consider..."
   #
-  ThinkingBlock = Data.define(:thinking, :signature) do
+  class ThinkingBlock < ImmutableRecord
+    attribute :thinking
+    attribute :signature
+
     def type
       :thinking
     end

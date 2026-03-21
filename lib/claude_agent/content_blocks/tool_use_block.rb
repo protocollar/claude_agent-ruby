@@ -10,7 +10,11 @@ module ClaudeAgent
   #   block.input[:file_path] # => "/tmp/file"
   #   block.name # => "Read"
   #
-  ToolUseBlock = Data.define(:id, :name, :input) do
+  class ToolUseBlock < ImmutableRecord
+    attribute :id
+    attribute :name
+    attribute :input
+
     def type
       :tool_use
     end

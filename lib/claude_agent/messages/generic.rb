@@ -14,7 +14,10 @@ module ClaudeAgent
   #   msg.data       # => "hello"
   #   msg.to_h       # => { data: "hello" }
   #
-  GenericMessage = Data.define(:message_type, :raw) do
+  class GenericMessage < ImmutableRecord
+    attribute :message_type
+    attribute :raw
+
     def type
       message_type&.to_sym || :unknown
     end
