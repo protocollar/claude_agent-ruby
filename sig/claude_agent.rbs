@@ -416,7 +416,7 @@ module ClaudeAgent
     attr_accessor mcp_servers: Hash[String, Hash[Symbol, untyped]]
 
     # Hooks
-    attr_accessor hooks: Hash[String, Array[HookMatcher]]?
+    attr_accessor hooks: Hash[String, Array[Hook]]?
 
     # Sandbox
     attr_accessor sandbox: SandboxSettings?
@@ -921,14 +921,12 @@ module ClaudeAgent
   end
 
   # Hook types
-  HOOK_EVENTS: Array[String]
-
-  class HookMatcher < ImmutableRecord
+  class Hook < ImmutableRecord
     attr_reader matcher: String | Regexp
-    attr_reader callbacks: Array[^(BaseHookInput, HookContext) -> Hash[Symbol, untyped]]
+    attr_reader callbacks: Array[^(HookInput, HookContext) -> Hash[Symbol, untyped]]
     attr_reader timeout: Integer?
 
-    def initialize: (matcher: String | Regexp, callbacks: Array[^(BaseHookInput, HookContext) -> Hash[Symbol, untyped]], ?timeout: Integer?) -> void
+    def initialize: (matcher: String | Regexp, callbacks: Array[^(HookInput, HookContext) -> Hash[Symbol, untyped]], ?timeout: Integer?) -> void
     def matches?: (String tool_name) -> bool
   end
 
@@ -938,209 +936,21 @@ module ClaudeAgent
     def initialize: (?tool_use_id: String?) -> void
   end
 
-  class BaseHookInput
-    attr_reader hook_event_name: String
+  class HookInput
+    BASE_FIELDS: Array[Symbol]
+
+    attr_reader hook_event_name: String?
     attr_reader session_id: String?
     attr_reader transcript_path: String?
     attr_reader cwd: String?
     attr_reader permission_mode: String?
     attr_reader agent_id: String?
     attr_reader agent_type: String?
+    attr_reader fields: Hash[Symbol, untyped]
 
-    def initialize: (hook_event_name: String, ?session_id: String?, ?transcript_path: String?, ?cwd: String?, ?permission_mode: String?, ?agent_id: String?, ?agent_type: String?, **untyped) -> void
-
-    def self.define_input: (String event_name, ?required: Array[Symbol], ?optional: Hash[Symbol, untyped], ?constants: Hash[Symbol, untyped]) -> Class
-                         | (String event_name, ?required: Array[Symbol], ?optional: Hash[Symbol, untyped], ?constants: Hash[Symbol, untyped]) { () -> void } -> Class
-  end
-
-  class PreToolUseInput < BaseHookInput
-    attr_reader tool_name: String
-    attr_reader tool_input: Hash[String, untyped]
-    attr_reader tool_use_id: String?
-
-    def initialize: (tool_name: String, tool_input: Hash[String, untyped], ?tool_use_id: String?, **untyped) -> void
-  end
-
-  class PostToolUseInput < BaseHookInput
-    attr_reader tool_name: String
-    attr_reader tool_input: Hash[String, untyped]
-    attr_reader tool_response: untyped
-    attr_reader tool_use_id: String?
-
-    def initialize: (tool_name: String, tool_input: Hash[String, untyped], tool_response: untyped, ?tool_use_id: String?, **untyped) -> void
-  end
-
-  class PostToolUseFailureInput < BaseHookInput
-    attr_reader tool_name: String
-    attr_reader tool_input: Hash[String, untyped]
-    attr_reader tool_use_id: String?
-    attr_reader error: String
-    attr_reader is_interrupt: bool?
-
-    def initialize: (tool_name: String, tool_input: Hash[String, untyped], error: String, ?tool_use_id: String?, ?is_interrupt: bool?, **untyped) -> void
-  end
-
-  class NotificationInput < BaseHookInput
-    attr_reader message: String
-    attr_reader title: String?
-    attr_reader notification_type: String?
-
-    def initialize: (message: String, ?title: String?, ?notification_type: String?, **untyped) -> void
-  end
-
-  class UserPromptSubmitInput < BaseHookInput
-    attr_reader prompt: String
-
-    def initialize: (prompt: String, **untyped) -> void
-  end
-
-  class SessionStartInput < BaseHookInput
-    attr_reader source: String
-    attr_reader agent_type: String?
-    attr_reader model: String?
-
-    def initialize: (source: String, ?agent_type: String?, ?model: String?, **untyped) -> void
-  end
-
-  class SessionEndInput < BaseHookInput
-    attr_reader reason: String
-
-    def initialize: (reason: String, **untyped) -> void
-  end
-
-  class StopInput < BaseHookInput
-    attr_reader stop_hook_active: bool
-    attr_reader last_assistant_message: String?
-
-    def initialize: (?stop_hook_active: bool, ?last_assistant_message: String?, **untyped) -> void
-  end
-
-  class StopFailureInput < BaseHookInput
-    attr_reader error: String
-    attr_reader error_details: String?
-    attr_reader last_assistant_message: String?
-
-    def initialize: (error: String, ?error_details: String?, ?last_assistant_message: String?, **untyped) -> void
-  end
-
-  class SubagentStartInput < BaseHookInput
-    attr_reader agent_id: String
-    attr_reader agent_type: String
-
-    def initialize: (agent_id: String, agent_type: String, **untyped) -> void
-  end
-
-  class SubagentStopInput < BaseHookInput
-    attr_reader stop_hook_active: bool
-    attr_reader agent_id: String?
-    attr_reader agent_transcript_path: String?
-    attr_reader agent_type: String?
-    attr_reader last_assistant_message: String?
-
-    def initialize: (?stop_hook_active: bool, ?agent_id: String?, ?agent_transcript_path: String?, ?agent_type: String?, ?last_assistant_message: String?, **untyped) -> void
-  end
-
-  class PreCompactInput < BaseHookInput
-    attr_reader trigger: String
-    attr_reader custom_instructions: String?
-
-    def initialize: (trigger: String, ?custom_instructions: String?, **untyped) -> void
-  end
-
-  class PostCompactInput < BaseHookInput
-    attr_reader trigger: String
-    attr_reader compact_summary: String
-
-    def initialize: (trigger: String, compact_summary: String, **untyped) -> void
-  end
-
-  class PermissionRequestInput < BaseHookInput
-    attr_reader tool_name: String
-    attr_reader tool_input: Hash[String, untyped]
-    attr_reader permission_suggestions: untyped
-
-    def initialize: (tool_name: String, tool_input: Hash[String, untyped], ?permission_suggestions: untyped, **untyped) -> void
-  end
-
-  class SetupInput < BaseHookInput
-    attr_reader trigger: String
-
-    def initialize: (trigger: String, **untyped) -> void
-    def init?: () -> bool
-    def maintenance?: () -> bool
-  end
-
-  class TeammateIdleInput < BaseHookInput
-    attr_reader teammate_name: String
-    attr_reader team_name: String
-
-    def initialize: (teammate_name: String, team_name: String, **untyped) -> void
-  end
-
-  class TaskCompletedInput < BaseHookInput
-    attr_reader task_id: String
-    attr_reader task_subject: String
-    attr_reader task_description: String?
-    attr_reader teammate_name: String?
-    attr_reader team_name: String?
-
-    def initialize: (task_id: String, task_subject: String, ?task_description: String?, ?teammate_name: String?, ?team_name: String?, **untyped) -> void
-  end
-
-  class ElicitationInput < BaseHookInput
-    attr_reader mcp_server_name: String
-    attr_reader message: String
-    attr_reader mode: String?
-    attr_reader url: String?
-    attr_reader elicitation_id: String?
-    attr_reader requested_schema: untyped
-
-    def initialize: (mcp_server_name: String, message: String, ?mode: String?, ?url: String?, ?elicitation_id: String?, ?requested_schema: untyped, **untyped) -> void
-  end
-
-  class ElicitationResultInput < BaseHookInput
-    attr_reader mcp_server_name: String
-    attr_reader action: String
-    attr_reader elicitation_id: String?
-    attr_reader mode: String?
-    attr_reader content: untyped
-
-    def initialize: (mcp_server_name: String, action: String, ?elicitation_id: String?, ?mode: String?, ?content: untyped, **untyped) -> void
-  end
-
-  class ConfigChangeInput < BaseHookInput
-    attr_reader source: String
-    attr_reader file_path: String?
-
-    SOURCES: Array[String]
-
-    def initialize: (source: String, ?file_path: String?, **untyped) -> void
-  end
-
-  class WorktreeCreateInput < BaseHookInput
-    attr_reader name: String
-
-    def initialize: (name: String, **untyped) -> void
-  end
-
-  class WorktreeRemoveInput < BaseHookInput
-    attr_reader worktree_path: String
-
-    def initialize: (worktree_path: String, **untyped) -> void
-  end
-
-  class InstructionsLoadedInput < BaseHookInput
-    attr_reader file_path: String
-    attr_reader memory_type: String
-    attr_reader load_reason: String
-    attr_reader globs: Array[String]?
-    attr_reader trigger_file_path: String?
-    attr_reader parent_file_path: String?
-
-    MEMORY_TYPES: Array[String]
-    LOAD_REASONS: Array[String]
-
-    def initialize: (file_path: String, memory_type: String, load_reason: String, ?globs: Array[String]?, ?trigger_file_path: String?, ?parent_file_path: String?, **untyped) -> void
+    def initialize: (?hook_event_name: String?, ?session_id: String?, ?transcript_path: String?, ?cwd: String?, ?permission_mode: String?, ?agent_id: String?, ?agent_type: String?, **untyped) -> void
+    def []: (Symbol | String key) -> untyped
+    def to_h: () -> Hash[Symbol, untyped]
   end
 
   # Permission types
@@ -1781,10 +1591,10 @@ module ClaudeAgent
     attr_reader allowed_tools: Array[String]?
     attr_reader disallowed_tools: Array[String]?
     attr_reader can_use_tool: (^(String, Hash[String, untyped], untyped) -> permission_result)?
-    attr_reader hooks: Hash[String, Array[HookMatcher]]?
+    attr_reader hooks: Hash[String, Array[Hook]]?
     attr_reader permission_mode: String?
 
-    def initialize: (model: String, ?path_to_claude_code_executable: String?, ?env: Hash[String, String]?, ?allowed_tools: Array[String]?, ?disallowed_tools: Array[String]?, ?can_use_tool: (^(String, Hash[String, untyped], untyped) -> permission_result)?, ?hooks: Hash[String, Array[HookMatcher]]?, ?permission_mode: String?) -> void
+    def initialize: (model: String, ?path_to_claude_code_executable: String?, ?env: Hash[String, String]?, ?allowed_tools: Array[String]?, ?disallowed_tools: Array[String]?, ?can_use_tool: (^(String, Hash[String, untyped], untyped) -> permission_result)?, ?hooks: Hash[String, Array[Hook]]?, ?permission_mode: String?) -> void
   end
 
   # V2 Session interface for multi-turn conversations

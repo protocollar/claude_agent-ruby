@@ -104,18 +104,8 @@ module ClaudeAgent
 
       # Wire in global hooks (additive merge with per-request hooks)
       if default_hooks && !default_hooks.empty?
-        request_hooks = merged[:hooks]
-        global_hooks = default_hooks.to_hooks_hash
-        if request_hooks.is_a?(Hash)
-          # Merge: global + request (request hooks take precedence for same event)
-          combined = global_hooks.dup
-          request_hooks.each do |event, matchers|
-            combined[event] = (combined[event] || []) + Array(matchers)
-          end
-          merged[:hooks] = combined
-        else
-          merged[:hooks] = global_hooks
-        end
+        request_hooks = HookRegistry.wrap(merged[:hooks])
+        merged[:hooks] = request_hooks ? default_hooks.merge(request_hooks) : default_hooks
       end
 
       # Wire in global MCP servers

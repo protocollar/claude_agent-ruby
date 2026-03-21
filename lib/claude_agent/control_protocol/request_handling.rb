@@ -129,18 +129,17 @@ module ClaudeAgent
       # @return [Hash] Response
       def handle_hook_callback(request)
         callback_id = request["callback_id"]
-        input = (request["input"] || {}).deep_symbolize_keys
+        raw_input = (request["input"] || {}).deep_symbolize_keys
         tool_use_id = request["tool_use_id"]
 
-        callback = @hook_callbacks[callback_id]
-        unless callback
+        entry = @hook_callbacks[callback_id]
+        unless entry
           logger.debug("protocol") { "Hook callback not found: #{callback_id}" }
           return {}
         end
         logger.debug("protocol") { "Hook callback: #{callback_id}" }
 
-        context = { tool_use_id: tool_use_id }
-        result = callback.call(input, context)
+        result = entry.hook.dispatch(entry.callback, raw_input, tool_use_id: tool_use_id)
 
         # Normalize result - convert Ruby field names to CLI field names
         normalize_hook_response(result || {})

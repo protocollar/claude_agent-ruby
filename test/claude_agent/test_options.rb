@@ -227,6 +227,12 @@ class TestClaudeAgentOptions < ActiveSupport::TestCase
     refute options.has_hooks?
 
     options = ClaudeAgent::Options.new(hooks: { "PreToolUse" => [] })
+    refute options.has_hooks?, "empty hooks array should not count as having hooks"
+
+    registry = ClaudeAgent::HookRegistry.new do |h|
+      h.before_tool_use("Bash") { |_, _| { continue_: true } }
+    end
+    options = ClaudeAgent::Options.new(hooks: registry)
     assert options.has_hooks?
   end
 

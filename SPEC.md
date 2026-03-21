@@ -480,7 +480,7 @@ Event hooks for intercepting and modifying SDK behavior.
 | `WorktreeRemoveHookInput`     |     ✅      |   ❌    |  ✅   |
 | `InstructionsLoadedHookInput` |     ✅      |   ❌    |  ✅   |
 
-#### BaseHookInput Fields
+#### HookInput Base Fields
 
 | Field             | TypeScript | Python | Ruby | Notes                                            |
 |-------------------|:----------:|:------:|:----:|--------------------------------------------------|

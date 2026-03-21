@@ -22,14 +22,14 @@ class TestClaudeAgentControlProtocolPrimitives < ActiveSupport::TestCase
     options = ClaudeAgent::Options.new(
       hooks: {
         "PreToolUse" => [
-          ClaudeAgent::HookMatcher.new(
+          ClaudeAgent::PreToolUseHook.new(
             matcher: "Bash|Write",
             callbacks: [ ->(i, c) { {} } ],
             timeout: 30
           )
         ],
         "PostToolUse" => [
-          ClaudeAgent::HookMatcher.new(
+          ClaudeAgent::PostToolUseHook.new(
             matcher: ".*",
             callbacks: [ ->(i, c) { {} }, ->(i, c) { {} } ],
             timeout: nil

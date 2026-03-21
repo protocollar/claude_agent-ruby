@@ -133,26 +133,11 @@ module ClaudeAgent
       def build_hooks_config
         return nil unless options.has_hooks?
 
-        config = {}
-
-        options.hooks.each do |event, matchers|
-          config[event] = matchers.map.with_index do |matcher, idx|
-            callback_ids = matcher.callbacks.map.with_index do |callback, cidx|
-              callback_id = "hook_#{event}_#{idx}_#{cidx}"
-              @hook_callbacks[callback_id] = callback
-              callback_id
-            end
-
-            entry = {
-              matcher: matcher.matcher,
-              hookCallbackIds: callback_ids
-            }
-            entry[:timeout] = matcher.timeout if matcher.timeout
-            entry
+        options.hooks.each_with_object({}) do |(event, hooks), config|
+          config[event] = hooks.each_with_index.map do |hook, idx|
+            hook.to_config(idx, @hook_callbacks)
           end
         end
-
-        config
       end
 
       # Extract SDK MCP server names from options

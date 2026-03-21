@@ -91,15 +91,17 @@ class TestClaudeAgentControlProtocolRequestHandling < ActiveSupport::TestCase
   test "handle hook callback" do
     callback_called = false
     callback_input = nil
+    callback_context = nil
 
     options = ClaudeAgent::Options.new(
       hooks: {
         "PreToolUse" => [
-          ClaudeAgent::HookMatcher.new(
+          ClaudeAgent::PreToolUseHook.new(
             matcher: "Read",
             callbacks: [ ->(input, context) {
               callback_called = true
               callback_input = input
+              callback_context = context
               { continue_: true }
             } ],
             timeout: nil
@@ -120,7 +122,12 @@ class TestClaudeAgentControlProtocolRequestHandling < ActiveSupport::TestCase
     result = protocol.send(:handle_hook_callback, request)
 
     assert callback_called
-    assert_equal({ tool_name: "Read", tool_input: {} }, callback_input)
+    assert_instance_of ClaudeAgent::HookInput, callback_input
+    assert_equal "PreToolUse", callback_input.hook_event_name
+    assert_equal "Read", callback_input.tool_name
+    assert_equal({}, callback_input.tool_input)
+    assert_instance_of ClaudeAgent::HookContext, callback_context
+    assert_equal "tool_123", callback_context.tool_use_id
     assert_equal true, result["continue"]
   end
 

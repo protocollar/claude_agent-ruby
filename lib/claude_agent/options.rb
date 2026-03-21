@@ -93,7 +93,7 @@ module ClaudeAgent
     # Check if hooks are configured
     # @return [Boolean]
     def has_hooks?
-      hooks.is_a?(Hash) && hooks.any?
+      hooks&.any? || false
     end
 
     # Get the abort signal from the controller
@@ -131,10 +131,8 @@ module ClaudeAgent
         raise ConfigurationError, "can_use_tool must be callable (Proc, Lambda, or object responding to #call)"
       end
 
-      # Auto-compile HookRegistry to hooks hash
-      if hooks.is_a?(HookRegistry)
-        @hooks = hooks.to_hooks_hash
-      end
+      # Normalize hooks to HookRegistry
+      @hooks = HookRegistry.wrap(hooks) if hooks && !hooks.is_a?(HookRegistry)
 
       if on_elicitation && !on_elicitation.respond_to?(:call)
         raise ConfigurationError, "on_elicitation must be callable (Proc, Lambda, or object responding to #call)"
