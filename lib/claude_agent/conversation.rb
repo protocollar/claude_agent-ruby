@@ -255,11 +255,6 @@ module ClaudeAgent
         end
       end
 
-      # Handle HookRegistry in hooks option
-      if options_kwargs[:hooks].is_a?(HookRegistry)
-        options_kwargs[:hooks] = options_kwargs[:hooks].to_hooks_hash
-      end
-
       Options.new(**options_kwargs)
     end
 

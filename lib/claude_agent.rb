@@ -16,9 +16,11 @@ require_relative "claude_agent/content_blocks"
 require_relative "claude_agent/messages"
 require_relative "claude_agent/message"              # Shared interface module for all message/block types
 require_relative "claude_agent/permission_policy"    # Declarative permission DSL
-require_relative "claude_agent/hook_registry"        # Declarative hooks DSL
+require_relative "claude_agent/hooks/hook"
+require_relative "claude_agent/hooks/hook_context"
+require_relative "claude_agent/hooks/hook_input"
+require_relative "claude_agent/hooks/hook_registry"
 require_relative "claude_agent/message_parser"
-require_relative "claude_agent/hooks"
 require_relative "claude_agent/permissions"
 require_relative "claude_agent/permission_request"
 require_relative "claude_agent/permission_queue"

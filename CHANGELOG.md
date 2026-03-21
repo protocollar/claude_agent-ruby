@@ -11,6 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced all 63 `Data.define` types with plain class inheritance from `ImmutableRecord` base class
 - `Message` module is now `include`d instead of `prepend`ed into message and content block types
 - RBS signatures now use real supertype inheritance (`< ImmutableRecord`)
+- Replaced 23 per-event `*Input` classes (`PreToolUseInput`, `StopInput`, etc.) with a single dynamic `HookInput` class that uses `method_missing` for event-specific fields
+- Renamed `HookMatcher` to `Hook` base class; `HookRegistry.register` now generates typed subclasses (e.g., `PreToolUseHook`, `SessionStartHook`) and DSL methods from a single CLI event name
+- `HookRegistry` is now `Enumerable` and persists as the data structure in `Options#hooks` — no more compile-to-hash step
+- Moved hooks code into `hooks/` directory (`hook.rb`, `hook_context.rb`, `hook_input.rb`, `hook_registry.rb`)
+
+### Added
+- `HookRegistry.register(cli_event)` — registers a new hook event, generating both a `*Hook` subclass and a DSL method by convention
+- `HookRegistry.wrap(input)` — normalizes `HookRegistry`, `Hash`, or `nil` into a `HookRegistry`
+- `HookRegistry.from_hash(hash)` — builds a registry from a raw hooks hash
+- `Hook#to_config` — builds CLI config entry and registers callbacks, replacing inline logic in `build_hooks_config`
+- `Hook#dispatch` — wraps raw CLI data in `HookInput` and `HookContext` before invoking callbacks
+- `Hook#event_name` — CLI event name derived from the class name by convention (e.g., `PreToolUseHook` → `"PreToolUse"`)
+- `Hook::CallbackEntry` — nested `ImmutableRecord` pairing a hook with a callback in the registry
+
+### Removed
+- `HOOK_EVENTS` constant (no longer needed — the CLI is the source of truth)
+- `BaseHookInput` class and `define_input` DSL (replaced by `HookInput`)
+- `HookRegistry::EVENT_MAP` constant (replaced by `HookRegistry.register` and `KNOWN_EVENTS`)
+- `HookMatcher` class (renamed to `Hook`)
+- `HookRegistry#to_hooks_hash` (registry is now used directly)
 
 ## [0.7.18] - 2026-03-20
 

@@ -19,43 +19,64 @@ class TestClaudeAgentHookRegistry < ActiveSupport::TestCase
     assert_equal 1, registry.size
   end
 
-  # --- Event mapping ---
+  # --- Convention-based event mapping ---
 
-  test "before_tool_use maps to PreToolUse" do
+  test "before_ prefix maps to Pre" do
     registry = ClaudeAgent::HookRegistry.new do |h|
-      h.before_tool_use { |input, ctx| { continue_: true } }
+      h.before_tool_use { |_, _| { continue_: true } }
+      h.before_compact { |_, _| { continue_: true } }
     end
-    hooks = registry.to_hooks_hash
-    assert hooks.key?("PreToolUse")
-    assert_equal 1, hooks["PreToolUse"].size
+    assert registry.key?("PreToolUse")
+    assert registry.key?("PreCompact")
   end
 
-  test "after_tool_use maps to PostToolUse" do
+  test "after_ prefix maps to Post" do
     registry = ClaudeAgent::HookRegistry.new do |h|
-      h.after_tool_use { |input, ctx| { continue_: true } }
+      h.after_tool_use { |_, _| { continue_: true } }
+      h.after_compact { |_, _| { continue_: true } }
+      h.after_tool_use_failure { |_, _| { continue_: true } }
     end
-    hooks = registry.to_hooks_hash
-    assert hooks.key?("PostToolUse")
+    assert registry.key?("PostToolUse")
+    assert registry.key?("PostCompact")
+    assert registry.key?("PostToolUseFailure")
   end
 
-  test "on_session_start maps to SessionStart" do
+  test "on_ prefix maps to bare event name" do
     registry = ClaudeAgent::HookRegistry.new do |h|
-      h.on_session_start { |input, ctx| { continue_: true } }
+      h.on_session_start { |_, _| { continue_: true } }
+      h.on_stop { |_, _| { continue_: true } }
+      h.on_notification { |_, _| { continue_: true } }
     end
-    hooks = registry.to_hooks_hash
-    assert hooks.key?("SessionStart")
+    assert registry.key?("SessionStart")
+    assert registry.key?("Stop")
+    assert registry.key?("Notification")
   end
 
-  test "on_stop maps to Stop" do
-    registry = ClaudeAgent::HookRegistry.new do |h|
-      h.on_stop { |input, ctx| { continue_: true } }
-    end
-    hooks = registry.to_hooks_hash
-    assert hooks.key?("Stop")
+  test "unknown method raises NoMethodError" do
+    registry = ClaudeAgent::HookRegistry.new
+    assert_raises(NoMethodError) { registry.not_a_hook_method }
   end
 
-  test "all 23 events are mapped" do
-    assert_equal 23, ClaudeAgent::HookRegistry::EVENT_MAP.size
+  # --- Register ---
+
+  test "register generates a concrete method and hook class" do
+    ClaudeAgent::HookRegistry.register("SomeFutureEvent")
+
+    # Generates the DSL method
+    registry = ClaudeAgent::HookRegistry.new do |h|
+      h.on_some_future_event { |_, _| { continue_: true } }
+    end
+    assert registry.key?("SomeFutureEvent")
+
+    # Generates the Hook subclass
+    assert ClaudeAgent::SomeFutureEventHook < ClaudeAgent::Hook
+    assert_equal "SomeFutureEvent", ClaudeAgent::SomeFutureEventHook.event_name
+    assert_instance_of ClaudeAgent::SomeFutureEventHook, registry["SomeFutureEvent"].first
+  end
+
+  test "register returns the generated method name" do
+    method_name = ClaudeAgent::HookRegistry.register("AnotherFutureEvent")
+    assert_equal :on_another_future_event, method_name
   end
 
   # --- Matcher normalization ---
@@ -64,46 +85,57 @@ class TestClaudeAgentHookRegistry < ActiveSupport::TestCase
     registry = ClaudeAgent::HookRegistry.new do |h|
       h.before_tool_use("Bash") { |_, _| { continue_: true } }
     end
-    matcher = registry.to_hooks_hash["PreToolUse"].first
-    assert_equal "Bash", matcher.matcher
+    hook = registry["PreToolUse"].first
+    assert_equal "Bash", hook.matcher
   end
 
   test "regexp matcher normalizes to source string" do
     registry = ClaudeAgent::HookRegistry.new do |h|
       h.before_tool_use(/Bash|Write/) { |_, _| { continue_: true } }
     end
-    matcher = registry.to_hooks_hash["PreToolUse"].first
-    assert_equal "Bash|Write", matcher.matcher
+    hook = registry["PreToolUse"].first
+    assert_equal "Bash|Write", hook.matcher
   end
 
   test "nil matcher passes through" do
     registry = ClaudeAgent::HookRegistry.new do |h|
       h.before_tool_use { |_, _| { continue_: true } }
     end
-    matcher = registry.to_hooks_hash["PreToolUse"].first
-    assert_nil matcher.matcher
+    hook = registry["PreToolUse"].first
+    assert_nil hook.matcher
   end
 
   # --- Timeout ---
 
-  test "timeout passes through to HookMatcher" do
+  test "timeout passes through to Hook" do
     registry = ClaudeAgent::HookRegistry.new do |h|
       h.before_tool_use(timeout: 30) { |_, _| { continue_: true } }
     end
-    matcher = registry.to_hooks_hash["PreToolUse"].first
-    assert_equal 30, matcher.timeout
+    hook = registry["PreToolUse"].first
+    assert_equal 30, hook.timeout
   end
 
-  # --- Multiple matchers per event ---
+  # --- Multiple hooks per event ---
 
-  test "multiple matchers for same event" do
+  test "multiple hooks for same event" do
     registry = ClaudeAgent::HookRegistry.new do |h|
       h.before_tool_use("Bash") { |_, _| { continue_: true } }
       h.before_tool_use("Write") { |_, _| { continue_: false } }
     end
-    hooks = registry.to_hooks_hash
-    assert_equal 2, hooks["PreToolUse"].size
+    assert_equal 2, registry["PreToolUse"].size
     assert_equal 2, registry.size
+  end
+
+  # --- Enumerable ---
+
+  test "each iterates over events and hooks" do
+    registry = ClaudeAgent::HookRegistry.new do |h|
+      h.before_tool_use { |_, _| {} }
+      h.on_stop { |_, _| {} }
+    end
+    events = registry.map { |event, _| event }
+    assert_includes events, "PreToolUse"
+    assert_includes events, "Stop"
   end
 
   # --- Merge ---
@@ -119,9 +151,8 @@ class TestClaudeAgentHookRegistry < ActiveSupport::TestCase
     end
 
     merged = r1.merge(r2)
-    hooks = merged.to_hooks_hash
-    assert_equal 2, hooks["PreToolUse"].size
-    assert_equal 1, hooks["Stop"].size
+    assert_equal 2, merged["PreToolUse"].size
+    assert_equal 1, merged["Stop"].size
     assert_equal 3, merged.size
   end
 
@@ -139,24 +170,36 @@ class TestClaudeAgentHookRegistry < ActiveSupport::TestCase
     assert_equal 1, r2.size
   end
 
-  # --- to_hooks_hash format ---
+  # --- Hook type ---
 
-  test "to_hooks_hash returns HookMatcher instances" do
+  test "hooks are typed subclass instances" do
     registry = ClaudeAgent::HookRegistry.new do |h|
       h.before_tool_use("Bash") { |_, _| { continue_: true } }
     end
-    hooks = registry.to_hooks_hash
-    matcher = hooks["PreToolUse"].first
-    assert_instance_of ClaudeAgent::HookMatcher, matcher
+    hook = registry["PreToolUse"].first
+    assert_instance_of ClaudeAgent::PreToolUseHook, hook
+    assert_kind_of ClaudeAgent::Hook, hook
+    assert_equal "PreToolUse", hook.event_name
   end
 
-  test "to_hooks_hash callbacks are wrapped in array" do
+  test "callbacks are wrapped in array" do
     callback = ->(_input, _ctx) { { continue_: true } }
     registry = ClaudeAgent::HookRegistry.new do |h|
       h.before_tool_use("Bash", &callback)
     end
-    matcher = registry.to_hooks_hash["PreToolUse"].first
-    assert_equal [ callback ], matcher.callbacks
+    hook = registry["PreToolUse"].first
+    assert_equal [ callback ], hook.callbacks
+  end
+
+  # --- from_hash ---
+
+  test "from_hash wraps a plain hooks hash" do
+    hook = ClaudeAgent::PreToolUseHook.new(matcher: "Bash", callbacks: [ ->(i, c) { {} } ])
+    registry = ClaudeAgent::HookRegistry.from_hash("PreToolUse" => [ hook ])
+
+    assert registry.key?("PreToolUse")
+    assert_equal 1, registry["PreToolUse"].size
+    assert_equal hook, registry["PreToolUse"].first
   end
 
   # --- Chaining ---

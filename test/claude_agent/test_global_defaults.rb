@@ -27,13 +27,13 @@ class TestClaudeAgentGlobalDefaults < ActiveSupport::TestCase
     assert_equal "allow", result.behavior
   end
 
-  test "HookRegistry in Options#validate! compiles to hash" do
+  test "HookRegistry in Options stays as registry" do
     registry = ClaudeAgent::HookRegistry.new do |h|
       h.before_tool_use("Bash") { |_, _| { continue_: true } }
     end
 
     options = ClaudeAgent::Options.new(hooks: registry)
-    assert options.hooks.is_a?(Hash)
+    assert options.hooks.is_a?(ClaudeAgent::HookRegistry)
     assert options.hooks.key?("PreToolUse")
   end
 

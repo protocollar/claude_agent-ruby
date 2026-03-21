@@ -121,7 +121,7 @@ end
 
 ### Multiple matchers per event
 
-You can register multiple callbacks for the same event. Each produces a separate `HookMatcher`:
+You can register multiple callbacks for the same event. Each produces a separate `Hook`:
 
 ```ruby
 ClaudeAgent.hooks do |h|
@@ -163,11 +163,11 @@ All 23 hook events with their Ruby DSL method, CLI event name, and description:
 
 ## Hook Input Types
 
-Every hook callback receives `(input, context)`. The `input` argument is a subclass of `BaseHookInput`.
+Every hook callback receives `(input, context)`. The `input` is a `HookInput` instance. Base fields are first-class readers; event-specific fields are accessed dynamically via `method_missing`.
 
 ### Base fields
 
-All input types inherit these fields from `BaseHookInput`:
+All `HookInput` instances have these base fields:
 
 | Field             | Type     | Description                               |
 |-------------------|----------|-------------------------------------------|
@@ -181,35 +181,37 @@ All input types inherit these fields from `BaseHookInput`:
 
 ### Event-specific fields
 
-| CLI event            | Input class               | Key fields                                                                                                                              |
-|----------------------|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `PreToolUse`         | `PreToolUseInput`         | `tool_name`, `tool_input`, `tool_use_id`                                                                                                |
-| `PostToolUse`        | `PostToolUseInput`        | `tool_name`, `tool_input`, `tool_response`, `tool_use_id`                                                                               |
-| `PostToolUseFailure` | `PostToolUseFailureInput` | `tool_name`, `tool_input`, `error`, `tool_use_id`, `is_interrupt`                                                                       |
-| `Notification`       | `NotificationInput`       | `message`, `title`, `notification_type`                                                                                                 |
-| `UserPromptSubmit`   | `UserPromptSubmitInput`   | `prompt`                                                                                                                                |
-| `SessionStart`       | `SessionStartInput`       | `source`, `agent_type`, `model`                                                                                                         |
-| `SessionEnd`         | `SessionEndInput`         | `reason`                                                                                                                                |
-| `Stop`               | `StopInput`               | `stop_hook_active`, `last_assistant_message`                                                                                            |
-| `StopFailure`        | `StopFailureInput`        | `error`, `error_details`, `last_assistant_message`                                                                                      |
-| `SubagentStart`      | `SubagentStartInput`      | `agent_id`, `agent_type`                                                                                                                |
-| `SubagentStop`       | `SubagentStopInput`       | `stop_hook_active`, `agent_id`, `agent_transcript_path`, `agent_type`, `last_assistant_message`                                         |
-| `PreCompact`         | `PreCompactInput`         | `trigger`, `custom_instructions`                                                                                                        |
-| `PostCompact`        | `PostCompactInput`        | `trigger`, `compact_summary`                                                                                                            |
-| `PermissionRequest`  | `PermissionRequestInput`  | `tool_name`, `tool_input`, `permission_suggestions`                                                                                     |
-| `Setup`              | `SetupInput`              | `trigger` (also has `init?` and `maintenance?` predicates)                                                                              |
-| `TeammateIdle`       | `TeammateIdleInput`       | `teammate_name`, `team_name`                                                                                                            |
-| `TaskCompleted`      | `TaskCompletedInput`      | `task_id`, `task_subject`, `task_description`, `teammate_name`, `team_name`                                                             |
-| `Elicitation`        | `ElicitationInput`        | `mcp_server_name`, `message`, `mode`, `url`, `elicitation_id`, `requested_schema`                                                       |
-| `ElicitationResult`  | `ElicitationResultInput`  | `mcp_server_name`, `action`, `elicitation_id`, `mode`, `content`                                                                        |
-| `ConfigChange`       | `ConfigChangeInput`       | `source`, `file_path` (constant: `SOURCES`)                                                                                             |
-| `WorktreeCreate`     | `WorktreeCreateInput`     | `name`                                                                                                                                  |
-| `WorktreeRemove`     | `WorktreeRemoveInput`     | `worktree_path`                                                                                                                         |
-| `InstructionsLoaded` | `InstructionsLoadedInput` | `file_path`, `memory_type`, `load_reason`, `globs`, `trigger_file_path`, `parent_file_path` (constants: `MEMORY_TYPES`, `LOAD_REASONS`) |
+All event-specific fields are accessed dynamically on `HookInput` via `method_missing`. The fields available depend on the CLI event:
+
+| CLI event            | Key fields                                                                                        |
+|----------------------|---------------------------------------------------------------------------------------------------|
+| `PreToolUse`         | `tool_name`, `tool_input`, `tool_use_id`                                                          |
+| `PostToolUse`        | `tool_name`, `tool_input`, `tool_response`, `tool_use_id`                                         |
+| `PostToolUseFailure` | `tool_name`, `tool_input`, `error`, `tool_use_id`, `is_interrupt`                                 |
+| `Notification`       | `message`, `title`, `notification_type`                                                           |
+| `UserPromptSubmit`   | `prompt`                                                                                          |
+| `SessionStart`       | `source`, `agent_type`, `model`                                                                   |
+| `SessionEnd`         | `reason`                                                                                          |
+| `Stop`               | `stop_hook_active`, `last_assistant_message`                                                      |
+| `StopFailure`        | `error`, `error_details`, `last_assistant_message`                                                |
+| `SubagentStart`      | `agent_id`, `agent_type`                                                                          |
+| `SubagentStop`       | `stop_hook_active`, `agent_id`, `agent_transcript_path`, `agent_type`, `last_assistant_message`   |
+| `PreCompact`         | `trigger`, `custom_instructions`                                                                  |
+| `PostCompact`        | `trigger`, `compact_summary`                                                                      |
+| `PermissionRequest`  | `tool_name`, `tool_input`, `permission_suggestions`                                               |
+| `Setup`              | `trigger`                                                                                         |
+| `TeammateIdle`       | `teammate_name`, `team_name`                                                                      |
+| `TaskCompleted`      | `task_id`, `task_subject`, `task_description`, `teammate_name`, `team_name`                       |
+| `Elicitation`        | `mcp_server_name`, `message`, `mode`, `url`, `elicitation_id`, `requested_schema`                 |
+| `ElicitationResult`  | `mcp_server_name`, `action`, `elicitation_id`, `mode`, `content`                                  |
+| `ConfigChange`       | `source`, `file_path`                                                                             |
+| `WorktreeCreate`     | `name`                                                                                            |
+| `WorktreeRemove`     | `worktree_path`                                                                                   |
+| `InstructionsLoaded` | `file_path`, `memory_type`, `load_reason`, `globs`, `trigger_file_path`, `parent_file_path`       |
 
 ### Context
 
-The `context` argument is a `Hash` with:
+The `context` argument is a `HookContext` instance with:
 
 | Field         | Type     | Description                                      |
 |---------------|----------|--------------------------------------------------|
@@ -269,12 +271,12 @@ The plain `continue` key also works (it is mapped identically), but `continue_` 
 
 ## Raw Options Approach
 
-As an alternative to the DSL, you can construct the hooks hash directly using `HookMatcher` instances. This is the underlying format that `HookRegistry#to_hooks_hash` produces.
+As an alternative to the DSL, you can construct the hooks hash directly using typed `Hook` subclasses. This is the underlying format that `HookRegistry#to_hooks_hash` produces.
 
 ```ruby
 hooks = {
   "PreToolUse" => [
-    ClaudeAgent::HookMatcher.new(
+    ClaudeAgent::PreToolUseHook.new(
       matcher: "Bash|Write",
       callbacks: [
         ->(input, ctx) { { continue_: true } }
@@ -283,7 +285,7 @@ hooks = {
     )
   ],
   "SessionStart" => [
-    ClaudeAgent::HookMatcher.new(
+    ClaudeAgent::SessionStartHook.new(
       matcher: nil,
       callbacks: [
         ->(input, ctx) { puts "Session started"; { continue_: true } }
@@ -296,15 +298,25 @@ opts = ClaudeAgent::Options.new(hooks: hooks)
 turn = ClaudeAgent.ask("Hello", options: opts)
 ```
 
-Each key is a CLI event name string (e.g., `"PreToolUse"`). Each value is an array of `HookMatcher` instances. A `HookMatcher` is an `ImmutableRecord` with three fields:
+Each key is a CLI event name string (e.g., `"PreToolUse"`). Each value is an array of `Hook` subclass instances. `Hook` is an `ImmutableRecord` with three fields:
 
-| Field       | Type             | Description                                                  |
-|-------------|------------------|--------------------------------------------------------------|
-| `matcher`   | `String`, `nil`  | Regex pattern string to match tool names. `nil` matches all. |
-| `callbacks` | `Array<Proc>`    | Array of callback procs. Each receives `(input, context)`.   |
-| `timeout`   | `Integer`, `nil` | Optional timeout in seconds.                                 |
+| Field       | Type             | Description                                                        |
+|-------------|------------------|--------------------------------------------------------------------|
+| `matcher`   | `String`, `nil`  | Regex pattern string to match tool names. `nil` matches all.       |
+| `callbacks` | `Array<Proc>`    | Array of callback procs. Each receives `(HookInput, HookContext)`. |
+| `timeout`   | `Integer`, `nil` | Optional timeout in seconds.                                       |
 
-`HookMatcher#matches?(tool_name)` tests whether a tool name matches the pattern. A pipe-separated string like `"Bash|Write"` matches if the tool name equals any segment; other strings are treated as regex patterns.
+`Hook#matches?(tool_name)` tests whether a tool name matches the pattern. A pipe-separated string like `"Bash|Write"` matches if the tool name equals any segment; other strings are treated as regex patterns.
+
+## Registering Custom Events
+
+For CLI hook events the gem doesn't ship with, call `HookRegistry.register`:
+
+```ruby
+ClaudeAgent::HookRegistry.register("SomeFutureEvent")
+# Generates: ClaudeAgent::SomeFutureEventHook (class)
+# Generates: registry.on_some_future_event(matcher, timeout:) { |input, ctx| ... }
+```
 
 ## Hook Lifecycle Messages
 
