@@ -19,6 +19,8 @@ module ClaudeAgent
   #   block.url  # => "https://example.com/image.png"
   #
   class ImageContentBlock < ImmutableRecord
+    include Message
+
     attribute :source
 
     def type

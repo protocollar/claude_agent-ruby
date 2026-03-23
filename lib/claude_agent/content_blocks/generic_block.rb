@@ -15,6 +15,8 @@ module ClaudeAgent
   #   block.to_h     # => { text: "ref", url: "https://example.com" }
   #
   class GenericBlock < ImmutableRecord
+    include Message
+
     attribute :block_type
     attribute :raw
 

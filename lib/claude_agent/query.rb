@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
 module ClaudeAgent
-  class << self
+  # One-shot query methods for ClaudeAgent.
+  #
+  # Extended into ClaudeAgent's singleton class to provide
+  # {ClaudeAgent.query} and {ClaudeAgent.query_turn}.
+  #
+  module Query
     # One-shot query to Claude Code CLI
     #
     # This is a simple, stateless interface for sending a single prompt

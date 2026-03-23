@@ -8,6 +8,8 @@ module ClaudeAgent
   #   block.text # => "Hello, world!"
   #
   class TextBlock < ImmutableRecord
+    include Message
+
     attribute :text
 
     def type

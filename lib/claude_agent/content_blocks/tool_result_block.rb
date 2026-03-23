@@ -7,6 +7,8 @@ module ClaudeAgent
   #   block = ToolResultBlock.new(tool_use_id: "tool_123", content: "file contents", is_error: false)
   #
   class ToolResultBlock < ImmutableRecord
+    include Message
+
     attribute :tool_use_id
     attribute :content, default: nil
     attribute :is_error, default: nil

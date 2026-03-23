@@ -11,6 +11,8 @@ module ClaudeAgent
   #   block.name # => "Read"
   #
   class ToolUseBlock < ImmutableRecord
+    include Message
+
     attribute :id
     attribute :name
     attribute :input

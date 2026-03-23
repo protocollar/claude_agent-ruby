@@ -1,27 +1,6 @@
 # frozen_string_literal: true
 
 module ClaudeAgent
-  # V2 Session options (subset of full Options)
-  # V2 API - UNSTABLE
-  # @alpha
-  #
-  # @example
-  #   options = SessionOptions.new(
-  #     model: "claude-sonnet-4-5-20250929",
-  #     permission_mode: "acceptEdits"
-  #   )
-  #
-  class SessionOptions < ImmutableRecord
-    attribute :model
-    attribute :path_to_claude_code_executable, default: nil
-    attribute :env, default: nil
-    attribute :allowed_tools, default: nil
-    attribute :disallowed_tools, default: nil
-    attribute :can_use_tool, default: nil
-    attribute :hooks, default: nil
-    attribute :permission_mode, default: nil
-  end
-
   # V2 API - UNSTABLE
   # Multi-turn session interface for persistent conversations.
   #
@@ -113,82 +92,6 @@ module ClaudeAgent
       # Session ID is typically extracted from the first system message
       # but since we don't have it immediately, we leave it nil until available
       @session_id = @client.server_info&.dig("session_id")
-    end
-  end
-
-  class << self
-    # V2 API - UNSTABLE
-    # Create a persistent session for multi-turn conversations.
-    #
-    # @param options [Hash, SessionOptions] Session configuration
-    # @return [Session] A new session instance
-    # @alpha
-    #
-    # @example
-    #   session = ClaudeAgent.unstable_v2_create_session(model: "claude-sonnet-4-5-20250929")
-    #
-    def unstable_v2_create_session(options)
-      V2Session.new(options)
-    end
-
-    # V2 API - UNSTABLE
-    # Resume an existing session by ID.
-    #
-    # @param session_id [String] The session ID to resume
-    # @param options [Hash, SessionOptions] Session configuration
-    # @return [Session] A session configured to resume the specified session
-    # @alpha
-    #
-    # @example
-    #   session = ClaudeAgent.unstable_v2_resume_session("session-abc123", model: "claude-sonnet-4-5-20250929")
-    #
-    def unstable_v2_resume_session(session_id, options)
-      # For resumption, we need to pass the resume option through
-      # Since SessionOptions doesn't have resume, we handle it in the Client options
-      session = V2Session.new(options)
-      session.instance_variable_set(:@resume_session_id, session_id)
-
-      # Override build_client_options to include resume
-      session.define_singleton_method(:build_client_options) do
-        Options.new(
-          model: @options.model,
-          cli_path: @options.path_to_claude_code_executable,
-          env: @options.env,
-          allowed_tools: @options.allowed_tools,
-          disallowed_tools: @options.disallowed_tools,
-          can_use_tool: @options.can_use_tool,
-          hooks: @options.hooks,
-          permission_mode: @options.permission_mode,
-          resume: @resume_session_id
-        )
-      end
-
-      session
-    end
-
-    # V2 API - UNSTABLE
-    # One-shot convenience function for single prompts.
-    #
-    # @param message [String] The prompt message
-    # @param options [Hash, SessionOptions] Session configuration
-    # @return [ResultMessage] The result of the query
-    # @alpha
-    #
-    # @example
-    #   result = ClaudeAgent.unstable_v2_prompt("What files are here?", model: "claude-sonnet-4-5-20250929")
-    #
-    def unstable_v2_prompt(message, options)
-      session = unstable_v2_create_session(options)
-      begin
-        session.send(message)
-        result = nil
-        session.stream.each do |msg|
-          result = msg if msg.is_a?(ResultMessage)
-        end
-        result
-      ensure
-        session.close
-      end
     end
   end
 end
