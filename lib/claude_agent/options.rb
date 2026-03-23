@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "options/serializer"
-
 module ClaudeAgent
   # Permission modes for tool execution (TypeScript SDK parity)
   PERMISSION_MODES = %w[default acceptEdits plan bypassPermissions dontAsk].freeze

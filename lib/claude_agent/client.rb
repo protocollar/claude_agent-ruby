@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "client/commands"
-
 module ClaudeAgent
   # Interactive, bidirectional client for Claude Code CLI
   #

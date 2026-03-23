@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Migrated from manual `require_relative` loading to Zeitwerk autoloading
+- Split multi-class files into one-class-per-file (Zeitwerk convention)
+- Collapsed `content_blocks/`, `messages/`, `types/`, `hooks/` directories (classes remain in `ClaudeAgent::` namespace)
+- Converted `ClaudeAgent.query`/`query_turn` to a `ClaudeAgent::Query` module extended into the singleton class
+- Moved logging and V2 session class methods into the main entry point
 - Replaced all 63 `Data.define` types with plain class inheritance from `ImmutableRecord` base class
 - `Message` module is now `include`d instead of `prepend`ed into message and content block types
 - RBS signatures now use real supertype inheritance (`< ImmutableRecord`)
@@ -17,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved hooks code into `hooks/` directory (`hook.rb`, `hook_context.rb`, `hook_input.rb`, `hook_registry.rb`)
 
 ### Added
+- `zeitwerk` (~> 2.7) runtime dependency for autoloading
+- `ClaudeAgent.loader` accessor for the Zeitwerk loader instance (useful for `eager_load` in production)
+- `include Message` directly in each message and content block class (replaces iteration over `MESSAGE_TYPES`/`CONTENT_BLOCK_TYPES`)
 - `HookRegistry.register(cli_event)` — registers a new hook event, generating both a `*Hook` subclass and a DSL method by convention
 - `HookRegistry.wrap(input)` — normalizes `HookRegistry`, `Hash`, or `nil` into a `HookRegistry`
 - `HookRegistry.from_hash(hash)` — builds a registry from a raw hooks hash

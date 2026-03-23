@@ -4,6 +4,8 @@ module ClaudeAgent
   # Server tool use block (for MCP servers)
   #
   class ServerToolUseBlock < ImmutableRecord
+    include Message
+
     attribute :id
     attribute :name
     attribute :input

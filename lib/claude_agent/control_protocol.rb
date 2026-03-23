@@ -3,12 +3,6 @@
 require "json"
 require "securerandom"
 
-require_relative "control_protocol/primitives"
-require_relative "control_protocol/lifecycle"
-require_relative "control_protocol/messaging"
-require_relative "control_protocol/commands"
-require_relative "control_protocol/request_handling"
-
 module ClaudeAgent
   # Handles the control protocol for bidirectional communication with Claude Code CLI
   #

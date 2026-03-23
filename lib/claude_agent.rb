@@ -1,62 +1,169 @@
 # frozen_string_literal: true
 
+require "zeitwerk"
 require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/hash/keys"
 
-require_relative "claude_agent/version"
-require_relative "claude_agent/logging"
-require_relative "claude_agent/errors"
-require_relative "claude_agent/immutable_record"    # Base class for all immutable value types
-require_relative "claude_agent/types"              # TypeScript SDK parity types
-require_relative "claude_agent/sandbox_settings"   # Sandbox configuration types
-require_relative "claude_agent/abort_controller"   # Abort/cancel support (TypeScript SDK parity)
-require_relative "claude_agent/spawn"              # Custom spawn support (TypeScript SDK parity)
-require_relative "claude_agent/options"
-require_relative "claude_agent/content_blocks"
-require_relative "claude_agent/messages"
-require_relative "claude_agent/message"              # Shared interface module for all message/block types
-require_relative "claude_agent/permission_policy"    # Declarative permission DSL
-require_relative "claude_agent/hooks/hook"
-require_relative "claude_agent/hooks/hook_context"
-require_relative "claude_agent/hooks/hook_input"
-require_relative "claude_agent/hooks/hook_registry"
-require_relative "claude_agent/message_parser"
-require_relative "claude_agent/permissions"
-require_relative "claude_agent/permission_request"
-require_relative "claude_agent/permission_queue"
-require_relative "claude_agent/control_protocol"
-require_relative "claude_agent/transport/base"
-require_relative "claude_agent/transport/subprocess"
-require_relative "claude_agent/mcp/tool"
-require_relative "claude_agent/mcp/server"
-require_relative "claude_agent/cumulative_usage"
-require_relative "claude_agent/event_handler"
-require_relative "claude_agent/turn_result"
-require_relative "claude_agent/tool_activity"
-require_relative "claude_agent/live_tool_activity"
-require_relative "claude_agent/tool_activity_tracker"
-require_relative "claude_agent/query"
-require_relative "claude_agent/client"
-require_relative "claude_agent/conversation"
-require_relative "claude_agent/session_paths"        # Shared session path infrastructure
-require_relative "claude_agent/list_sessions"       # Session discovery (TypeScript SDK v0.2.53 parity)
-require_relative "claude_agent/get_session_messages"    # Session transcript reading (TypeScript SDK v0.2.59 parity)
-require_relative "claude_agent/session_message_relation" # Chainable message query object
-require_relative "claude_agent/session_mutations"          # Session rename/tag mutations
-require_relative "claude_agent/get_session_info"           # Single session lookup
-require_relative "claude_agent/fork_session"               # Session forking (TypeScript SDK v0.2.76 parity)
-require_relative "claude_agent/v2_session"                  # V2 Session API (unstable)
-require_relative "claude_agent/configuration"                # Stripe-style global config
-require_relative "claude_agent/session"                    # Session finder
-
 module ClaudeAgent
-  require "forwardable"
+  LOADER = Zeitwerk::Loader.for_gem
+  LOADER.inflector.inflect(
+    "mcp" => "MCP",
+    "cli_not_found_error" => "CLINotFoundError",
+    "cli_version_error" => "CLIVersionError",
+    "cli_connection_error" => "CLIConnectionError",
+    "json_decode_error" => "JSONDecodeError",
+    "sdk_permission_denial" => "SDKPermissionDenial",
+    "api_retry_message" => "APIRetryMessage",
+    "v2_session" => "V2Session"
+  )
+  LOADER.collapse("#{__dir__}/claude_agent/content_blocks")
+  LOADER.collapse("#{__dir__}/claude_agent/messages")
+  LOADER.collapse("#{__dir__}/claude_agent/types")
+  LOADER.collapse("#{__dir__}/claude_agent/hooks")
+  LOADER.setup
+
+  class << self
+    # @return [Zeitwerk::Loader]
+    def loader
+      LOADER
+    end
+  end
+
+  # --- Aggregate constants ---
+
+  CONTENT_BLOCK_TYPES = [
+    TextBlock,
+    ThinkingBlock,
+    ToolUseBlock,
+    ToolResultBlock,
+    ServerToolUseBlock,
+    ServerToolResultBlock,
+    ImageContentBlock,
+    GenericBlock
+  ].freeze
+
+  MESSAGE_TYPES = [
+    UserMessage,
+    UserMessageReplay,
+    AssistantMessage,
+    SystemMessage,
+    ResultMessage,
+    StreamEvent,
+    CompactBoundaryMessage,
+    StatusMessage,
+    ToolProgressMessage,
+    HookResponseMessage,
+    AuthStatusMessage,
+    TaskNotificationMessage,
+    HookStartedMessage,
+    HookProgressMessage,
+    ToolUseSummaryMessage,
+    FilesPersistedEvent,
+    TaskStartedMessage,
+    TaskProgressMessage,
+    RateLimitEvent,
+    PromptSuggestionMessage,
+    ElicitationCompleteMessage,
+    LocalCommandOutputMessage,
+    APIRetryMessage,
+    GenericMessage
+  ].freeze
+
+  ASSISTANT_MESSAGE_ERROR_TYPES = %w[
+    authentication_failed
+    billing_error
+    rate_limit
+    invalid_request
+    server_error
+    unknown
+    max_output_tokens
+  ].freeze
+
+  API_KEY_SOURCES = %w[user project org temporary oauth].freeze
+
+  PERMISSION_UPDATE_TYPES = %w[
+    addRules
+    replaceRules
+    removeRules
+    setMode
+    addDirectories
+    removeDirectories
+  ].freeze
+
+  PERMISSION_UPDATE_DESTINATIONS = %w[
+    userSettings
+    projectSettings
+    localSettings
+    session
+    cliArg
+  ].freeze
+
+  # --- Logging ---
+
+  LOG_FORMATTER = proc do |severity, time, progname, msg|
+    "[ClaudeAgent] [#{time.strftime("%H:%M:%S.%L")}] #{severity.ljust(5)} -- #{progname}: #{msg}\n"
+  end
+
+  # Default spawn function for local subprocess execution
+  DEFAULT_SPAWN = ->(spawn_options) {
+    LocalSpawnedProcess.spawn(spawn_options)
+  }.freeze
+
+  # --- Global configuration ---
 
   @config = Configuration.setup
 
+  require "forwardable"
+
   class << self
     extend Forwardable
+    include Query
+
     attr_reader :config
+
+    # --- Logger methods ---
+
+    # Module-level logger used by all components unless overridden per-query.
+    #
+    # Defaults to {NullLogger} for zero overhead. Set to any +Logger+-compatible
+    # instance to enable logging.
+    #
+    # @return [Logger]
+    #
+    # @example
+    #   ClaudeAgent.logger = Logger.new($stderr, level: :info)
+    #
+    def logger
+      @logger ||= default_logger
+    end
+
+    # Set the module-level logger.
+    #
+    # @param logger [Logger] A Logger-compatible instance
+    # @return [Logger]
+    def logger=(logger)
+      @logger = logger
+    end
+
+    # Enable debug-level logging to stderr (or a custom output).
+    #
+    # Convenience method for quick debugging. Creates a +Logger+ with
+    # a compact formatter and DEBUG level.
+    #
+    # @param output [IO] Output destination (default: +$stderr+)
+    # @return [Logger] The configured logger
+    #
+    # @example
+    #   ClaudeAgent.debug!
+    #   ClaudeAgent.debug!(output: $stdout)
+    #   ClaudeAgent.debug!(output: File.open("debug.log", "a"))
+    #
+    def debug!(output: $stderr)
+      require "logger"
+      self.logger = Logger.new(output, level: Logger::DEBUG).tap do |l|
+        l.formatter = LOG_FORMATTER
+      end
+    end
 
     # --- Tier 1 delegators (set once at boot) ---
 
@@ -185,14 +292,9 @@ module ClaudeAgent
 
     # List past sessions with metadata
     #
-    # Reads session metadata directly from disk without spawning a CLI subprocess.
-    # Returns SessionInfo objects sorted by last modified time (most recent first).
-    #
-    # @param dir [String, nil] Directory to scope sessions to (includes git worktrees).
-    #   When nil, returns sessions from all projects.
-    # @param limit [Integer, nil] Maximum number of sessions to return.
-    # @param include_worktrees [Boolean] When dir is in a git repo, include sessions
-    #   from all git worktree paths. Defaults to true.
+    # @param dir [String, nil] Directory to scope sessions to
+    # @param limit [Integer, nil] Maximum number of sessions to return
+    # @param include_worktrees [Boolean] Include git worktree sessions
     # @return [Array<SessionInfo>]
     def list_sessions(dir: nil, limit: nil, offset: nil, include_worktrees: true)
       ListSessions.call(dir: dir, limit: limit, offset: offset, include_worktrees: include_worktrees)
@@ -200,34 +302,30 @@ module ClaudeAgent
 
     # Read messages from a past session's transcript
     #
-    # Reads the session JSONL file from disk, reconstructs the main conversation
-    # thread, and returns user/assistant messages with optional pagination.
-    #
     # @param session_id [String] UUID of the session to read
-    # @param dir [String, nil] Project directory to find the session in.
-    #   When nil, searches all projects.
-    # @param limit [Integer, nil] Maximum number of messages to return.
-    # @param offset [Integer, nil] Number of messages to skip from the start.
+    # @param dir [String, nil] Project directory
+    # @param limit [Integer, nil] Maximum number of messages
+    # @param offset [Integer, nil] Number of messages to skip
     # @return [Array<SessionMessage>]
     def get_session_messages(session_id, dir: nil, limit: nil, offset: nil)
       GetSessionMessages.call(session_id, dir: dir, limit: limit, offset: offset)
     end
 
-    # Rename a session by appending a custom-title entry to its file.
+    # Rename a session
     #
-    # @param session_id [String] UUID of the session to rename
+    # @param session_id [String] UUID of the session
     # @param title [String] New title
-    # @param dir [String, nil] Project directory to scope the search
+    # @param dir [String, nil] Project directory
     # @return [void]
     def rename_session(session_id, title, dir: nil)
       SessionMutations.rename_session(session_id, title, dir: dir)
     end
 
-    # Tag a session by appending a tag entry to its file.
+    # Tag a session
     #
-    # @param session_id [String] UUID of the session to tag
-    # @param tag [String, nil] Tag value. Pass nil to clear.
-    # @param dir [String, nil] Project directory to scope the search
+    # @param session_id [String] UUID of the session
+    # @param tag [String, nil] Tag value
+    # @param dir [String, nil] Project directory
     # @return [void]
     def tag_session(session_id, tag, dir: nil)
       SessionMutations.tag_session(session_id, tag, dir: dir)
@@ -235,19 +333,19 @@ module ClaudeAgent
 
     # Look up a single session by ID.
     #
-    # @param session_id [String] UUID of the session
-    # @param dir [String, nil] Project directory to scope the search
+    # @param session_id [String] UUID
+    # @param dir [String, nil] Project directory
     # @return [SessionInfo, nil]
     def get_session_info(session_id, dir: nil)
       GetSessionInfo.call(session_id, dir: dir)
     end
 
-    # Fork a session by creating a new session file with remapped UUIDs.
+    # Fork a session
     #
     # @param session_id [String] UUID of the source session
-    # @param up_to_message_id [String, nil] Truncate at this message UUID (inclusive)
+    # @param up_to_message_id [String, nil] Truncate at this message UUID
     # @param title [String, nil] Title for the forked session
-    # @param dir [String, nil] Project directory to find the session in
+    # @param dir [String, nil] Project directory
     # @return [ForkSessionResult]
     def fork_session(session_id, up_to_message_id: nil, title: nil, dir: nil)
       ForkSession.call(session_id, up_to_message_id: up_to_message_id, title: title, dir: dir)
@@ -260,6 +358,67 @@ module ClaudeAgent
     # @return [Conversation]
     def resume_conversation(session_id, **kwargs)
       Conversation.resume(session_id, **kwargs)
+    end
+
+    # --- V2 Session API (unstable) ---
+
+    # V2 API - UNSTABLE
+    # Create a persistent session for multi-turn conversations.
+    #
+    # @param options [Hash, SessionOptions] Session configuration
+    # @return [V2Session]
+    # @alpha
+    def unstable_v2_create_session(options)
+      V2Session.new(options)
+    end
+
+    # V2 API - UNSTABLE
+    # Resume an existing session by ID.
+    #
+    # @param session_id [String] The session ID to resume
+    # @param options [Hash, SessionOptions] Session configuration
+    # @return [V2Session]
+    # @alpha
+    def unstable_v2_resume_session(session_id, options)
+      session = V2Session.new(options)
+      session.instance_variable_set(:@resume_session_id, session_id)
+
+      session.define_singleton_method(:build_client_options) do
+        Options.new(
+          model: @options.model,
+          cli_path: @options.path_to_claude_code_executable,
+          env: @options.env,
+          allowed_tools: @options.allowed_tools,
+          disallowed_tools: @options.disallowed_tools,
+          can_use_tool: @options.can_use_tool,
+          hooks: @options.hooks,
+          permission_mode: @options.permission_mode,
+          resume: @resume_session_id
+        )
+      end
+
+      session
+    end
+
+    # V2 API - UNSTABLE
+    # One-shot convenience function for single prompts.
+    #
+    # @param message [String] The prompt message
+    # @param options [Hash, SessionOptions] Session configuration
+    # @return [ResultMessage]
+    # @alpha
+    def unstable_v2_prompt(message, options)
+      session = unstable_v2_create_session(options)
+      begin
+        session.send(message)
+        result = nil
+        session.stream.each do |msg|
+          result = msg if msg.is_a?(ResultMessage)
+        end
+        result
+      ensure
+        session.close
+      end
     end
 
     private
@@ -307,6 +466,17 @@ module ClaudeAgent
 
       # Per-request kwargs override config
       merged.merge(kwargs)
+    end
+
+    def default_logger
+      require "logger"
+      if ENV["CLAUDE_AGENT_DEBUG"]
+        Logger.new($stderr, level: Logger::DEBUG).tap do |l|
+          l.formatter = LOG_FORMATTER
+        end
+      else
+        NullLogger.new
+      end
     end
   end
 end

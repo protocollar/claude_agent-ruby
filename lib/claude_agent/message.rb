@@ -83,10 +83,4 @@ module ClaudeAgent
       end
     end
   end
-
-  # Include Message in all message types
-  MESSAGE_TYPES.each { |klass| klass.include(Message) }
-
-  # Include Message in all content block types
-  CONTENT_BLOCK_TYPES.each { |klass| klass.include(Message) }
 end

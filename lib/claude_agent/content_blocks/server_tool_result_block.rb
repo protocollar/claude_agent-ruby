@@ -4,6 +4,8 @@ module ClaudeAgent
   # Server tool result block
   #
   class ServerToolResultBlock < ImmutableRecord
+    include Message
+
     attribute :tool_use_id
     attribute :server_name
     attribute :content, default: nil

@@ -8,6 +8,8 @@ module ClaudeAgent
   #   block.thinking # => "Let me consider..."
   #
   class ThinkingBlock < ImmutableRecord
+    include Message
+
     attribute :thinking
     attribute :signature
 
